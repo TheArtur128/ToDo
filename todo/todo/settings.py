@@ -77,6 +77,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'tasks.User'
+
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
