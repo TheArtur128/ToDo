@@ -18,40 +18,30 @@ class Position(Model):
 class TaskSettings(Model):
     is_removable_on_completion = BooleanField(default=True)
 
-    @staticmethod
-    def get_default() -> Self:
-        return TaskSettings.objects.create()
 
 
 class Zone(Model):
     position = OneToOneField(Position, on_delete=CASCADE)
     width = PositiveIntegerField()
     height = PositiveIntegerField()
-    settings = ForeignKey(
-        TaskSettings,
-        default=TaskSettings.get_default,
-        on_delete=PROTECT,
-    )
+    settings = ForeignKey(TaskSettings, on_delete=PROTECT, blank=True, null=True)
 
 
 class Task(Model):
     description = CharField(max_length=128)
     is_done = BooleanField(default=False)
-    subtasks = ManyToManyField("self")
+    subtasks = ManyToManyField("self", blank=True, symmetrical=False)
     rgb_color = CharField(max_length=6)
     position = OneToOneField(Position, on_delete=CASCADE)
-    settings = ForeignKey(
-        TaskSettings,
-        default=TaskSettings.get_default,
-        on_delete=PROTECT,
-    )
+    settings = ForeignKey(TaskSettings, on_delete=PROTECT, blank=True, null=True)
 
 
 class User(AbstractUser):
-    tasks = ManyToManyField(Task)
-    zones = ManyToManyField(Zone)
+    tasks = ManyToManyField(Task, blank=True)
+    zones = ManyToManyField(Zone, blank=True)
     default_settings = ForeignKey(
         TaskSettings,
-        default=TaskSettings.get_default,
         on_delete=PROTECT,
+        blank=True,
+        null=True,
     )
