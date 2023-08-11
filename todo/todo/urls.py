@@ -1,10 +1,8 @@
 from django.contrib import admin
-from django.urls import path
-
-from tasks.views import index
+from django.urls import path, include
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', index),
+    path('', include('tasks.urls', namespace='tasks'))
 ]
