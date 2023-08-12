@@ -1,9 +1,7 @@
-from typing import Any
-
 from django.contrib.auth.models import AbstractUser
 from django.db.models import (
-    Model, CASCADE, PositiveIntegerField, OneToOneField, BooleanField, CharField,
-    ManyToManyField, ForeignKey, PROTECT
+    Model, CASCADE, PositiveIntegerField, OneToOneField, BooleanField,
+    CharField, ManyToManyField, ForeignKey, PROTECT
 )
 
 
@@ -22,7 +20,7 @@ class Position(_VisualizableMixin, Model):
     def __str__(self) -> str:
         return f"id={self.id}, x={self.x}, y={self.y}"
 
- 
+
 class TaskSettings(_VisualizableMixin, Model):
     is_removable_on_completion = BooleanField(default=True)
 
@@ -37,7 +35,12 @@ class Zone(_VisualizableMixin, Model):
     position = OneToOneField(Position, on_delete=CASCADE)
     width = PositiveIntegerField()
     height = PositiveIntegerField()
-    settings = ForeignKey(TaskSettings, on_delete=PROTECT, blank=True, null=True)
+    settings = ForeignKey(
+        TaskSettings,
+        on_delete=PROTECT,
+        blank=True,
+        null=True,
+    )
 
     def __str__(self) -> str:
         return (
@@ -54,7 +57,12 @@ class Task(_VisualizableMixin, Model):
     subtasks = ManyToManyField("self", blank=True, symmetrical=False)
     rgb_color = CharField(max_length=6)
     position = OneToOneField(Position, on_delete=CASCADE)
-    settings = ForeignKey(TaskSettings, on_delete=PROTECT, blank=True, null=True)
+    settings = ForeignKey(
+        TaskSettings,
+        on_delete=PROTECT,
+        blank=True,
+        null=True,
+    )
 
     def __str__(self) -> str:
         return f"id={self.id}, is_done={self.is_done}"
