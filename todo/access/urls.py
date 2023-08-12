@@ -1,9 +1,9 @@
 from django.urls import path
 
-from tasks.views import login
+from access.views import login
 
 
-app_name = 'tasks'
+app_name = 'access'
 
 urlpatterns = [
     path('login', login, name='login')
