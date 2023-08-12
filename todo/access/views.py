@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, HttpResponseRedirect
 from django.contrib import auth
 
 from access.forms import UserLoginForm
@@ -17,6 +17,8 @@ def login(request):
 
             if user:
                 auth.login(request, user)
+
+                return HttpResponseRedirect('/')
 
     else:
         form = UserLoginForm()
