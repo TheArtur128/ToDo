@@ -1,7 +1,9 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import (
+    AbstractBaseUser, BaseUserManager, PermissionsMixin
+)
 from django.db.models import (
     Model, CASCADE, PositiveIntegerField, OneToOneField, BooleanField,
-    CharField, ManyToManyField, ForeignKey, PROTECT
+    CharField, EmailField, ManyToManyField, ForeignKey, PROTECT
 )
 
 
@@ -68,7 +70,33 @@ class Task(_VisualizableMixin, Model):
         return f"id={self.id}, is_done={self.is_done}"
 
 
-class User(AbstractUser):
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Email field is required')
+
+        user = self.model(email=self.normalize_email(email), **extra_fields)
+        user.set_password(password)
+        user.save()
+
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_active', True)
+
+        return self.create_user(email, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    name = CharField(max_length=128, unique=True)
+    email = EmailField(max_length=154, unique=True)
+    password = CharField(max_length=128)
+    is_active = BooleanField(default=False)
+    is_staff = BooleanField(default=False)
+    is_superuser = BooleanField(default=False)
+
     tasks = ManyToManyField(Task, blank=True)
     zones = ManyToManyField(Zone, blank=True)
     default_settings = ForeignKey(
@@ -77,3 +105,11 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
+
+    USERNAME_FIELD = "name"
+    REQUIRED_FIELDS = ("email", "password")
+
+    objects = CustomUserManager()
+
+    def has_module_perms(self, label) -> bool:
+        return self.is_superuser and self.is_staff and self.is_active
