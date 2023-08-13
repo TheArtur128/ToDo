@@ -1,7 +1,7 @@
 from django.shortcuts import render, HttpResponseRedirect
 from django.contrib import auth
 
-from access.forms import UserLoginForm
+from accounts.forms import UserLoginForm
 
 
 def login(request):

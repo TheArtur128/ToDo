@@ -96,3 +96,8 @@ div {
   right: 12px;
   bottom: 8px;
 }
+
+.push {
+  position: relative;
+  bottom: 14px;
+}

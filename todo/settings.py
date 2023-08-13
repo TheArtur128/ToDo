@@ -22,7 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'access',
+    'accounts',
     'tasks',
 ]
 
@@ -102,10 +102,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = (
-    BASE_DIR / 'todo' / 'static',
+    BASE_DIR / 'static',
 )
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

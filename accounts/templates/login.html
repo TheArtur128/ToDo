@@ -5,17 +5,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href={% static 'access/css/style.css' %}>
-    <link rel="shortcut icon" href="{% static 'global/icon.png' %}" type="image/x-icon">
+    <link rel="stylesheet" href={% static 'accounts/css/style.css' %}>
+    <link rel="shortcut icon" href="{% static 'todo/icon.png' %}" type="image/x-icon">
     <title>ToDo</title>
 </head>
 <body>
     <div class="form">
-        <form action="{% url 'access:login' %}" method="POST">
+        <form action="{% url 'accounts:login' %}" method="POST">
             {% csrf_token %}
             <h1>Login</h1>
             <div class="form-content">{{ form.as_p }}</div>
-            <button type="submit" class="push-data" >Push</button>
+            <div class="push"><button type="submit" class="push-data">Push</button></div>
             <a class="form-changing" href="">Sign up</a>
         </form>
     </div>
