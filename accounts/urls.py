@@ -6,5 +6,5 @@ from accounts.views import login
 app_name = 'accounts'
 
 urlpatterns = [
-    path('login', login, name='login')
+    path('sign-in', login, name='sign-in'),
 ]
