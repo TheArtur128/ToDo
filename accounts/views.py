@@ -3,9 +3,11 @@ from django.contrib import auth
 
 from accounts.forms import UserLoginForm
 
+    if request.method == 'GET':
+        form = UserLoginForm()
 
 def login(request):
-    if request.method == 'POST':
+    elif request.method == 'POST':
         form = UserLoginForm(data=request.POST)
 
         if form.is_valid():
@@ -18,9 +20,6 @@ def login(request):
             if user:
                 auth.login(request, user)
 
-                return HttpResponseRedirect('/')
-
-    else:
-        form = UserLoginForm()
+                return redirect(reverse('tasks:index'))
 
     return render(request, 'login.html', dict(form=form))
