@@ -33,3 +33,29 @@ def account_activation_by(email: str, *, request: HttpRequest) -> Optional[
         return bad('Make sure the email is correct or try again after a while.')
 
     caches['emails-to-confirm'].set(token, email)
+
+
+def recover_access_by_name(name: str, *, request: HttpRequest) -> Union[
+    ok[str],
+    bad[str],
+]:
+    user = User.objects.filter(name=request.POST['name']).first()
+
+    return (
+        bad("There is no user with this name.")
+        if user is None
+        else recover_access_by_email(user.gmail, request=request)
+    )
+
+
+def recover_access_by_email(email: str, *, request: HttpRequest) -> Union[
+    ok[str],
+    bad[str],
+]:
+    result = account_activation_by(email, request=request)
+
+    return (
+        ok("Follow the link in the email you just received to recover access.")
+        if not of(bad, result)
+        else result
+    )

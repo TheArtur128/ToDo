@@ -101,3 +101,56 @@ def logout(request: HttpRequest) -> HttpResponse:
     auth.logout(request)
 
     return redirect(reverse('tasks:index'))
+
+
+_FormT = TypeVar("_FormT", bound=Form)
+
+
+class AccessRecovererView(View):
+    form_type: Type[_FormT]
+    template_name: str
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        return render(request, self.template_name, dict(form=self.form_type()))
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        form = self.form_type(data=request.POST)
+
+        return (
+            render(
+                request,
+                self.template_name,
+                dict(form=form) | self._messages_of(self.service(request)),
+            )
+            if form.is_valid()
+            else render(
+                request,
+                self.template_name,
+                dict(form=form, error_messages=tuple(form.errors.values())),
+            )
+        )
+
+    def service(self, request) -> ok[str] | bad[str]:
+        raise NotImplementedError
+
+    @staticmethod
+    def _messages_of(value: ok[str] | bad[str]) -> dict[str,  Tuple[str]]:
+        key = 'notification_messages' if of(ok, value) else 'error_messages'
+
+        return {key: (value.value, )}
+
+
+class NameAccessRecovererView(AccessRecovererView):
+    form_type = RestoringAccessByNameForm
+    template_name = 'access-recovery-by-name.html'
+
+    def service(self, request: HttpRequest) -> ok[str] | bad[str]:
+        return recover_access_by_name(request.POST['name'], request=request)
+
+
+class EmailAccessRecovererView(AccessRecovererView):
+    form_type = RestoringAccessByEmailForm
+    template_name = 'access-recovery-by-email.html'
+
+    def service(self, request: HttpRequest) -> ok[str] | bad[str]:
+        return recover_access_by_email(request.POST['email'], request=request)
