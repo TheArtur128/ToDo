@@ -92,6 +92,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = 'tasks.User'
 
+LOGIN_URL = '/sign-in'
+
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'

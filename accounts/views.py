@@ -95,6 +95,7 @@ def authorize(request: HttpRequest, token: str) -> HttpResponse:
     return redirect(reverse('tasks:index'))
 
 
+@login_required
 @require_GET
 def logout(request: HttpRequest) -> HttpResponse:
     auth.logout(request)
