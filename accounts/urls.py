@@ -12,4 +12,5 @@ urlpatterns = [
     path('sign-in', login, name='sign-in'),
     path('sign-up', registrate, name='sign-up'),
     path('authorize/<str:token>', authorize, name='authorize'),
+    path('logout', logout, name='logout'),
 ]

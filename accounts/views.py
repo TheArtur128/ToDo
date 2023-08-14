@@ -92,3 +92,9 @@ def authorize(request: HttpRequest, token: str) -> HttpResponse:
         auth.login(request, user)
 
     return redirect(reverse('tasks:index'))
+
+
+def logout(request: HttpRequest) -> HttpResponse:
+    auth.logout(request)
+
+    return redirect(reverse('tasks:index'))
