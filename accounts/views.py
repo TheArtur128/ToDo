@@ -21,10 +21,10 @@ from accounts.services import (
 from tasks.models import User
 
 
+def login(request: HttpRequest) -> HttpResponse:
     if request.method == 'GET':
         form = UserLoginForm()
 
-def login(request):
     elif request.method == 'POST':
         form = UserLoginForm(data=request.POST)
 
