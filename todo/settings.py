@@ -120,3 +120,24 @@ EMAIL_USE_SSL = bool(int(getenv('EMAIL_USE_SSL', default=False)))
 DEFAULT_FROM_EMAIL = getenv('DEFAULT_FROM_EMAIL')
 EMAIL_ADMIN = getenv('EMAIL_ADMIN', default=DEFAULT_FROM_EMAIL)
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://localhost:6379',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'db': '0',
+        }
+    },
+    'sessions': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://localhost:6379',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'db': '1',
+        }
+    },
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "sessions"
