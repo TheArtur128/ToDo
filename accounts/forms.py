@@ -6,7 +6,7 @@ from tasks.models import User
 class UserLoginForm(AuthenticationForm):
     class Meta:
         model = User
-        fields = ("username", "password")
+        fields = ("name", "password")
 
 
 class UserRegistrationForm(UserCreationForm):
