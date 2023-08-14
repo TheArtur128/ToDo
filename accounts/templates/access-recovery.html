@@ -1,0 +1,27 @@
+{% extends 'form-base.html' %}
+
+{% block body %}
+    <div class="front-axis">
+        <form class="recovery-form" action="{% block form-action %}{% endblock %}" method="POST">
+            {% csrf_token %}
+            <h2 id="recovery-form-title">Access recovery</h2>
+            <div class="form-fileds">{% block form-fields %}{% endblock %}</div>
+            <div class="push" id="recovery-form-push-button"><button type="submit" class="push-data">Push</button></div>
+            {% block form-changing %}{% endblock %}
+        </form>
+        {% if error_messages %}
+            <div class="form-errors">
+                {% for error_message in error_messages %}
+                    <p>{{ error_message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if notification_messages %}
+            <div class="form-notification">
+                {% for notification_message in notification_messages %}
+                    <p>{{ notification_message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

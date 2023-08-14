@@ -1,0 +1,44 @@
+{% extends 'form-base.html' %}
+{% load static %}
+
+{% block body %}
+    <div class="front-axis">
+        <form class="registration-form" action="{% url 'accounts:sign-up' %}" method="POST">
+            {% csrf_token %}
+            <h1>Sign up</h1>
+            <div class="form-fileds">
+                <p>
+                    <label for="{{ form.name.id_for_label }}">Name</label>
+                    {{ form.name }}
+                </p>
+                <p>
+                    <label for="{{ form.email.id_for_label }}">Email</label>
+                    {{ form.email }}
+                </p>
+                <p>
+                    <label for="{{ form.password1.id_for_label }}">Password</label>
+                    {{ form.password1 }}
+                </p>
+                <p>
+                    <label for="{{ form.password2.id_for_label }}">Repeat password</label>
+                    {{ form.password2 }}
+                </p>
+            </div>
+            <div class="push"><button type="submit" class="push-data">Push</button></div>
+            <a class="to-change-form" href="{% url 'accounts:sign-in' %}">Sign in</a>
+        </form>
+        {% if errors %}
+            <div class="form-errors">
+                {% for error in errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if was_registered %}
+            <div class="form-notification">
+                <p>Confirm your email using the link in the email you will now receive.</p>
+                <p>The email may be identified as spam.</p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,103 +1,99 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-
-body {
-  font-family: "Nunito";
-  font-weight: 300;
-  text-align: center;
-  background-color: #f7fffb;
-}
-
-::selection {
-  background-color: #fcd84e;
-  color: #fffdd9;
-}
-
-a {
-  text-decoration: none;
-  color: #bec8f0;
-}
-
-a:hover {
-  text-decoration-color: #fcd84e;
-  color: #fcd84e;
-}
-
-input, button, textarea {
-  border-radius: 3px;
-}
-
-input[incorrectly-filled], textarea[incorrectly-filled] {
-  background-color: #fc6268;
-}
-
-input, .structured-text textarea {
-  background-color: #fafafa;
-  border: 0;
-  font-size: 14px;
-}
-
-input:focus, textarea:focus {
-  background-color: #8f7cf7;
-  outline: none;
-}
-
-input[type="text"], input[type="password"] {
-  width: 230px;
-  height: 19px;
-}
-
-button {
-  background-color: #8e7aff;
-  color: #282828;
-  border: solid 1px #8c78ff;
-}
-
-button:active {
-  background-color: #fcdc60;
-  border-color: #fcdc60;
-}
-
-div {
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-
-.form {
+.login-form, .registration-form, .form-errors, .form-notification, .recovery-form {
   background-color: #2d2c2e;
+}
+
+.front-axis {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  transform: translate(-50%);
+}
+
+.login-form, .registration-form, .recovery-form {
+  position: relative;
   text-align: center;
   color: #fffff5;
   padding-top: 2px;
-  width: 270px;
-  height: 300px;
   border: solid 2px #7672f7;
+  width: 270px;
   border-radius: 5px;
+  text-align: center;
+}
+
+.login-form {
+  height: 300px;
+  position: relative;
+}
+
+.registration-form {
+  height: 419px;
+}
+
+.recovery-form {
+  height: 215px;
+}
+
+#recovery-form-title {
+  margin-bottom: 35px;
+}
+
+#recovery-form-push-button {
   position: absolute;
-  left: 50%;
-  top: 7%;
-  transform: translate(-50%, -7%);
+  left: 12px;
+  bottom: 0px;
 }
 
-.form .push-data {
-  width: 50px;
+.push-data {
+  width: 55px;
   height: 30px;
-  font-size: 16px;
+  font-size: 17px;
 }
 
-.form-content {
+.form-fileds {
   display: inline-block;
   text-align: left;
   width: 250px;
   margin-top: -20px;
-  margin-left: 10px;
+  margin-left: 15px;
 }
 
-.form-changing {
+.to-change-form {
   position: absolute;
   right: 12px;
   bottom: 8px;
 }
 
-.push {
-  position: relative;
-  bottom: 14px;
+.to-reset-password {
+  position: absolute;
+  left: 12px;
+  bottom: 8px;
+}
+
+.form-errors, .form-notification {
+  display: inline-block;
+  border-radius: 4px;
+  position: static;
+  top: 38px;
+  width: 270px;
+  float: left;
+  right: 2px;
+  text-align: left;
+}
+
+.form-errors *, .form-notification * {
+  padding-left: 0px;
+  margin: 5px;
+}
+
+.form-errors {
+  color: #f7f0f1;
+  border: solid 2px #f74358;
+}
+
+.form-notification {
+  border: solid 2px #45FF76;
+}
+
+.form-notification * {
+  margin-left: 10px;
 }

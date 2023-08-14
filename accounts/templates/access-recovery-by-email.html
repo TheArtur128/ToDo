@@ -1,0 +1,17 @@
+{% extends 'access-recovery.html' %}
+{% load static %}
+
+{% block form-action %}
+    {% url 'accounts:recover-access-by-email' %}
+{% endblock %}
+
+{% block form-fields %}
+    <p>
+        <label for="{{ form.email.id_for_label }}">Email</label>
+        {{ form.email }}
+    </p>
+{% endblock %}
+
+{% block form-changing %}
+    <a class="to-change-form" href="{% url 'accounts:recover-access-by-name' %}">Via name</a>
+{% endblock %}
