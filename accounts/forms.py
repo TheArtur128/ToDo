@@ -8,3 +8,8 @@ class UserLoginForm(AuthenticationForm):
         model = User
         fields = ("username", "password")
 
+
+class UserRegistrationForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ("name", "email", "password1", "password2")

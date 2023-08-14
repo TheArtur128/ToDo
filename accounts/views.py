@@ -1,7 +1,25 @@
-from django.shortcuts import render, HttpResponseRedirect
-from django.contrib import auth
+from typing import Type, TypeVar, Tuple
 
-from accounts.forms import UserLoginForm
+from act import of, bad, ok
+from django.core.cache import caches
+from django.contrib import auth
+from django.contrib.auth.decorators import login_required
+from django.forms import Form
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.views import View
+from django.views.decorators.http import require_GET
+
+from accounts.forms import (
+    UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
+    RestoringAccessByEmailForm
+)
+from accounts.services import (
+    account_activation_by, recover_access_by_name, recover_access_by_email
+)
+from tasks.models import User
+
 
     if request.method == 'GET':
         form = UserLoginForm()
@@ -23,3 +41,54 @@ def login(request):
                 return redirect(reverse('tasks:index'))
 
     return render(request, 'login.html', dict(form=form))
+
+
+def registrate(request: HttpRequest) -> HttpResponse:
+    was_registered = False
+    errors = tuple()
+
+    if request.method == 'GET':
+        form = UserRegistrationForm()
+
+    elif request.method == 'POST':
+        form = UserRegistrationForm(data=request.POST)
+
+        if form.is_valid():
+            result = account_activation_by(
+                request.POST['email'],
+                request=request,
+            )
+
+            if not of(bad, result):
+                was_registered = True
+
+                user = form.save()
+                auth.login(request, user)
+            else:
+                errors = (result.value, )
+
+    context = dict(
+        form=form,
+        errors=errors if errors else tuple(form.errors.values()),
+        was_registered=was_registered,
+    )
+
+    return render(request, 'registration.html', context)
+
+
+def authorize(request: HttpRequest, token: str) -> HttpResponse:
+    email = caches['emails-to-confirm'].get(token)
+
+    if email is not None:
+        user = User.objects.get(email=email)
+
+        if not user.is_active:
+            user.is_active = True
+
+            user.save()
+
+        caches['emails-to-confirm'].delete(token)
+
+        auth.login(request, user)
+
+    return redirect(reverse('tasks:index'))
