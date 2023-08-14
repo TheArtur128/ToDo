@@ -76,6 +76,7 @@ def registrate(request: HttpRequest) -> HttpResponse:
     return render(request, 'registration.html', context)
 
 
+@require_GET
 def authorize(request: HttpRequest, token: str) -> HttpResponse:
     email = caches['emails-to-confirm'].get(token)
 
@@ -94,6 +95,7 @@ def authorize(request: HttpRequest, token: str) -> HttpResponse:
     return redirect(reverse('tasks:index'))
 
 
+@require_GET
 def logout(request: HttpRequest) -> HttpResponse:
     auth.logout(request)
 
