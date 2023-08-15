@@ -57,8 +57,8 @@ class Zone(_VisualizableMixin, Model):
 
 class Task(_VisualizableMixin, Model):
     description = CharField(max_length=128)
-    is_done = BooleanField(default=False)
     subtasks = ManyToManyField("self", blank=True, symmetrical=False)
+    is_forced = BooleanField(default=False)
     rgb_color = CharField(max_length=6)
     position = OneToOneField(Position, on_delete=CASCADE)
     settings = ForeignKey(
@@ -69,7 +69,7 @@ class Task(_VisualizableMixin, Model):
     )
 
     def __str__(self) -> str:
-        return f"id={self.id}, is_done={self.is_done}"
+        return f"id={self.id}"
 
 
 class CustomUserManager(BaseUserManager):
