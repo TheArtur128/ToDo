@@ -2,8 +2,8 @@ from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
 from django.db.models import (
-    Model, CASCADE, PositiveIntegerField, OneToOneField, BooleanField,
-    CharField, EmailField, ManyToManyField, ForeignKey, PROTECT
+    Model, CASCADE, PositiveIntegerField, DateTimeField, OneToOneField,
+    BooleanField, CharField, EmailField, ManyToManyField, ForeignKey, PROTECT
 )
 
 
@@ -25,6 +25,7 @@ class Position(_VisualizableMixin, Model):
 
 class TaskSettings(_VisualizableMixin, Model):
     is_removable_on_completion = BooleanField(default=True)
+    failure_time = DateTimeField(default=None, null=True, blank=True)
 
     def __str__(self) -> str:
         return (
