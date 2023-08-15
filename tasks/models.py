@@ -57,10 +57,17 @@ class Zone(_VisualizableMixin, Model):
 
 class Task(_VisualizableMixin, Model):
     description = CharField(max_length=128)
-    subtasks = ManyToManyField("self", blank=True, symmetrical=False)
     is_forced = BooleanField(default=False)
     rgb_color = CharField(max_length=6)
     position = OneToOneField(Position, on_delete=CASCADE)
+    root = ForeignKey(
+        'self',
+        on_delete=CASCADE,
+        related_name='subtasks',
+        blank=True,
+        null=True,
+        default=None,
+    )
     settings = ForeignKey(
         TaskSettings,
         on_delete=PROTECT,
