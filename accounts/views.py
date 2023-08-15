@@ -106,7 +106,7 @@ def logout(request: HttpRequest) -> HttpResponse:
 _FormT = TypeVar("_FormT", bound=Form)
 
 
-class AccessRecovererView(View):
+class AccessRecoveryView(View):
     form_type: Type[_FormT]
     template_name: str
 
@@ -140,7 +140,7 @@ class AccessRecovererView(View):
         return {key: (value.value, )}
 
 
-class NameAccessRecovererView(AccessRecovererView):
+class AccessRecoveryByNameView(AccessRecoveryView):
     form_type = RestoringAccessByNameForm
     template_name = 'access-recovery-by-name.html'
 
@@ -148,7 +148,7 @@ class NameAccessRecovererView(AccessRecovererView):
         return recover_access_by_name(request.POST['name'], request=request)
 
 
-class EmailAccessRecovererView(AccessRecovererView):
+class AccessRecoveryByEmailView(AccessRecoveryView):
     form_type = RestoringAccessByEmailForm
     template_name = 'access-recovery-by-email.html'
 
