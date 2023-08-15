@@ -17,7 +17,7 @@
                 </p>
             </div>
             <div class="push"><button type="submit" class="push-data">Push</button></div>
-            <a class="to-reset-password" href="{% url 'accounts:recover-access-by-email' %}">Forgot</a>
+            <a class="to-regain-access" href="{% url 'accounts:recover-access-by-email' %}">Forgot</a>
             <a class="to-change-form" href="{% url 'accounts:sign-up' %}">Sign up</a>
         </form>
         {% if form.non_field_errors %}
