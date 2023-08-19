@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block form-action %}
-    {% url 'accounts:recover-access-by-name' %}
+    {% url 'access:recover-access-by-name' %}
 {% endblock %}
 
 {% block form-fields %}
@@ -13,5 +13,5 @@
 {% endblock %}
 
 {% block form-changing %}
-    <a class="to-change-form" href="{% url 'accounts:recover-access-by-email' %}">Via email</a>
+    <a class="to-change-form" href="{% url 'access:recover-access-by-email' %}">Via email</a>
 {% endblock %}

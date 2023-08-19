@@ -1,12 +1,12 @@
 from django.urls import path
 
-from accounts.views import (
+from access.views import (
     login, registrate, logout, authorize, AccessRecoveryByNameView,
     AccessRecoveryByEmailView
 )
 
 
-app_name = 'accounts'
+app_name = 'access'
 
 urlpatterns = [
     path('sign-in', login, name='sign-in'),

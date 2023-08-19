@@ -11,11 +11,11 @@ from django.urls import reverse
 from django.views import View
 from django.views.decorators.http import require_GET
 
-from accounts.forms import (
+from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm
 )
-from accounts.services import (
+from access.services import (
     account_activation_by, recover_access_by_name, recover_access_by_email
 )
 from tasks.models import User

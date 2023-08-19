@@ -3,7 +3,7 @@
 
 {% block body %}
     <div class="front-axis">
-        <form class="login-form" action="{% url 'accounts:sign-in' %}" method="POST">
+        <form class="login-form" action="{% url 'access:sign-in' %}" method="POST">
             {% csrf_token %}
             <h1>Sign in</h1>
             <div class="form-fileds">
@@ -17,8 +17,8 @@
                 </p>
             </div>
             <div class="push"><button type="submit" class="push-data">Push</button></div>
-            <a class="to-regain-access" href="{% url 'accounts:recover-access-by-name' %}">Forgot</a>
-            <a class="to-change-form" href="{% url 'accounts:sign-up' %}">Sign up</a>
+            <a class="to-regain-access" href="{% url 'access:recover-access-by-name' %}">Forgot</a>
+            <a class="to-change-form" href="{% url 'access:sign-up' %}">Sign up</a>
         </form>
         {% if form.non_field_errors %}
             <div class="form-errors">{{ form.non_field_errors }}</div>

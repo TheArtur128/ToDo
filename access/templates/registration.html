@@ -3,7 +3,7 @@
 
 {% block body %}
     <div class="front-axis">
-        <form class="registration-form" action="{% url 'accounts:sign-up' %}" method="POST">
+        <form class="registration-form" action="{% url 'access:sign-up' %}" method="POST">
             {% csrf_token %}
             <h1>Sign up</h1>
             <div class="form-fileds">
@@ -25,7 +25,7 @@
                 </p>
             </div>
             <div class="push"><button type="submit" class="push-data">Push</button></div>
-            <a class="to-change-form" href="{% url 'accounts:sign-in' %}">Sign in</a>
+            <a class="to-change-form" href="{% url 'access:sign-in' %}">Sign in</a>
         </form>
         {% if errors %}
             <div class="form-errors">
