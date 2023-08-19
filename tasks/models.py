@@ -38,7 +38,7 @@ class Zone(_VisualizableMixin, Model):
     position = OneToOneField(Position, on_delete=CASCADE)
     width = PositiveIntegerField()
     height = PositiveIntegerField()
-    tasks = ManyToManyField('Task', related_name='students', symmetrical=True)
+    tasks = ManyToManyField('Task', related_name='students')
     settings = ForeignKey(
         TaskSettings,
         on_delete=PROTECT,
