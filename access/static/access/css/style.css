@@ -71,7 +71,7 @@
 
 .form-errors, .form-notification {
   display: inline-block;
-  border-radius: 4px;
+  border-radius: 5px;
   position: static;
   top: 38px;
   width: 270px;
