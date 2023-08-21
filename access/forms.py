@@ -20,9 +20,11 @@ class RestoringAccessByNameForm(ModelForm):
     class Meta:
         model = User
         fields = ("name", )
+        validate_unique = False
 
 
 class RestoringAccessByEmailForm(ModelForm):
     class Meta:
         model = User
         fields = ("email", )
+        validate_unique = False
