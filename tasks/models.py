@@ -7,20 +7,12 @@ from django.db.models import (
 )
 
 
-__all__ = ("Position", "TaskSettings", "Zone", "Task", "User")
+__all__ = ("TaskSettings", "Zone", "Task", "User")
 
 
 class _VisualizableMixin:
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self})"
-
-
-class Position(_VisualizableMixin, Model):
-    x = PositiveIntegerField()
-    y = PositiveIntegerField()
-
-    def __str__(self) -> str:
-        return f"id={self.id}, x={self.x}, y={self.y}"
 
 
 class TaskSettings(_VisualizableMixin, Model):
@@ -35,7 +27,8 @@ class TaskSettings(_VisualizableMixin, Model):
 
 
 class Zone(_VisualizableMixin, Model):
-    position = OneToOneField(Position, on_delete=CASCADE)
+    x = PositiveIntegerField()
+    y = PositiveIntegerField()
     width = PositiveIntegerField()
     height = PositiveIntegerField()
     tasks = ManyToManyField('Task', related_name='students')
@@ -49,7 +42,8 @@ class Zone(_VisualizableMixin, Model):
     def __str__(self) -> str:
         return (
             f"id={self.id}, "
-            f"position=({self.position}), "
+            f"x={self.x}, "
+            f"y={self.y}, "
             f"width={self.width}, "
             f"height={self.height}"
         )
@@ -59,7 +53,8 @@ class Task(_VisualizableMixin, Model):
     description = CharField(max_length=128)
     is_forced = BooleanField(default=False)
     rgb_color = CharField(max_length=6)
-    position = OneToOneField(Position, on_delete=CASCADE)
+    x = PositiveIntegerField()
+    y = PositiveIntegerField()
     root = ForeignKey(
         'self',
         on_delete=CASCADE,
