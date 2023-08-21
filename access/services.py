@@ -11,7 +11,7 @@ from django.urls import reverse
 from tasks.models import User
 
 
-def account_activation_by(email: str, *, request: HttpRequest) -> Optional[
+def authorization_port_for(email: str, *, request: HttpRequest) -> Optional[
     bad[str]
 ]:
     token = token_urlsafe(64)

@@ -16,7 +16,7 @@ from access.forms import (
     RestoringAccessByEmailForm
 )
 from access.services import (
-    account_activation_by, recover_access_by_name, recover_access_by_email
+    authorization_port_for, recover_access_by_name, recover_access_by_email
 )
 from tasks.models import User
 
@@ -54,7 +54,7 @@ def registrate(request: HttpRequest) -> HttpResponse:
         form = UserRegistrationForm(data=request.POST)
 
         if form.is_valid():
-            result = account_activation_by(
+            result = authorization_port_for(
                 request.POST['email'],
                 request=request,
             )
