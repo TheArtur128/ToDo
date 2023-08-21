@@ -21,7 +21,7 @@ def account_activation_by(email: str, *, request: HttpRequest) -> Optional[
             "Authorization",
             "Follow this link to authorize:\n{}\n\n{}".format(
                 request.build_absolute_uri(reverse(
-                    "accounts:authorize",
+                    "access:authorize",
                     args=[token],
                 )),
                 "Don't share this link with anyone.",
