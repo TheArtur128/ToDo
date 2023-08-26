@@ -84,6 +84,9 @@ AUTH_USER_MODEL = "tasks.User"
 
 LOGIN_URL = "/sign-in"
 
+URL_TO_REDIRECT_NON_ANONYMOUS = '/'
+
+
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = 'UTC'
