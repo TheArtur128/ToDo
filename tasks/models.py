@@ -1,8 +1,8 @@
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin)
 from django.db.models import (
-    Model, CASCADE, PositiveIntegerField, DateTimeField, OneToOneField,
-    BooleanField, CharField, EmailField, ManyToManyField, ForeignKey, PROTECT)
+    Model, CASCADE, PositiveIntegerField, DateTimeField, BooleanField,
+    CharField, EmailField, ManyToManyField, ForeignKey, PROTECT)
 
 
 __all__ = ("TaskSettings", "Zone", "Task", "User")
