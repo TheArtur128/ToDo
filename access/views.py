@@ -1,6 +1,6 @@
-from typing import Type, TypeVar, Tuple
+from typing import Type, TypeVar, Tuple, Optional
 
-from act import of, bad, ok
+from act import of, bad, ok, v, _
 from django.core.cache import caches
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
@@ -14,68 +14,43 @@ from django.views.decorators.http import require_GET
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm)
-from access.services import (
-    open_authorization_port_for, recover_access_by_name,
-    recover_access_by_email)
+from access.services import open_authorization_port_for
 from access.tools import status_of
+from access.utils import for_anonymous
 from tasks.models import User
 
 
-def login(request: HttpRequest) -> HttpResponse:
-    if request.method == 'GET':
-        form = UserLoginForm()
-
-    elif request.method == "POST":
-        form = UserLoginForm(data=request.POST)
-
-        if form.is_valid():
-            user = auth.authenticate(
-                request,
-                username=request.POST["username"],
-                password=request.POST["password"])
-
-            if user:
-                auth.login(request, user)
-
-                return redirect(reverse("tasks:index"))
-
-    return render(request, "pages/login.html", dict(form=form))
+__all__ = (
+    "login", "registrate", "authorize", "logout", "access_recovery_by_name",
+    "access_recovery_by_email")
 
 
-def registrate(request: HttpRequest) -> HttpResponse:
-    was_registered = False
+def confirm(request: HttpRequest, subject: str) -> HttpResponse:
     errors = tuple()
 
     if request.method == 'GET':
-        form = UserRegistrationForm()
-
-    elif request.method == "POST":
-        form = UserRegistrationForm(data=request.POST)
+        form = ConfirmForm()
+    else:
+        form = ConfirmForm(data=form.POST)
 
         if form.is_valid():
-            is_port_open = open_authorization_port_for(
-                request.POST["email"],
-                request=request)
+            is_port_open = open_port_of(subject, for_=form.POST["email"])
 
-            if not is_port_open:
-                errors = (result.value, )
-            else:
-                was_registered = True
+            if is_port_open:
+                return redirect(confirmation_page_url_of(subject))
 
-                user = form.save()
-                auth.login(request, user)
+            errors = ("", )
 
     context = dict(
-        form=form,
-        errors=errors if errors else tuple(form.errors.values()),
-        was_registered=was_registered)
+        subject=subject, form=form, errors=(*form.errors.values(), *errors))
 
-    return render(request, "pages/registration.html", context)
+    return render(request, "pages/confirmation.html", context)
 
 
+@for_anonymous
 @require_GET
 def authorize(request: HttpRequest, token: str) -> HttpResponse:
-    email = caches["emails-to-confirm"].get(token)
+    email = port_email_of("authorization").get_of(token)
 
     if email is not None:
         user = User.objects.get(email=email)
@@ -85,7 +60,7 @@ def authorize(request: HttpRequest, token: str) -> HttpResponse:
 
             user.save()
 
-        caches["emails-to-confirm"].delete(token)
+        delete_of(token, "authorization")
 
         auth.login(request, user)
 
@@ -103,34 +78,101 @@ def logout(request: HttpRequest) -> HttpResponse:
 _FormT = TypeVar("_FormT", bound=Form)
 
 
-class AccessRecoveryView(View):
-    form_type: Type[_FormT]
-    template_name: str
-
-    __default_port_open_success_message: str = (
-        "Follow the link in the email you just received to recover access")
-
-    __default_port_open_failure_message: str = (
-        "Make sure the email is correct or try again after a while")
+class ViewWithForm(View):
+    form_type = property(v._form_type)
+    template_name = property(v._template_name)
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        return render(request, self.template_name, dict(form=self.form_type()))
+        return render(request, self._template_name, dict(form=self._form_type()))
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        form = self.form_type(data=request.POST)
-        render_with = partial(render, request, self.template_name)
+        form = self._form_type(data=request.POST)
+        render_with = (
+            _.render(request, self._template_name, dict(form=form) | v))
 
-        return (
-            render_with(
-                dict(form=form)
-                | self.__context_about(self._open_recovery_port(request)))
-            if form.is_valid()
-            render_with(dict(
-                form=form,
-                error_messages=tuple(form.errors.values())))
-        )
+        if not form.is_valid():
+            return render_with(dict(error_messages=tuple(form.errors.values())))
 
-    def _open_recovery_port(
+        result = self._service(request=request, render_with=render_with)
+
+        if of(bad, result):
+            return render_with(dict(error_messages=tuple(result.value)))
+
+        return result
+
+    _form_type: Type[_FormT]
+    _template_name: str
+
+    def _service(
+        self,
+        *,
+        request: HttpRequest,
+        render_with: Callable[Mapping, HttpResponse]
+    ) -> HttpResponse | bad[Iterable[str]]:
+        raise NotImplementedError
+
+
+class LoginView(ViewWithForm):
+    _form_type = UserLoginForm
+    _template_name = "pages/login.html"
+
+    def _service(
+        self,
+        *,
+        request: HttpRequest,
+        render_with: Callable[Mapping, HttpResponse]
+    ) -> HttpResponse | bad[Iterable[str]]:
+        is_port_open = open_port_of(subject, for_=form.POST["email"])
+
+        if is_port_open:
+            return redirect(confirmation_page_url_of(subject))
+
+        user = auth.authenticate(
+            request,
+            username=request.POST["username"],
+            password=request.POST["password"])
+
+        if user:
+            auth.login(request, user)
+
+            return redirect(reverse("tasks:index"))
+
+
+class _RegistrationView(ViewWithForm):
+    _form_type: Type[_FormT] = UserRegistrationForm
+    _template_name: str = "pages/registration.html"
+
+    def _service(
+        self,
+        *,
+        request: HttpRequest,
+        _: Any,
+    ) -> HttpResponse:
+        user_data = obj(
+            name=request.POST["name"],
+            email=request.POST["email"],
+            password=request.POST["password1"])
+
+        is_port_open = open_registration_port_for(
+            user_data, request=request)
+
+        if is_port_open:
+            return redirect(reverse("access:registration_port"))
+        else:
+            return bad([
+                "Make sure the email is correct or try again after a while"])
+
+
+class _StaticPortOpeningView(ViewWithForm):
+    def _service(
+        self,
+        *,
+        request: HttpRequest,
+        render_with: Callable[Mapping, HttpResponse]
+    ) -> HttpResponse:
+        return render_with(self.__context_about(self._open_port(request)))
+
+    def _open_port(
         self,
         request: HttpRequest,
     ) -> ok[Optional[str]] | bad[Optional[str]]:
@@ -147,10 +189,10 @@ class AccessRecoveryView(View):
 
         if of(ok, port_open_message):
             message_subject = "notification_messages"
-            default_message = self.__default_port_open_success_message
+            default_message = self._default_port_open_success_message
         else:
             message_subject = "error_messages"
-            default_message = self.__default_port_open_failure_message
+            default_message = self._default_port_open_failure_message
 
         final_message = (
             default_message
@@ -160,11 +202,19 @@ class AccessRecoveryView(View):
         return {message_subject: (final_message, )}
 
 
-class AccessRecoveryByNameView(AccessRecoveryView):
-    form_type = RestoringAccessByNameForm
-    template_name = "pages/access-recovery-by-name.html"
+class _AccessRecoveryView(_StaticPortOpeningView):
+    _default_port_open_success_message = (
+        "Follow the link in the email you just received to recover access")
 
-    def _open_recovery_port(
+    _default_port_open_failure_message: str = (
+        "Make sure the email is correct or try again after a while")
+
+
+class _AccessRecoveryByNameView(_AccessRecoveryView):
+    _form_type = RestoringAccessByNameForm
+    _template_name = "pages/access-recovery-by-name.html"
+
+    def _open_port(
         self,
         request: HttpRequest,
     ) -> ok[Optional[str]] | bad[Optional[str]]:
@@ -178,14 +228,23 @@ class AccessRecoveryByNameView(AccessRecoveryView):
             request=request))
 
 
-class AccessRecoveryByEmailView(AccessRecoveryView):
-    form_type = RestoringAccessByEmailForm
-    template_name = "pages/access-recovery-by-email.html"
+class _AccessRecoveryByEmailView(_AccessRecoveryView):
+    _form_type = RestoringAccessByEmailForm
+    _template_name = "pages/access-recovery-by-email.html"
 
-    def _open_recovery_port(
+    def _open_port(
         self,
         request: HttpRequest,
     ) -> ok[Optional[str]] | bad[Optional[str]]:
         return status_of(open_authorization_port_for(
             request.POST["email"],
             request=request))
+
+
+registrate = for_anonymous(_RegistrationView.as_view())
+
+login = for_anonymous(LoginView.as_view())
+
+access_recovery_by_name = for_anonymous(_AccessRecoveryByNameView.as_view())
+
+access_recovery_by_email = for_anonymous(_AccessRecoveryByEmailView.as_view())

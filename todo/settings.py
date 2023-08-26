@@ -118,7 +118,17 @@ EMAIL_USE_SSL = bool(int(getenv("EMAIL_USE_SSL", default=False)))
 DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL")
 EMAIL_ADMIN = getenv("EMAIL_ADMIN", default=DEFAULT_FROM_EMAIL)
 
-ACCESS_PORT_ACTIVITY_MINUTES = 5
+
+PORT_AUTHENTICATION_TOKEN_LENGTH = 64
+PORT_PASSWORD_LENGTH = 8
+PORT_ACTIVITY_MINUTES = 5
+PORTS_CACHE_LOCATION = "ports"
+
+PORTS = {
+    "registration": {"FOR_AUTHORIZED": False, "HANDLER": "access:registrate"},
+    "authorization": {"FOR_AUTHORIZED": False, "HANDLER": "access:authorize"},
+}
+
 
 CACHES = {
     "default": {
@@ -126,20 +136,37 @@ CACHES = {
         "LOCATION": "redis://localhost:6379",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            'db': '0'}},
+            'db': '0'
+        }
+    },
     "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://localhost:6379",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            'db': '1'}},
+            'db': '1',
+        }
+    },
+    "ports": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://localhost:6379",
+        "TIMEOUT": 60 * PORT_ACTIVITY_MINUTES,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            'db': '2'
+        }
+    },
     "emails-to-confirm": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://localhost:6379",
-        "TIMEOUT": 60 * ACCESS_PORT_ACTIVITY_MINUTES,
+        "TIMEOUT": 60 * PORT_ACTIVITY_MINUTES,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            'db': '2'}}}
+            'db': '3',
+        }
+    },
+}
+
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"

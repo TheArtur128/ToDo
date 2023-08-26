@@ -1,0 +1,16 @@
+{% load common_tags %}
+{% get_settings as settings %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <h2><b>{{ password }}</b></h2>
+        <p>Enter this password on the page to which you were redirected to confirm {{ subject }}</p>
+        <p>If you are not redirected, then follow this link to go to this confirmation page: <a href="{{ link }}">{{ link }}</a></p>
+        <p><b>Warning</b>: this password is active for only {{ settings.PORT_ACTIVITY_MINUTES }} minutes<p>
+    </body>
+</html>

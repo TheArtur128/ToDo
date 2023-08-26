@@ -16,15 +16,26 @@ class UserRegistrationForm(UserCreationForm):
         fields = ("name", "email", "password1", "password2")
 
 
-class RestoringAccessByNameForm(ModelForm):
-    class Meta:
-        model = User
-        fields = ("name", )
-        validate_unique = False
+class ConfirmForm(ModelForm):
+    password = CharField(
+        min_length=settings.PORT_PASSWORD_LENGTH,
+        max_length=settings.PORT_PASSWORD_LENGTH,
+    )
 
-
-class RestoringAccessByEmailForm(ModelForm):
     class Meta:
         model = User
         fields = ("email", )
+
+
+class RestoringAccessByNameForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ("name", "password1", "password2")
+        validate_unique = False
+
+
+class RestoringAccessByEmailForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ("email", "password1", "password2")
         validate_unique = False
