@@ -13,11 +13,11 @@ from django.views.decorators.http import require_GET
 
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
-    RestoringAccessByEmailForm
-)
+    RestoringAccessByEmailForm)
 from access.services import (
-    authorization_port_for, recover_access_by_name, recover_access_by_email
-)
+    open_authorization_port_for, recover_access_by_name,
+    recover_access_by_email)
+from access.tools import status_of
 from tasks.models import User
 
 
@@ -31,7 +31,6 @@ def login(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             user = auth.authenticate(
                 request,
-            )
                 username=request.POST["username"],
                 password=request.POST["password"])
 
@@ -40,7 +39,7 @@ def login(request: HttpRequest) -> HttpResponse:
 
                 return redirect(reverse("tasks:index"))
 
-    return render(request, 'login.html', dict(form=form))
+    return render(request, "pages/login.html", dict(form=form))
 
 
 def registrate(request: HttpRequest) -> HttpResponse:
@@ -69,10 +68,9 @@ def registrate(request: HttpRequest) -> HttpResponse:
     context = dict(
         form=form,
         errors=errors if errors else tuple(form.errors.values()),
-        was_registered=was_registered,
-    )
+        was_registered=was_registered)
 
-    return render(request, 'registration.html', context)
+    return render(request, "pages/registration.html", context)
 
 
 @require_GET

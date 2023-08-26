@@ -1,10 +1,8 @@
 from django.contrib.auth.models import (
-    AbstractBaseUser, BaseUserManager, PermissionsMixin
-)
+    AbstractBaseUser, BaseUserManager, PermissionsMixin)
 from django.db.models import (
     Model, CASCADE, PositiveIntegerField, DateTimeField, OneToOneField,
-    BooleanField, CharField, EmailField, ManyToManyField, ForeignKey, PROTECT
-)
+    BooleanField, CharField, EmailField, ManyToManyField, ForeignKey, PROTECT)
 
 
 __all__ = ("TaskSettings", "Zone", "Task", "User")
@@ -22,8 +20,7 @@ class TaskSettings(_VisualizableMixin, Model):
     def __str__(self) -> str:
         return (
             f"id={self.id}, "
-            f"is_removable_on_completion={self.is_removable_on_completion}"
-        )
+            f"is_removable_on_completion={self.is_removable_on_completion}")
 
 
 class Zone(_VisualizableMixin, Model):
@@ -36,8 +33,7 @@ class Zone(_VisualizableMixin, Model):
         TaskSettings,
         on_delete=PROTECT,
         blank=True,
-        null=True,
-    )
+        null=True)
 
     def __str__(self) -> str:
         return (
@@ -45,8 +41,7 @@ class Zone(_VisualizableMixin, Model):
             f"x={self.x}, "
             f"y={self.y}, "
             f"width={self.width}, "
-            f"height={self.height}"
-        )
+            f"height={self.height}")
 
 
 class Task(_VisualizableMixin, Model):
@@ -61,14 +56,12 @@ class Task(_VisualizableMixin, Model):
         related_name="subtasks",
         blank=True,
         null=True,
-    )
         default=None)
 
     settings = ForeignKey(
         TaskSettings,
         on_delete=PROTECT,
         blank=True,
-    )
         null=True)
 
     def __str__(self) -> str:
@@ -108,7 +101,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         TaskSettings,
         on_delete=PROTECT,
         blank=True,
-    )
         null=True)
 
     USERNAME_FIELD = "name"
