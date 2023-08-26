@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 BASE_URL = getenv("BASE_URL")
@@ -27,7 +28,6 @@ INSTALLED_APPS = [
     "access",
     "tasks"]
 
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -36,7 +36,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware"]
-
 
 ROOT_URLCONF = "todo.urls"
 
@@ -53,7 +52,6 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages"],
             "libraries": {
                 "common_tags": "templatetags.common_tags"}}}]
-
 
 WSGI_APPLICATION = "todo.wsgi.application"
 
@@ -81,7 +79,6 @@ AUTH_PASSWORD_VALIDATORS = [
             "django.contrib.auth.password_validation."
             "NumericPasswordValidator")}]
 
-
 AUTH_USER_MODEL = "tasks.User"
 
 LOGIN_URL = "/sign-in"
@@ -97,6 +94,7 @@ USE_I18N = True
 
 USE_TZ = True
 
+
 STATIC_URL = "static/"
 
 STATIC_ROOT = BASE_DIR / "collectedstatic"
@@ -107,6 +105,7 @@ STATICFILES_DIRS = (
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 
 EMAIL_HOST = getenv("EMAIL_HOST")
 EMAIL_HOST_USER = getenv("EMAIL_HOST_USER")
