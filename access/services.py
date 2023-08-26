@@ -11,51 +11,29 @@ from django.urls import reverse
 from tasks.models import User
 
 
-def authorization_port_for(email: str, *, request: HttpRequest) -> Optional[
-    bad[str]
-]:
+def open_authorization_port_for(email: str, *, request: HttpRequest) -> bool:
     token = token_urlsafe(64)
+    authorization_port_link = request.build_absolute_uri(
+        reverse(
+            "access:authorize",
+            args=[token]))
 
-    try:
-        send_mail(
-            "Authorization",
-            "Follow this link to authorize:\n{}\n\n{}".format(
-                request.build_absolute_uri(reverse(
-                    "access:authorize",
-                    args=[token],
-                )),
-                "Don't share this link with anyone.",
-            ),
-            None,
-            [email],
-        )
-    except SMTPException:
-        return bad('Make sure the email is correct or try again after a while.')
+    text_message = f"Follow this link to login: {authorization_port_link}"
+    html_message = render_to_string(
+        "mails/authorization.html",
+        dict(link=authorization_port_link))
 
-    caches['emails-to-confirm'].set(token, email)
+    send_result = send_mail(
+        subject="Authorization",
+        message=plain_text,
+        html_message=html_message,
+        recipient_list=[email],
+        fail_silently=True)
 
+    if send_result == 1:
+        caches['emails-to-confirm'].set(token, email)
 
-def recover_access_by_name(name: str, *, request: HttpRequest) -> Union[
-    ok[str],
-    bad[str],
-]:
-    user = User.objects.filter(name=request.POST['name']).first()
-
-    return (
-        bad("There is no user with this name.")
-        if user is None
-        else recover_access_by_email(user.gmail, request=request)
-    )
+    return send_result == 1
 
 
-def recover_access_by_email(email: str, *, request: HttpRequest) -> Union[
-    ok[str],
-    bad[str],
-]:
-    result = account_activation_by(email, request=request)
 
-    return (
-        ok("Follow the link in the email you just received to recover access.")
-        if not of(bad, result)
-        else result
-    )
