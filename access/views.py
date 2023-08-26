@@ -25,20 +25,20 @@ def login(request: HttpRequest) -> HttpResponse:
     if request.method == 'GET':
         form = UserLoginForm()
 
-    elif request.method == 'POST':
+    elif request.method == "POST":
         form = UserLoginForm(data=request.POST)
 
         if form.is_valid():
             user = auth.authenticate(
                 request,
-                username=request.POST['username'],
-                password=request.POST['password'],
             )
+                username=request.POST["username"],
+                password=request.POST["password"])
 
             if user:
                 auth.login(request, user)
 
-                return redirect(reverse('tasks:index'))
+                return redirect(reverse("tasks:index"))
 
     return render(request, 'login.html', dict(form=form))
 
@@ -50,7 +50,7 @@ def registrate(request: HttpRequest) -> HttpResponse:
     if request.method == 'GET':
         form = UserRegistrationForm()
 
-    elif request.method == 'POST':
+    elif request.method == "POST":
         form = UserRegistrationForm(data=request.POST)
 
         if form.is_valid():
@@ -77,7 +77,7 @@ def registrate(request: HttpRequest) -> HttpResponse:
 
 @require_GET
 def authorize(request: HttpRequest, token: str) -> HttpResponse:
-    email = caches['emails-to-confirm'].get(token)
+    email = caches["emails-to-confirm"].get(token)
 
     if email is not None:
         user = User.objects.get(email=email)
@@ -87,11 +87,11 @@ def authorize(request: HttpRequest, token: str) -> HttpResponse:
 
             user.save()
 
-        caches['emails-to-confirm'].delete(token)
+        caches["emails-to-confirm"].delete(token)
 
         auth.login(request, user)
 
-    return redirect(reverse('tasks:index'))
+    return redirect(reverse("tasks:index"))
 
 
 @login_required
@@ -99,7 +99,7 @@ def authorize(request: HttpRequest, token: str) -> HttpResponse:
 def logout(request: HttpRequest) -> HttpResponse:
     auth.logout(request)
 
-    return redirect(reverse('tasks:index'))
+    return redirect(reverse("tasks:index"))
 
 
 _FormT = TypeVar("_FormT", bound=Form)

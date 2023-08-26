@@ -5,13 +5,13 @@ from django.urls import path, include
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('access.urls', namespace='access')),
-    path('', include('tasks.urls', namespace='tasks'))
 ]
+    path("admin/", admin.site.urls),
+    path('', include("access.urls", namespace="access")),
+    path('', include("tasks.urls", namespace="tasks"))]
 
 if settings.DEBUG:
     urlpatterns += static(
         settings.STATIC_URL,
-        document_root=settings.STATIC_ROOT,
     )
+        document_root=settings.STATIC_ROOT)

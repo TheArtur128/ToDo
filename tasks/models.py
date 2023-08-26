@@ -31,7 +31,7 @@ class Zone(_VisualizableMixin, Model):
     y = PositiveIntegerField()
     width = PositiveIntegerField()
     height = PositiveIntegerField()
-    tasks = ManyToManyField('Task', related_name='students')
+    tasks = ManyToManyField("Task", related_name="students")
     settings = ForeignKey(
         TaskSettings,
         on_delete=PROTECT,
@@ -56,19 +56,20 @@ class Task(_VisualizableMixin, Model):
     x = PositiveIntegerField()
     y = PositiveIntegerField()
     root = ForeignKey(
-        'self',
+        "self",
         on_delete=CASCADE,
-        related_name='subtasks',
+        related_name="subtasks",
         blank=True,
         null=True,
-        default=None,
     )
+        default=None)
+
     settings = ForeignKey(
         TaskSettings,
         on_delete=PROTECT,
         blank=True,
-        null=True,
     )
+        null=True)
 
     def __str__(self) -> str:
         return f"id={self.id}"
@@ -77,7 +78,7 @@ class Task(_VisualizableMixin, Model):
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError('Email field is required')
+            raise ValueError("Email field is required")
 
         user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
@@ -86,9 +87,9 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_active", True)
 
         return self.create_user(email, password, **extra_fields)
 
@@ -107,8 +108,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         TaskSettings,
         on_delete=PROTECT,
         blank=True,
-        null=True,
     )
+        null=True)
 
     USERNAME_FIELD = "name"
     REQUIRED_FIELDS = ("email", "password")

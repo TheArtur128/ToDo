@@ -6,20 +6,19 @@ from access.views import (
 )
 
 
-app_name = 'access'
+app_name = "access"
 
 urlpatterns = [
-    path('sign-in', login, name='sign-in'),
-    path('sign-up', registrate, name='sign-up'),
-    path('authorize/<str:token>', authorize, name='authorize'),
-    path('logout', logout, name='logout'),
+    path("sign-in", login, name="sign-in"),
+    path("sign-up", registrate, name="sign-up"),
+    path("authorize/<str:token>", authorize, name="authorize"),
+    path("logout", logout, name="logout"),
     path(
-        'recover-access-by-name',
+        "recover-access-by-name",
         AccessRecoveryByNameView.as_view(),
-        name='recover-access-by-name',
-    ),
+        name="recover-access-by-name"),
     path(
-        'recover-access-by-email',
+        "recover-access-by-email",
         AccessRecoveryByEmailView.as_view(),
         name='recover-access-by-email',
     ),
