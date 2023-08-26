@@ -1,8 +1,8 @@
-{% extends 'form-base.html' %}
+{% extends 'base.html' %}
 
 {% block body %}
     <div class="front-axis">
-        <form class="recovery-form" action="{% block form-action %}{% endblock %}" method="POST">
+        <form class="block" id="recovery-form" action="{% block form-action %}{% endblock %}" method="POST">
             {% csrf_token %}
             <h2 id="recovery-form-title">Access recovery</h2>
             <div class="form-fileds">{% block form-fields %}{% endblock %}</div>

@@ -1,9 +1,9 @@
-{% extends 'form-base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block body %}
     <div class="front-axis">
-        <form class="registration-form" action="{% url 'access:sign-up' %}" method="POST">
+        <form class="block" id="registration-form" action="{% url 'access:sign-up' %}" method="POST">
             {% csrf_token %}
             <h1>Sign up</h1>
             <div class="form-fileds">

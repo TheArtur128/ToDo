@@ -60,3 +60,18 @@ div {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
+.block {
+  background-color: #2d2c2e;
+}
+
+.block {
+  position: relative;
+  text-align: center;
+  color: #fffff5;
+  padding-top: 2px;
+  border: solid 2px #7672f7;
+  width: 270px;
+  border-radius: 5px;
+  text-align: center;
+}
