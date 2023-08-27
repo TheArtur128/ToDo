@@ -1,8 +1,10 @@
 from django.contrib.auth.models import (
-    AbstractBaseUser, BaseUserManager, PermissionsMixin)
+    AbstractBaseUser, BaseUserManager, PermissionsMixin
+)
 from django.db.models import (
     Model, CASCADE, PositiveIntegerField, DateTimeField, BooleanField,
-    CharField, EmailField, ManyToManyField, ForeignKey, PROTECT)
+    CharField, EmailField, ManyToManyField, ForeignKey, PROTECT
+)
 
 
 __all__ = ("TaskSettings", "Zone", "Task", "User")
@@ -33,7 +35,8 @@ class Zone(_VisualizableMixin, Model):
         TaskSettings,
         on_delete=PROTECT,
         blank=True,
-        null=True)
+        null=True,
+    )
 
     def __str__(self) -> str:
         return (
@@ -56,13 +59,14 @@ class Task(_VisualizableMixin, Model):
         related_name="subtasks",
         blank=True,
         null=True,
-        default=None)
-
+        default=None
+    )
     settings = ForeignKey(
         TaskSettings,
         on_delete=PROTECT,
         blank=True,
-        null=True)
+        null=True,
+    )
 
     def __str__(self) -> str:
         return f"id={self.id}"

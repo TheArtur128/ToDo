@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from tasks.models import User, Task, Zone, TaskSettings
+from core.models import User, Task, Zone, TaskSettings
 
 
 admin.site.register(User)

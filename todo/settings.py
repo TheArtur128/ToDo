@@ -44,7 +44,7 @@ ROOT_URLCONF = "todo.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -109,11 +109,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-STATIC_ROOT = BASE_DIR / "collectedstatic"
-
-STATICFILES_DIRS = (
-    BASE_DIR / "static",
-)
+STATIC_ROOT = BASE_DIR / "static"
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
