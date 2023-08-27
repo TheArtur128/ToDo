@@ -26,7 +26,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "access",
-    "tasks"]
+    "tasks",
+]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -35,7 +36,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware"]
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
 
 ROOT_URLCONF = "todo.urls"
 
@@ -51,33 +53,43 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages"],
             "libraries": {
-                "common_tags": "templatetags.common_tags"}}}]
+                "common_tags": "core.templatetags.common_tags"}
+        }
+    }
+]
 
 WSGI_APPLICATION = "todo.wsgi.application"
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3"}}
+        "NAME": BASE_DIR / "db.sqlite3"
+    }
+}
 
 
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": (
             "django.contrib.auth.password_validation."
-            "UserAttributeSimilarityValidator")},
+            "UserAttributeSimilarityValidator")
+    },
     {
         "NAME": (
             "django.contrib.auth.password_validation."
-            "MinimumLengthValidator")},
+            "MinimumLengthValidator")
+    },
     {
         "NAME": (
             "django.contrib.auth.password_validation."
-            "CommonPasswordValidator")},
+            "CommonPasswordValidator")
+    },
     {
         "NAME": (
             "django.contrib.auth.password_validation."
-            "NumericPasswordValidator")}]
+            "NumericPasswordValidator")
+    }
+]
 
 AUTH_USER_MODEL = "tasks.User"
 
