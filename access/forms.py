@@ -16,15 +16,11 @@ class UserRegistrationForm(UserCreationForm):
         fields = ("name", "email", "password1", "password2")
 
 
-class ConfirmForm(ModelForm):
+class ConfirmForm(Form):
     password = CharField(
         min_length=settings.PORT_PASSWORD_LENGTH,
         max_length=settings.PORT_PASSWORD_LENGTH,
     )
-
-    class Meta:
-        model = User
-        fields = ("email", )
 
 
 class RestoringAccessByNameForm(UserCreationForm):
