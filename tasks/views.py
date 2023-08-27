@@ -7,4 +7,4 @@ from django.views.decorators.http import require_GET
 @login_required
 @require_GET
 def index(request: HttpRequest) -> HttpResponse:
-    return render(request, "index.html")
+    return render(request, "tasks/index.html")
