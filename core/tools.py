@@ -3,6 +3,9 @@ from typing import Iterable
 from act import ok, bad, temp, obj
 
 
+__all__ = ("status_of", "name_enum_of")
+
+
 def status_of(condition: bool) -> ok[None] | bad[None]:
     return ok(None) if condition else bad(None)
 
