@@ -13,7 +13,8 @@ from django.views.decorators.http import require_GET
 
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
-    RestoringAccessByEmailForm)
+    RestoringAccessByEmailForm
+)
 from access.services import open_authorization_port_for
 from access.tools import status_of
 from access.utils import for_anonymous
@@ -22,7 +23,8 @@ from tasks.models import User
 
 __all__ = (
     "login", "registrate", "authorize", "logout", "access_recovery_by_name",
-    "access_recovery_by_email")
+    "access_recovery_by_email"
+)
 
 
 def confirm(request: HttpRequest, subject: str) -> HttpResponse:
@@ -42,7 +44,8 @@ def confirm(request: HttpRequest, subject: str) -> HttpResponse:
             errors = ("", )
 
     context = dict(
-        subject=subject, form=form, errors=(*form.errors.values(), *errors))
+        subject=subject, form=form, errors=(*form.errors.values(), *errors)
+    )
 
     return render(request, "pages/confirmation.html", context)
 
@@ -88,7 +91,8 @@ class ViewWithForm(View):
     def post(self, request: HttpRequest) -> HttpResponse:
         form = self._form_type(data=request.POST)
         render_with = (
-            _.render(request, self._template_name, dict(form=form) | v))
+            _.render(request, self._template_name, dict(form=form) | v)
+        )
 
         if not form.is_valid():
             return render_with(dict(error_messages=tuple(form.errors.values())))
@@ -129,8 +133,9 @@ class LoginView(ViewWithForm):
 
         user = auth.authenticate(
             request,
-            username=request.POST["username"],
-            password=request.POST["password"])
+            username=request.POST["name"],
+            password=request.POST["password"],
+        )
 
         if user:
             auth.login(request, user)
@@ -151,16 +156,19 @@ class _RegistrationView(ViewWithForm):
         user_data = obj(
             name=request.POST["name"],
             email=request.POST["email"],
-            password=request.POST["password1"])
+            password=request.POST["password1"]
+        )
 
         is_port_open = open_registration_port_for(
-            user_data, request=request)
+            user_data, request=request
+        )
 
         if is_port_open:
             return redirect(reverse("access:registration_port"))
         else:
-            return bad([
-                "Make sure the email is correct or try again after a while"])
+            return bad(
+                ["Make sure the email is correct or try again after a while"]
+            )
 
 
 class _StaticPortOpeningView(ViewWithForm):
@@ -185,7 +193,8 @@ class _StaticPortOpeningView(ViewWithForm):
         message_subject = (
             "notification_messages"
             if of(ok, port_open_message)
-            else "error_messages")
+            else "error_messages"
+        )
 
         if of(ok, port_open_message):
             message_subject = "notification_messages"
@@ -197,17 +206,19 @@ class _StaticPortOpeningView(ViewWithForm):
         final_message = (
             default_message
             if port_open_message.value is None
-            else port_open_message.value)
+            else port_open_message.value
+        )
 
         return {message_subject: (final_message, )}
 
 
 class _AccessRecoveryView(_StaticPortOpeningView):
     _default_port_open_success_message = (
-        "Follow the link in the email you just received to recover access")
-
+        "Follow the link in the email you just received to recover access"
+    )
     _default_port_open_failure_message: str = (
-        "Make sure the email is correct or try again after a while")
+        "Make sure the email is correct or try again after a while"
+    )
 
 
 class _AccessRecoveryByNameView(_AccessRecoveryView):
@@ -225,7 +236,8 @@ class _AccessRecoveryByNameView(_AccessRecoveryView):
 
         return status_of(open_authorization_port_for(
             user.email,
-            request=request))
+            request=request)
+        )
 
 
 class _AccessRecoveryByEmailView(_AccessRecoveryView):
@@ -238,7 +250,8 @@ class _AccessRecoveryByEmailView(_AccessRecoveryView):
     ) -> ok[Optional[str]] | bad[Optional[str]]:
         return status_of(open_authorization_port_for(
             request.POST["email"],
-            request=request))
+            request=request,
+        ))
 
 
 registrate = for_anonymous(_RegistrationView.as_view())
