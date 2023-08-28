@@ -57,6 +57,14 @@ def confirm(request: HttpRequest, subject: str, token: str) -> HttpResponse:
     return render(request, "pages/confirmation.html", context)
 
 
+@ports.handle(ports.subjects.authorization, of=ports.id_groups.email)
+def authorization_port(request: HttpRequest, email: Email) -> HttpResponse:
+    user = User.objects.get(email=email)
+    auth.login(request, user)
+
+    return redirect(reverse("tasks:index"))
+
+
 @for_anonymous
 @require_GET
 def authorize(request: HttpRequest, token: str) -> HttpResponse:
@@ -135,21 +143,28 @@ class LoginView(ViewWithForm):
         form: UserLoginForm,
         render_with: Callable[Mapping, HttpResponse]
     ) -> HttpResponse | bad[Iterable[str]]:
-        is_port_open = open_port_of(subject, for_=form.POST["email"])
-
-        if is_port_open:
-            return redirect(confirmation_page_url_of(subject))
-
         user = auth.authenticate(
             request,
             username=request.POST["name"],
             password=request.POST["password"],
         )
 
-        if user:
-            auth.login(request, user)
+        if user is None:
+            return bad(
+                ["Make sure you entered your username and password correctly"]
+            )
 
-            return redirect(reverse("tasks:index"))
+        confirmation_page_url = by_email_open_port_of(
+            ports.subjects.authorization,
+            for_=contextual(ports.id_groups.email, form.POST["email"]),
+        )
+
+        if confirmation_page_url is None:
+            return bad(
+                ["Make sure the email is correct or try again after a while"]
+            )
+
+        return redirect(confirmation_page_url)
 
 
 class _RegistrationView(ViewWithForm):
