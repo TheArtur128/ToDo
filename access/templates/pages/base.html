@@ -1,0 +1,8 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block head %}
+    {{ block.super }}
+
+    <link rel="stylesheet" href={% static 'access/css/style.css' %}>
+{% endblock %}
