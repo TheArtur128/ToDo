@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.decorators.http import require_GET
 
+import ports
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm
@@ -27,21 +28,27 @@ __all__ = (
 )
 
 
-def confirm(request: HttpRequest, subject: str) -> HttpResponse:
+def confirm(request: HttpRequest, subject: str, token: str) -> HttpResponse:
     errors = tuple()
 
     if request.method == 'GET':
         form = ConfirmForm()
     else:
         form = ConfirmForm(data=form.POST)
+        id_group = request.POST.get("notified-via", None)
 
-        if form.is_valid():
-            is_port_open = open_port_of(subject, for_=form.POST["email"])
+        if id_group is not None and form.is_valid():
+            response = ports.activate(
+                subject,
+                token=token,
+                id_group=id_group,
+                password=form.POST["password"],
+            )
 
-            if is_port_open:
-                return redirect(confirmation_page_url_of(subject))
+            if response is not None:
+                return response
 
-            errors = ("", )
+            errors = ("Make sure you enter the correct password", )
 
     context = dict(
         subject=subject, form=form, errors=(*form.errors.values(), *errors)
