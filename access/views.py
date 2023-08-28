@@ -97,7 +97,7 @@ class ViewWithForm(View):
         if not form.is_valid():
             return render_with(dict(error_messages=tuple(form.errors.values())))
 
-        result = self._service(request=request, render_with=render_with)
+        result = self._service(request=request, form=form, render_with=render_with)
 
         if of(bad, result):
             return render_with(dict(error_messages=tuple(result.value)))
@@ -111,6 +111,7 @@ class ViewWithForm(View):
         self,
         *,
         request: HttpRequest,
+        form: _FormT,
         render_with: Callable[Mapping, HttpResponse]
     ) -> HttpResponse | bad[Iterable[str]]:
         raise NotImplementedError
@@ -124,6 +125,7 @@ class LoginView(ViewWithForm):
         self,
         *,
         request: HttpRequest,
+        form: UserLoginForm,
         render_with: Callable[Mapping, HttpResponse]
     ) -> HttpResponse | bad[Iterable[str]]:
         is_port_open = open_port_of(subject, for_=form.POST["email"])
@@ -151,7 +153,8 @@ class _RegistrationView(ViewWithForm):
         self,
         *,
         request: HttpRequest,
-        _: Any,
+        form: UserRegistrationForm,
+        render_with: Callable[Mapping, HttpResponse],
     ) -> HttpResponse:
         user_data = obj(
             name=request.POST["name"],
