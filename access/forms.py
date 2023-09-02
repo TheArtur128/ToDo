@@ -1,7 +1,8 @@
-from django.forms import ModelForm
+from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.forms import Form, CharField
 
-from tasks.models import User
+from core.models import User
 
 
 class UserLoginForm(AuthenticationForm):
