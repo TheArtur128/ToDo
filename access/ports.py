@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 from core.adapters import ChachRepository
-from core.types import URL, Email
+from core.types import URL, Email, Password
 from core.tools import name_enum_of
 
 
@@ -25,8 +25,6 @@ __all__ = (
 Subject: TypeAlias: TypeAlias = str
 ReadableSubject: TypeAlias = str
 AuthToken: TypeAlias = str
-Password = str
-PasswordHash: TypeAlias = str
 IdGroup: TypeAlias = str
 
 _SubjectHandlerOf = via_indexer(
