@@ -15,7 +15,9 @@ def for_anonymous(
     *,
     redirect_to: str = settings.URL_TO_REDIRECT_NON_ANONYMOUS,
 ) -> Callable[Concatenate[HttpRequest, Pm], HttpResponse]:
-    def wrapper(request: HttpRequest, *args: Pm.args, **kwargs: Pm.kwargs) -> HttpResponse:
+    def wrapper(
+        request: HttpRequest, *args: Pm.args, **kwargs: Pm.kwargs
+    ) -> HttpResponse:
         return (
             redirect(redirect_to)
             if request.user.is_authenticated
