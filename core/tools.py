@@ -1,13 +1,9 @@
 from typing import Iterable
 
-from act import ok, bad, temp, obj
+from act import temp, obj
 
 
-__all__ = ("status_of", "name_enum_of")
-
-
-def status_of(condition: bool) -> ok[None] | bad[None]:
-    return ok(None) if condition else bad(None)
+__all__ = ("name_enum_of", )
 
 
 def name_enum_of(annotated: temp(__annotations__=Iterable[str])) -> obj:
