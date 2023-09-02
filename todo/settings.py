@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    "core",
     "access",
     "tasks",
 ]
@@ -91,7 +92,7 @@ AUTH_PASSWORD_VALIDATORS = [
     }
 ]
 
-AUTH_USER_MODEL = "tasks.User"
+AUTH_USER_MODEL = "core.User"
 
 LOGIN_URL = "/sign-in"
 
@@ -132,8 +133,8 @@ PORT_ACTIVITY_MINUTES = 5
 PORTS_CACHE_LOCATION = "ports"
 
 PORTS = {
-    "registration": {"FOR_AUTHORIZED": False, "HANDLER": "access:registrate"},
-    "authorization": {"FOR_AUTHORIZED": False, "HANDLER": "access:authorize"},
+    "registration": {"FOR_AUTHORIZED": False},
+    "authorization": {"FOR_AUTHORIZED": False},
 }
 
 
