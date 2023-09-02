@@ -17,9 +17,8 @@ from core.tools import name_enum_of
 
 
 __all__ = (
-    "Subject", "ReadableSubject", "AuthToken", "Password", "PasswordHash",
-    "IdGroup", "id_groups", "subjects", "handler_of", "handle", "activate"
-    "by_email_open_port_of"
+    "Subject", "ReadableSubject", "AuthToken", "IdGroup", "id_groups",
+    "subjects", "handler_of", "handle", "activate", "open_email_port_of"
 )
 
 Subject: TypeAlias = str
@@ -83,9 +82,14 @@ def handle(
 
 
 def activate(
-    subject: Subject, *, token: AuthToken, id_group: IdGroup, password: Password
+    subject: Subject,
+    *,
+    token: AuthToken,
+    id_group: IdGroup,
+    password: Password,
+    request: HttpRequest,
 ) -> Optional[HttpRequest]:
-    password_hash = ports._password_hashes_of(subject)[token]
+    password_hash = _password_hashes_of(subject)[token]
     is_password_correct = (
         password_hash is not None
         and check_password(password, password_hash)
@@ -94,9 +98,17 @@ def activate(
     if not is_password_correct:
         return None
 
-    id_ = id_that(id_group)[token]
+    id_ = _ids_that(id_group)[token]
 
-    return ports.handler_of(subject)(request, id_)
+    return handler_of(subject)(request, id_, token)
+
+
+def open_email_port_of(subject: Subject, *, for_: Email) -> Optional[URL]:
+    return _open_port_of(
+        subject,
+        for_=contextual(id_groups.email, for_),
+        notify=_send_confirmation_mail_to,
+    )
 
 
 def _open_port_of(
@@ -147,14 +159,11 @@ def _send_confirmation_mail_to(
     )
 
 
-by_email_open_port_of = partial(open_port_of, notify=_send_confirmation_mail_to)
-
-
-_password_hashes_of = will(_ChachRepository)(
+_password_hashes_of = will(ChachRepository)(
     salt="passwordhash", location=settings.PORTS_CACHE_LOCATION
 )
 
-_ids_that = will(_ChachRepository)(
+_ids_that = will(ChachRepository)(
     salt='ids', location=settings.PORTS_CACHE_LOCATION
 )
 
