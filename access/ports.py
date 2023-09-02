@@ -22,7 +22,7 @@ __all__ = (
     "by_email_open_port_of"
 )
 
-Subject: TypeAlias: TypeAlias = str
+Subject: TypeAlias = str
 ReadableSubject: TypeAlias = str
 AuthToken: TypeAlias = str
 IdGroup: TypeAlias = str
