@@ -24,8 +24,8 @@ class ChachRepository(Generic[K, V]):
     def __setitem__(self, key: K, value: V) -> None:
         caches[self.__location].set(self.__key_for(key), value)
 
-    def __delitem__(self, key: key) -> bool:
+    def __delitem__(self, key: K) -> bool:
         return caches[self.__location].delete(key)
 
-    def __key_for(self, *, key: key) -> str:
+    def __key_for(self, *, key: K) -> str:
         return f"{self.__salt}:{self.__subject}:{key}"
