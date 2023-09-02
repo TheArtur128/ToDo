@@ -1,7 +1,6 @@
-from typing import Type, TypeVar, Tuple, Optional
+from typing import Type, TypeVar, Tuple, Optional, Callable, Mapping, Iterable
 
 from act import of, bad, ok, v, _
-from django.core.cache import caches
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.forms import Form
@@ -11,19 +10,19 @@ from django.urls import reverse
 from django.views import View
 from django.views.decorators.http import require_GET
 
-import ports
+from core.models import User
+from core.types import Email, URL
+from access import ports
+from access import services
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
-    RestoringAccessByEmailForm
+    RestoringAccessByEmailForm, ConfirmForm
 )
-from access.services import open_authorization_port_for
-from access.tools import status_of
 from access.utils import for_anonymous
-from tasks.models import User
 
 
 __all__ = (
-    "login", "registrate", "authorize", "logout", "access_recovery_by_name",
+    "login", "registrate", "logout", "access_recovery_by_name",
     "access_recovery_by_email"
 )
 
@@ -43,6 +42,7 @@ def confirm(request: HttpRequest, subject: str, token: str) -> HttpResponse:
                 token=token,
                 id_group=id_group,
                 password=form.POST["password"],
+                request=request,
             )
 
             if response is not None:
@@ -57,30 +57,10 @@ def confirm(request: HttpRequest, subject: str, token: str) -> HttpResponse:
     return render(request, "pages/confirmation.html", context)
 
 
-@ports.handle(ports.subjects.authorization, of=ports.id_groups.email)
+@ports.handle(ports.subjects.authorization, using=ports.id_groups.email)
 def authorization_port(request: HttpRequest, email: Email) -> HttpResponse:
     user = User.objects.get(email=email)
     auth.login(request, user)
-
-    return redirect(reverse("tasks:index"))
-
-
-@for_anonymous
-@require_GET
-def authorize(request: HttpRequest, token: str) -> HttpResponse:
-    email = port_email_of("authorization").get_of(token)
-
-    if email is not None:
-        user = User.objects.get(email=email)
-
-        if not user.is_active:
-            user.is_active = True
-
-            user.save()
-
-        delete_of(token, "authorization")
-
-        auth.login(request, user)
 
     return redirect(reverse("tasks:index"))
 
@@ -101,7 +81,9 @@ class ViewWithForm(View):
     template_name = property(v._template_name)
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        return render(request, self._template_name, dict(form=self._form_type()))
+        return render(
+            request, self._template_name, dict(form=self._form_type())
+        )
 
     def post(self, request: HttpRequest) -> HttpResponse:
         form = self._form_type(data=request.POST)
@@ -112,7 +94,9 @@ class ViewWithForm(View):
         if not form.is_valid():
             return render_with(dict(error_messages=tuple(form.errors.values())))
 
-        result = self._service(request=request, form=form, render_with=render_with)
+        result = self._service(
+            request=request, form=form, render_with=render_with
+        )
 
         if of(bad, result):
             return render_with(dict(error_messages=tuple(result.value)))
@@ -132,71 +116,11 @@ class ViewWithForm(View):
         raise NotImplementedError
 
 
-class LoginView(ViewWithForm):
-    _form_type = UserLoginForm
-    _template_name = "pages/login.html"
-
-    def _service(
-        self,
-        *,
-        request: HttpRequest,
-        form: UserLoginForm,
-        render_with: Callable[Mapping, HttpResponse]
-    ) -> HttpResponse | bad[Iterable[str]]:
-        user = auth.authenticate(
-            request,
-            username=request.POST["name"],
-            password=request.POST["password"],
-        )
-
-        if user is None:
-            return bad(
-                ["Make sure you entered your username and password correctly"]
-            )
-
-        confirmation_page_url = by_email_open_port_of(
-            ports.subjects.authorization,
-            for_=contextual(ports.id_groups.email, form.POST["email"]),
-        )
-
-        if confirmation_page_url is None:
-            return bad(
-                ["Make sure the email is correct or try again after a while"]
-            )
-
-        return redirect(confirmation_page_url)
-
-
-class _RegistrationView(ViewWithForm):
-    _form_type: Type[_FormT] = UserRegistrationForm
-    _template_name: str = "pages/registration.html"
-
-    def _service(
-        self,
-        *,
-        request: HttpRequest,
-        form: UserRegistrationForm,
-        render_with: Callable[Mapping, HttpResponse],
-    ) -> HttpResponse:
-        user_data = obj(
-            name=request.POST["name"],
-            email=request.POST["email"],
-            password=request.POST["password1"]
-        )
-
-        is_port_open = open_registration_port_for(
-            user_data, request=request
-        )
-
-        if is_port_open:
-            return redirect(reverse("access:registration_port"))
-        else:
-            return bad(
-                ["Make sure the email is correct or try again after a while"]
-            )
-
-
 class _StaticPortOpeningView(ViewWithForm):
+    _default_port_open_failure_message: str = (
+        "Make sure you entered your account information correctly"
+    )
+
     def _service(
         self,
         *,
@@ -210,6 +134,10 @@ class _StaticPortOpeningView(ViewWithForm):
         request: HttpRequest,
     ) -> ok[Optional[str]] | bad[Optional[str]]:
         raise NotImplementedError
+
+    @staticmethod
+    def _redirect_to(url: URL) -> HttpResponse | bad[None]:
+        return bad(None) if url is None else redirect(url)
 
     def __context_about(
         self,
@@ -237,12 +165,44 @@ class _StaticPortOpeningView(ViewWithForm):
         return {message_subject: (final_message, )}
 
 
+class LoginView(_StaticPortOpeningView):
+    _form_type = UserLoginForm
+    _template_name = "pages/login.html"
+
+    def _open_port(self, request: HttpRequest) -> HttpResponse | bad[None]:
+        user = auth.authenticate(
+            request,
+            username=request.POST["name"],
+            password=request.POST["password"],
+        )
+
+        if user is None:
+            return bad(None)
+
+        confirmation_page_url = ports.open_email_port_of(
+            ports.subjects.authorization, for_=request.POST["email"],
+        )
+
+        return self._redirect_to(confirmation_page_url)
+
+
+class _RegistrationView(_StaticPortOpeningView):
+    _form_type: Type[_FormT] = UserRegistrationForm
+    _template_name: str = "pages/registration.html"
+
+    def _open_port(self, request: HttpRequest) -> HttpResponse | bad[None]:
+        confirmation_page_url = services.open_registration_port(
+            name=request.POST["name"],
+            email=request.POST["email"],
+            password=request.POST["password1"],
+        )
+
+        return self._redirect_to(confirmation_page_url)
+
+
 class _AccessRecoveryView(_StaticPortOpeningView):
     _default_port_open_success_message = (
         "Follow the link in the email you just received to recover access"
-    )
-    _default_port_open_failure_message: str = (
-        "Make sure the email is correct or try again after a while"
     )
 
 
@@ -250,19 +210,17 @@ class _AccessRecoveryByNameView(_AccessRecoveryView):
     _form_type = RestoringAccessByNameForm
     _template_name = "pages/access-recovery-by-name.html"
 
-    def _open_port(
-        self,
-        request: HttpRequest,
-    ) -> ok[Optional[str]] | bad[Optional[str]]:
+    def _open_port(self, request: HttpRequest) -> HttpResponse | bad[None]:
         user = User.objects.filter(name=request.POST["name"]).first()
 
         if user is None:
-            return bad("There is no user with this name")
+            return bad(None)
 
-        return status_of(open_authorization_port_for(
-            user.email,
-            request=request)
+        confirmation_page_url = ports.open_email_port_of(
+            ports.subjects.access_recovery.via_name, for_=user.email
         )
+
+        return self._redirect_to(confirmation_page_url)
 
 
 class _AccessRecoveryByEmailView(_AccessRecoveryView):
@@ -273,10 +231,12 @@ class _AccessRecoveryByEmailView(_AccessRecoveryView):
         self,
         request: HttpRequest,
     ) -> ok[Optional[str]] | bad[Optional[str]]:
-        return status_of(open_authorization_port_for(
-            request.POST["email"],
-            request=request,
-        ))
+        confirmation_page_url = ports.open_email_port_of(
+            ports.subjects.access_recovery.via_email,
+            for_=request.POST["email"],
+        )
+
+        return self._redirect_to(confirmation_page_url)
 
 
 registrate = for_anonymous(_RegistrationView.as_view())
