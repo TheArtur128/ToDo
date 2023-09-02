@@ -1,37 +1,17 @@
-{% extends 'pages/base.html' %}
+{% extends 'pages/form.html' %}
 
-{% block body %}
-    <div class="front-axis">
-        <form class="block" id="recovery-form" action="{% block form-action %}{% endblock %}" method="POST">
-            {% csrf_token %}
-            <h2 id="recovery-form-title">Access recovery</h2>
-            <div class="form-fileds">
-                {% block form-fields %}{% endblock %}
-                <p>
-                    <label for="{{ form.password1.id_for_label }}">New password</label>
-                    {{ form.password1 }}
-                </p>
-                <p>
-                    <label for="{{ form.password2.id_for_label }}">Repeat password</label>
-                    {{ form.password2 }}
-                </p>
-            </div>
-            <div class="push" id="recovery-form-push-button"><button type="submit" class="push-data">Push</button></div>
-            {% block form-changing %}{% endblock %}
-        </form>
-        {% if error_messages %}
-            <div class="form-errors">
-                {% for error_message in error_messages %}
-                    <p>{{ error_message }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% if notification_messages %}
-            <div class="form-notification">
-                {% for notification_message in notification_messages %}
-                    <p>{{ notification_message }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-    </div>
+
+{% block attrs %}id="recovery-form"{% endblock %}
+
+{% block title %}<h2 id="recovery-form-title">Access recovery</h2>{% endblock %}
+
+{% block fileds %}
+    <p>
+        <label for="{{ form.password1.id_for_label }}">New password</label>
+        {{ form.password1 }}
+    </p>
+    <p>
+        <label for="{{ form.password2.id_for_label }}">Repeat password</label>
+        {{ form.password2 }}
+    </p>
 {% endblock %}

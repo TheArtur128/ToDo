@@ -1,27 +1,22 @@
-{% extends 'pages/base.html' %}
-{% load static %}
+{% extends 'pages/form.html' %}
 
-{% block body %}
-    <div class="front-axis">
-        <form class="block" id="login-form" action="{% url 'access:sign-in' %}" method="POST">
-            {% csrf_token %}
-            <h1>Sign in</h1>
-            <div class="form-fileds">
-                <p>
-                    <label for="{{ form.username.id_for_label }}">Name</label>
-                    {{ form.username }}
-                </p>
-                <p>
-                    <label for="{{ form.password.id_for_label }}">Password</label>
-                    {{ form.password }}
-                </p>
-            </div>
-            <div class="push"><button type="submit" class="push-data">Push</button></div>
-            <a class="to-regain-access" href="{% url 'access:recover-access-by-name' %}">Forgot</a>
-            <a class="to-change-form" href="{% url 'access:sign-up' %}">Sign up</a>
-        </form>
-        {% if form.non_field_errors %}
-            <div class="form-errors">{{ form.non_field_errors }}</div>
-        {% endif %}
-    </div>
+
+{% block attrs %}id="login-form" action="{% url 'access:sign-in' %}"{% endblock %}
+
+{% block title %}<h1>Sign in</h1>{% endblock %}
+
+{% block fileds %}
+    <p>
+        <label for="{{ form.username.id_for_label }}">Name</label>
+        {{ form.username }}
+    </p>
+    <p>
+        <label for="{{ form.password.id_for_label }}">Password</label>
+        {{ form.password }}
+    </p>
+{% endblock %}
+
+{% block extension %}
+    <a class="to-regain-access" href="{% url 'access:recover-access-by-name' %}">Forgot</a>
+    <a class="to-change-form" href="{% url 'access:sign-up' %}">Sign up</a>
 {% endblock %}
