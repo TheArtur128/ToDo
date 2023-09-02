@@ -1,13 +1,13 @@
-from enum import Enum
+from functools import wraps
 from secrets import token_urlsafe
+from typing import TypeAlias, Callable, Any, Optional
 from urllib.parse import urljoin
 
-from act import via_indexer
-from django.core.cache import caches
+from act import via_indexer, contextual, will, I
 from django.core.mail import send_mail
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
-from django.http import HttpRequest
+from django.contrib.auth.hashers import make_password, check_password
+from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 
@@ -56,23 +56,30 @@ def handler_of(subject: Subject, *, for_: IdGroup) -> _SubjectHandlerOf[Any]:
     return settings.PORTS[subject]["HANDLERS"][for_]
 
 
-@partially
 def handle(
-    subject: Subject, of: IdGroup, action: _SubjectHandlerOf[I]
-) -> _SubjectHandlerOf[I]:
-    id_group = of
+    subject: Subject, using: IdGroup
+) -> Callable[_SubjectHandlerOf[I], _SubjectHandlerOf[I]]:
+    def handler_of(action: _SubjectHandlerOf[I]) -> _SubjectHandlerOf[I]:
+        id_group = using
 
-    @wraps(action)
-    def subject_handler(request: HttpRequest, id_: I) -> HttpRequest:
-        result = action(request, id_)
+        @wraps(action)
+        def subject_handler(
+            request: HttpRequest, id_: I, token: AuthToken
+        ) -> HttpRequest:
+            result = action(request, id_)
 
-        _close_port_of(subject, token=token, id_group=id_group)
+            _close_port_of(subject, token=token, id_group=id_group)
 
-        return result
+            return result
 
-    settings.PORTS[subject]["HANDLERS"][id_group] = subject_handler
+        if "HANDLERS" not in settings.PORTS[subject].keys():
+            settings.PORTS[subject]["HANDLERS"] = dict()
 
-    return action
+        settings.PORTS[subject]["HANDLERS"][id_group] = subject_handler
+
+        return action
+
+    return handler_of
 
 
 def activate(
