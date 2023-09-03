@@ -164,15 +164,6 @@ CACHES = {
             'db': '2'
         }
     },
-    "emails-to-confirm": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379",
-        "TIMEOUT": 60 * PORT_ACTIVITY_MINUTES,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            'db': '3',
-        }
-    },
 }
 
 
