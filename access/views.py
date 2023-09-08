@@ -125,7 +125,7 @@ class ViewWithForm(View):
         request: HttpRequest,
         form: _FormT,
         render_with: Callable[Mapping, HttpResponse]
-    ) -> HttpResponse | bad[Iterable[str]]:
+    ) -> HttpResponse | bad[Iterable[ErrorMessage]]:
         raise NotImplementedError
 
 
