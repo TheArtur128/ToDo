@@ -37,18 +37,18 @@ _AuthTokenSenderOf_ = via_indexer(
 
 @name_enum_of
 class id_groups:
-    email: str
+    email: IdGroup
 
 
 @name_enum_of
 class subjects:
-    authorization: str
-    registration: str
+    authorization: Subject
+    registration: Subject
 
     @name_enum_of
     class access_recovery:
-        via_email: str
-        via_name: str
+        via_email: Subject
+        via_name: Subject
 
 
 def handler_of(subject: Subject, *, for_: IdGroup) -> _SubjectHandlerOf[Any]:
