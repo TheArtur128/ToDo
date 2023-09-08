@@ -27,28 +27,35 @@ __all__ = (
 )
 
 
-def confirm(request: HttpRequest, subject: str, token: str) -> HttpResponse:
+def confirm(
+    request: HttpRequest,
+    subject: confirmation.Subject,
+    id_group: confirmation.IdGroup,
+    token: confirmation.AuthToken,
+) -> HttpResponse:
     errors = tuple()
 
     if request.method == 'GET':
         form = ConfirmForm()
     else:
         form = ConfirmForm(data=form.POST)
-        id_group = request.POST.get("notified-via", None)
 
-        if id_group is not None and form.is_valid():
-            response = confirmation.activate(
-                subject,
-                token=token,
-                id_group=id_group,
-                password=form.POST["password"],
-                request=request,
+        if form.is_valid():
+            port_access = confirmation.PortAccess(
+                confirmation.PortID(subject=subject, id_group=id_group),
+                token,
+                password,
             )
+
+            response = confirmation.activate_by(port_access, request)
 
             if response is not None:
                 return response
 
-            errors = ("Make sure you enter the correct password", )
+            errors = [
+                "You entered the wrong password"
+                f" or the {subject} time has expired"
+            ]
 
     context = dict(
         subject=subject, form=form, errors=(*form.errors.values(), *errors)
@@ -57,8 +64,14 @@ def confirm(request: HttpRequest, subject: str, token: str) -> HttpResponse:
     return render(request, "pages/confirmation.html", context)
 
 
-@confirmation.handle(confirmation.subjects.authorization, using=confirmation.id_groups.email)
-def authorization_port(request: HttpRequest, email: Email) -> HttpResponse:
+@confirmation.handle(confirmation.PortID(
+    confirmation.subjects.authorization,
+    confirmation.id_groups.email,
+))
+def authorization_confirmation(
+    request: HttpRequest,
+    email: Email,
+) -> HttpResponse:
     user = User.objects.get(email=email)
     auth.login(request, user)
 
