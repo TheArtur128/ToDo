@@ -22,7 +22,7 @@ from access.utils import for_anonymous
 
 
 __all__ = (
-    "login", "registrate", "logout", "access_recovery_by_name",
+    "confirm", "login", "registrate", "logout", "access_recovery_by_name",
     "access_recovery_by_email"
 )
 
