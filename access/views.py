@@ -129,60 +129,39 @@ class ViewWithForm(View):
         raise NotImplementedError
 
 
-class _StaticPortOpeningView(ViewWithForm):
-    _default_port_open_failure_message: str = (
-        "Make sure you entered your account information correctly"
+class _ConfirmationOpeningView(ViewWithForm):
+    _default_confirmation_open_failure_message: ErrorMessage = (
+        "Make sure you have entered your information correctly"
     )
+
+    def _open_port(
+        self,
+        request: HttpRequest,
+    ) -> ok[URL] | bad[Optional[ErrorMessage]]:
+        raise NotImplementedError
 
     def _service(
         self,
         *,
         request: HttpRequest,
-        render_with: Callable[Mapping, HttpResponse]
+        render_with: Callable[Mapping, HttpResponse],
     ) -> HttpResponse:
-        return render_with(self.__context_about(self._open_port(request)))
+        result = self._open_port(request)
 
-    def _open_port(
-        self,
-        request: HttpRequest,
-    ) -> ok[Optional[str]] | bad[Optional[str]]:
-        raise NotImplementedError
+        if of(ok, result):
+            return redirect(result.value)
 
-    @staticmethod
-    def _redirect_to(url: URL) -> HttpResponse | bad[None]:
-        return bad(None) if url is None else redirect(url)
+        default_message = self._default_confirmation_open_failure_message
 
-    def __context_about(
-        self,
-        port_open_message: ok[Optional[str]] | bad[Optional[str]]
-    ) -> dict[str,  Tuple[str]]:
-        message_subject = (
-            "notification_messages"
-            if of(ok, port_open_message)
-            else "error_messages"
-        )
-
-        if of(ok, port_open_message):
-            message_subject = "notification_messages"
-            default_message = self._default_port_open_success_message
-        else:
-            message_subject = "error_messages"
-            default_message = self._default_port_open_failure_message
-
-        final_message = (
-            default_message
-            if port_open_message.value is None
-            else port_open_message.value
-        )
-
-        return {message_subject: (final_message, )}
+        return saving_context(on(None, default_message))(result)
 
 
-class LoginView(_StaticPortOpeningView):
+class LoginView(_ConfirmationOpeningView):
     _form_type = UserLoginForm
     _template_name = "pages/login.html"
 
-    def _open_port(self, request: HttpRequest) -> HttpResponse | bad[None]:
+    @staticmethod
+    def _open_port(request: HttpRequest) -> URL | bad[Optional[ErrorMessage]]:
         user = auth.authenticate(
             request,
             username=request.POST["name"],
@@ -193,63 +172,69 @@ class LoginView(_StaticPortOpeningView):
             return bad(None)
 
         confirmation_page_url = confirmation.open_email_port_of(
-            confirmation.subjects.authorization, for_=request.POST["email"],
+            confirmation.subjects.authorization,
+            for_=request.POST["email"],
         )
 
-        return self._redirect_to(confirmation_page_url)
+        return bad_or(confirmation_page_url)
 
 
-class _RegistrationView(_StaticPortOpeningView):
-    _form_type: Type[_FormT] = UserRegistrationForm
-    _template_name: str = "pages/registration.html"
+class _RegistrationView(_ConfirmationOpeningView):
+    _form_type = UserRegistrationForm
+    _template_name = "pages/registration.html"
 
-    def _open_port(self, request: HttpRequest) -> HttpResponse | bad[None]:
+    @staticmethod
+    def _open_port(request: HttpRequest) -> URL | bad[Optional[ErrorMessage]]:
+        # Not implemented
         confirmation_page_url = services.open_registration_port(
             name=request.POST["name"],
             email=request.POST["email"],
             password=request.POST["password1"],
         )
 
-        return self._redirect_to(confirmation_page_url)
+        return bad_or(confirmation_page_url)
 
 
-class _AccessRecoveryView(_StaticPortOpeningView):
-    _default_port_open_success_message = (
-        "Follow the link in the email you just received to recover access"
-    )
-
-
-class _AccessRecoveryByNameView(_AccessRecoveryView):
+class _EmailAccessRecoveryView(_ConfirmationOpeningView):
     _form_type = RestoringAccessByNameForm
     _template_name = "pages/access-recovery-by-name.html"
 
-    def _open_port(self, request: HttpRequest) -> HttpResponse | bad[None]:
-        user = User.objects.filter(name=request.POST["name"]).first()
+    def _user_of(self, request: HttpRequest) -> Optional[User]:
+        raise NotImplementedError
+
+    def _open_port(
+        self,
+        request: HttpRequest,
+    ) -> URL | bad[Optional[ErrorMessage]]:
+        user = self._user_of(request)
 
         if user is None:
             return bad(None)
 
         confirmation_page_url = confirmation.open_email_port_of(
-            confirmation.subjects.access_recovery.via_name, for_=user.email
+            confirmation.subjects.access_recovery.via_name,
+            for_=user.email,
         )
 
-        return self._redirect_to(confirmation_page_url)
+        return bad_or(confirmation_page_url)
 
 
-class _AccessRecoveryByEmailView(_AccessRecoveryView):
+class _AccessRecoveryByNameView(_ConfirmationOpeningView):
+    _form_type = RestoringAccessByNameForm
+    _template_name = "pages/access-recovery-by-name.html"
+
+    @staticmethod
+    def _user_of(request: HttpRequest) -> Optional[User]:
+        return User.objects.filter(name=request.POST["name"]).first()
+
+
+class _AccessRecoveryByEmailView(_ConfirmationOpeningView):
     _form_type = RestoringAccessByEmailForm
     _template_name = "pages/access-recovery-by-email.html"
 
-    def _open_port(
-        self,
-        request: HttpRequest,
-    ) -> ok[Optional[str]] | bad[Optional[str]]:
-        confirmation_page_url = confirmation.open_email_port_of(
-            confirmation.subjects.access_recovery.via_email,
-            for_=request.POST["email"],
-        )
-
-        return self._redirect_to(confirmation_page_url)
+    @staticmethod
+    def _user_of(request: HttpRequest) -> Optional[User]:
+        return User.objects.filter(email=request.POST["email"]).first()
 
 
 registrate = for_anonymous(_RegistrationView.as_view())
