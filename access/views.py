@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET
 
 from core.models import User
 from core.types import Email, URL
-from access import ports
+from access import confirmation
 from access import services
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
@@ -37,7 +37,7 @@ def confirm(request: HttpRequest, subject: str, token: str) -> HttpResponse:
         id_group = request.POST.get("notified-via", None)
 
         if id_group is not None and form.is_valid():
-            response = ports.activate(
+            response = confirmation.activate(
                 subject,
                 token=token,
                 id_group=id_group,
@@ -57,7 +57,7 @@ def confirm(request: HttpRequest, subject: str, token: str) -> HttpResponse:
     return render(request, "pages/confirmation.html", context)
 
 
-@ports.handle(ports.subjects.authorization, using=ports.id_groups.email)
+@confirmation.handle(confirmation.subjects.authorization, using=confirmation.id_groups.email)
 def authorization_port(request: HttpRequest, email: Email) -> HttpResponse:
     user = User.objects.get(email=email)
     auth.login(request, user)
@@ -179,8 +179,8 @@ class LoginView(_StaticPortOpeningView):
         if user is None:
             return bad(None)
 
-        confirmation_page_url = ports.open_email_port_of(
-            ports.subjects.authorization, for_=request.POST["email"],
+        confirmation_page_url = confirmation.open_email_port_of(
+            confirmation.subjects.authorization, for_=request.POST["email"],
         )
 
         return self._redirect_to(confirmation_page_url)
@@ -216,8 +216,8 @@ class _AccessRecoveryByNameView(_AccessRecoveryView):
         if user is None:
             return bad(None)
 
-        confirmation_page_url = ports.open_email_port_of(
-            ports.subjects.access_recovery.via_name, for_=user.email
+        confirmation_page_url = confirmation.open_email_port_of(
+            confirmation.subjects.access_recovery.via_name, for_=user.email
         )
 
         return self._redirect_to(confirmation_page_url)
@@ -231,8 +231,8 @@ class _AccessRecoveryByEmailView(_AccessRecoveryView):
         self,
         request: HttpRequest,
     ) -> ok[Optional[str]] | bad[Optional[str]]:
-        confirmation_page_url = ports.open_email_port_of(
-            ports.subjects.access_recovery.via_email,
+        confirmation_page_url = confirmation.open_email_port_of(
+            confirmation.subjects.access_recovery.via_email,
             for_=request.POST["email"],
         )
 
