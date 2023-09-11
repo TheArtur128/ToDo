@@ -52,6 +52,7 @@ class PortAccessView(Generic[I, A]):
 _ClosableHandler: TypeAlias = Callable[Concatenate[AuthToken, Pm], R]
 
 
+@partially
 def closing(
     repository: HandlerRepositoryOf[Callable[Pm, R]],
     close_port_of: Callable[[PortID, AuthToken], None],
