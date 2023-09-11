@@ -114,7 +114,7 @@ def activate_by(
     hash_equals: Callable[[Password, PasswordHash], bool],
     id_of: Callable[[IdGroup, AuthToken], I],
     handler_of: Callable[PortID, Callable[I, R]],
-) -> Optional[HttpRequest]:
+) -> Optional[R]:
     password_hash = password_hash_of(access.port_id.subject, access.token)
     is_password_correct = (
         password_hash is not None
