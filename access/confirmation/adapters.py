@@ -1,3 +1,16 @@
+from urllib.parse import urljoin
+
+from act import will
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.urls import reverse
+
+from core.adapters import ChachRepository
+from core.types import URL, Email, Password
+from access.confirmation.core import PortID, AuthToken, Subject
+
+
 def close_port_of(identifier: PortID, token: AuthToken) -> None:
     del password_hashes_of(identifier.subject)[token]
     del ids_that(identifier.id_group)[token]
