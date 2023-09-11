@@ -1,6 +1,6 @@
 def close_port_of(identifier: PortID, token: AuthToken) -> None:
-    del _password_hashes_of(identifier.subject)[token]
-    del _ids_that(identifier.id_group)[token]
+    del password_hashes_of(identifier.subject)[token]
+    del ids_that(identifier.id_group)[token]
 
 
 def send_confirmation_mail_to(
