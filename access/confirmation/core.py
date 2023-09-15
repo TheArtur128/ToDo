@@ -56,37 +56,6 @@ class PortAccessView(Generic[I, A]):
     password: Password
 
 
-_ClosableHandler: TypeAlias = Callable[Concatenate[AuthToken, Pm], R]
-
-
-@partially
-def closing(
-    repository: HandlerRepositoryOf[Callable[Pm, R]],
-    close_port_of: Callable[[PortID, AuthToken], None],
-) -> HandlerRepositoryOf[_ClosableHandler]:
-    def registrate_for(
-        port_id: PortID,
-    ) -> Callable[Callable[Pm, R], _ClosableHandler]:
-        def decorator(handle: Callable[Pm, R]) -> _ClosableHandler:
-            def decorated_handler(
-                token: AuthToken,
-                *args: Pm.args,
-                **kwargs: Pm.kwargs,
-            ) -> R:
-                result = handle(*args, **kwargs)
-                close_port_of(port_id, token)
-
-                return result
-
-            repository.registrate_for(decorated_handler)
-
-            return decorated_handler
-
-        return decorator
-
-    return obj(get_of=repository.get_of, registrate_for=registrate_for)
-
-
 def open_port_of(
     subject: Subject,
     *,
