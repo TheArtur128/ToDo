@@ -12,7 +12,9 @@ from access.confirmation import adapters
 from access.confirmation import core
 
 
-HANDLER_REPOSITORY = ConfigHandlerRepository(django_config_repository)
+HANDLER_REPOSITORY = core.ConfigHandlerRepository(
+    adapters.django_config_repository
+)
 
 
 def activate_by(
