@@ -1,32 +1,31 @@
-from urllib.parse import urljoin
 from typing import Optional
+from secrets import token_urlsafe
 
-from act import contextual, will
-from django.core.mail import send_mail
+from act import _, a, b, then, will, rwill, partial, to
 from django.conf import settings
-from django.template.loader import render_to_string
-from django.urls import reverse
+from django.contrib.auth.hashers import make_password, check_password
+from django.http import HttpRequest
 
-from core.adapters import ChachRepository
-from core.types import Email, URL, Password
-from access.confirmation.adapters import _send_confirmation_mail_to
-from access.confirmation.core import PortID, AuthToken, Subject
+from core.tools import name_enum_of, for_effect
+from core.types import URL
+from access.confirmation import adapters
+from access.confirmation import core
 
 
 HANDLER_REPOSITORY = ConfigHandlerRepository(django_config_repository)
 
 
 def activate_by(
-    access: PortAccess,
+    access: core.PortAccess,
     request: HttpRequest,
 ) -> Optional[HttpRequest]:
-    return activate_by(
+    return core.activate_by(
         access,
-        password_hash_of=_._password_hashes_of(a)[b],
+        password_hash_of=_.adapters.password_hashes_of(a)[b],
         hash_equals=check_password,
-        id_of=_._ids_that(a)[b],
+        id_of=_.adapters._ids_that(a)[b],
         payload_of=HANDLER_REPOSITORY.get_of |then>> rwill(partial)(request),
-        port_closing_by=will(for_effect)(close_port_of),
+        port_closing_by=will(for_effect)(adapters.close_port_of),
     )
 
 
@@ -40,14 +39,14 @@ def open_port_of(
     generate_password = token_urlsafe |to| settings.PORT_PASSWORD_LENGTH
 
     return core.open_port_of(
-        port_id=PortID(subject=subject, id_group=method),
+        port_id=core.PortID(subject=subject, id_group=method),
         for_=for_,
         generate_auth_token=generate_auth_token,
         generate_password=generate_password,
         password_hash_of=make_password,
-        access_token_of=confirmation_page_url_of,
-        notify_by=send_confirmation_mail_to,
-        create_port_from=create_port,
+        access_token_of=adapters.confirmation_page_url_of,
+        notify_by=adapters.send_confirmation_mail_to,
+        create_port_from=adapters.create_port,
     )
 
 
@@ -58,10 +57,10 @@ class id_groups:
 
 @name_enum_of
 class subjects:
-    authorization: Subject
-    registration: Subject
+    authorization: core.Subject
+    registration: core.Subject
 
     @name_enum_of
     class access_recovery:
-        via_email: Subject
-        via_name: Subject
+        via_email: core.Subject
+        via_name: core.Subject

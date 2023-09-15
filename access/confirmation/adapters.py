@@ -1,14 +1,18 @@
 from urllib.parse import urljoin
+from typing import Callable, Optional, Generic, Final
 
-from act import will
+from act import will, via_indexer, obj, I
 from django.core.mail import send_mail
 from django.conf import settings
+from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from core.adapters import ChachRepository
-from core.types import URL, Email, Password
-from access.confirmation.core import PortID, AuthToken, Subject
+from core.adapters import CacheRepository
+from core.types import URL, Email, PasswordHash, Annotaton
+from access.confirmation.core import (
+    PortID, AuthToken, PortAccess, PortAccessView, IDGroup
+)
 
 
 password_hashes_of = will(CacheRepository)(
