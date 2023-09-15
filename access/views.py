@@ -1,4 +1,4 @@
-from typing import Type, TypeVar, Tuple, Optional, Callable, Mapping, Iterable
+from typing import Type, TypeVar, Optional, Callable, Mapping, Iterable
 
 from act import of, bad, ok, v, _
 from django.contrib import auth
@@ -11,7 +11,7 @@ from django.views import View
 from django.views.decorators.http import require_GET
 
 from core.models import User
-from core.types import Email, URL
+from core.types import Email, URL, ErrorMessage
 from access import confirmation
 from access import services
 from access.forms import (
