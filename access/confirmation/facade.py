@@ -1,10 +1,16 @@
+from urllib.parse import urljoin
 from typing import Optional
 
-from act import contextual
+from act import contextual, will
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.urls import reverse
 
-from core.types import Email, URL
-from access.confirmation.adapters import send_confirmation_mail_to
-from access.confirmation.core import Subject
+from core.adapters import ChachRepository
+from core.types import Email, URL, Password
+from access.confirmation.adapters import _send_confirmation_mail_to
+from access.confirmation.core import PortID, AuthToken, Subject
 
 
 HANDLER_REPOSITORY = ConfigHandlerRepository(django_config_repository)

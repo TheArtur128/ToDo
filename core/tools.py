@@ -3,7 +3,10 @@ from typing import Iterable
 from act import temp, obj, Special, bad, V
 
 
-__all__ = ("name_enum_of", "bad_or")
+__all__ = (
+    "name_enum_of", "bad_or", "rollbackable_event_by", "transactionally_for",
+    "for_effect"
+)
 
 
 def name_enum_of(annotated: temp(__annotations__=Iterable[str])) -> obj:
