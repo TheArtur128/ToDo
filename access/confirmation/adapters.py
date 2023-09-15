@@ -11,6 +11,15 @@ from core.types import URL, Email, Password
 from access.confirmation.core import PortID, AuthToken, Subject
 
 
+password_hashes_of = will(CacheRepository)(
+    salt="passwordhash", location=settings.PORTS_CACHE_LOCATION
+)
+
+ids_that = will(CacheRepository)(
+    salt='ids', location=settings.PORTS_CACHE_LOCATION
+)
+
+
 def create_port(access: PortAccess[PasswordHash], id_: str) -> None:
     password_hashes_of(access.port_id.subject)[access.token] = access.password
     ids_that(access.port_id.id_group)[access.token] = id_
@@ -38,15 +47,6 @@ def send_confirmation_mail_to(view: PortAccessView[Email, URL]) -> bool:
         recipient_list=[view.id_],
         fail_silently=True
     )
-
-
-password_hashes_of = will(ChachRepository)(
-    salt="passwordhash", location=settings.PORTS_CACHE_LOCATION
-)
-
-ids_that = will(ChachRepository)(
-    salt='ids', location=settings.PORTS_CACHE_LOCATION
-)
 
 
 def confirmation_page_url_of(port_id: PortID, token: AuthToken) -> URL:
