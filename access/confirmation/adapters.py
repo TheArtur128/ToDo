@@ -11,6 +11,11 @@ from core.types import URL, Email, Password
 from access.confirmation.core import PortID, AuthToken, Subject
 
 
+def create_port(access: PortAccess[PasswordHash], id_: str) -> None:
+    _password_hashes_of(access.port_id.subject)[access.token] = access.password
+    _ids_that(access.port_id.id_group)[access.token] = id_
+
+
 def close_port_of(identifier: PortID, token: AuthToken) -> None:
     del password_hashes_of(identifier.subject)[token]
     del ids_that(identifier.id_group)[token]
