@@ -34,7 +34,7 @@ def open_port_of(
     subject: core.Subject,
     *,
     for_: str,
-    method: core.IdGroup,
+    method: core.IDGroup,
 ) -> Optional[URL]:
     generate_auth_token = token_urlsafe |to| settings.PORT_AUTH_TOKEN_LENGTH
     generate_password = token_urlsafe |to| settings.PORT_PASSWORD_LENGTH
@@ -53,7 +53,7 @@ def open_port_of(
 
 @name_enum_of
 class id_groups:
-    email: IdGroup
+    email: core.IDGroup
 
 
 @name_enum_of

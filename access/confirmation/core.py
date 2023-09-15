@@ -13,13 +13,13 @@ __all__ = (
 Subject: TypeAlias = str
 ReadableSubject: TypeAlias = str
 AuthToken: TypeAlias = str
-IdGroup: TypeAlias = str
+IDGroup: TypeAlias = str
 
 
 @dataclass(frozen=True)
 class PortID(Generic[_IdGroupT]):
     subject: Subject
-    id_group: IdGroup
+    id_group: IDGroup
 
 
 @dataclass(frozen=True)
@@ -70,7 +70,7 @@ def activate_by(
     access: PortAccess[Password],
     password_hash_of: Callable[[Subject, AuthToken], Optional[PasswordHash]],
     hash_equals: Callable[[Password, PasswordHash], bool],
-    id_of: Callable[[IdGroup, AuthToken], I],
+    id_of: Callable[[IDGroup, AuthToken], I],
     payload_of: Callable[PortID, Callable[I, P]],
     port_closing_by: Callable[[PortID, AuthToken], Callable[P, R]],
 ) -> Optional[R]:
@@ -102,7 +102,7 @@ def _ConfigRepositoryOf(config_annotation: Annotaton) -> temp:
 class ConfigHandlerRepository(Generic[ActionT]):
     def __init__(
         self,
-        config_repository: _ConfigRepositoryOf[Mapping[IdGroup, ActionT]],
+        config_repository: _ConfigRepositoryOf[Mapping[IDGroup, ActionT]],
     ) -> None:
         self.__config_repository = config_repository
 
