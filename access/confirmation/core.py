@@ -109,3 +109,30 @@ def activate_by(
 
     return close_port_based_on(payload_result)
 
+
+def _ConfigRepositoryOf(config_annotation: Annotaton) -> temp:
+    return temp(
+        get_of=Callable[PortID, config_annotation],
+        has_of=Callable[PortID, bool],
+        create_for=Callable[PortID, Any],
+    )
+
+
+class ConfigHandlerRepository(Generic[ActionT]):
+    def __init__(
+        self,
+        config_repository: _ConfigRepositoryOf[Mapping[IdGroup, ActionT]],
+    ) -> None:
+        self.__config_repository = config_repository
+
+    def get_of(self, port_id: PortID) -> ActionT:
+        return self.__config_repository.get_of(port_id)[port_id.id_group]
+
+    def registration_for(self, port_id: PortID, payload: ActionT) -> ActionT:
+        if not self.__config_repository.has_of(port_id):
+            self.__config_repository.create_for(port_id)
+
+        config = self.__config_repository.get_of(port_id)
+        config[port_id.id_group] = payload
+
+        return payload
