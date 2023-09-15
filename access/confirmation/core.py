@@ -13,7 +13,6 @@ __all__ = (
 )
 
 Subject: TypeAlias = str
-ReadableSubject: TypeAlias = str
 AuthToken: TypeAlias = str
 IDGroup: TypeAlias = str
 
