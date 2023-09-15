@@ -90,7 +90,8 @@ def activate_by(
     password_hash_of: Callable[[Subject, AuthToken], Optional[PasswordHash]],
     hash_equals: Callable[[Password, PasswordHash], bool],
     id_of: Callable[[IdGroup, AuthToken], I],
-    handler_of: Callable[PortID, Callable[I, R]],
+    payload_of: Callable[PortID, Callable[I, P]],
+    port_closing_by: Callable[[PortID, AuthToken], Callable[P, R]],
 ) -> Optional[R]:
     password_hash = password_hash_of(access.port_id.subject, access.token)
     is_password_correct = (
@@ -102,5 +103,9 @@ def activate_by(
         return None
 
     id_ = id_of(access.port_id.id_group, access.token)
+    payload_result = payload_of(access.port_id)(id_)
 
-    return handler_of(access.port_id)(id_)
+    close_port_based_on = port_closing_by(access.port_id, access.token)
+
+    return close_port_based_on(payload_result)
+
