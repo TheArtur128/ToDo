@@ -16,25 +16,6 @@ AuthToken: TypeAlias = str
 IdGroup: TypeAlias = str
 
 
-@via_indexer
-def HandlerRepositoryOf(handle_annotation: Annotaton) -> Annotaton
-    return temp(
-        registrate_for=Callable[PortID, reformer_of[handle_annotation]],
-        get_of=Callable[PortID, handle_annotation],
-    )
-
-
-@via_indexer
-def _AuthTokenSenderOf(
-    id_annotation: Annotaton,
-    access_token_annotation: Annotaton,
-) -> Annotaton:
-    return Callable[
-        [id_annotation, ReadableSubject, access_token_annotation, Password],
-        bool,
-    ]
-
-
 @dataclass(frozen=True)
 class PortID(Generic[_IdGroupT]):
     subject: Subject
