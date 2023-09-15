@@ -75,7 +75,7 @@ def open_port_of(
 
     access_token = access_token_of(subject, auth_token)
 
-    notify = will(notify_by)(PortView(id_, subject, access_token, password))
+    notify = will(notify_by)(PortView(id_, port_id.subject, access_token, password))
 
     create_port = will(create_port_from)(
         PortID(subject, id_group), password_hash, id_
