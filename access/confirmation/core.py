@@ -17,7 +17,7 @@ IDGroup: TypeAlias = str
 
 
 @dataclass(frozen=True)
-class PortID(Generic[_IdGroupT]):
+class PortID:
     subject: Subject
     id_group: IDGroup
 
