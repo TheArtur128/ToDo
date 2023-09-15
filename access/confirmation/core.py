@@ -42,10 +42,10 @@ class PortID(Generic[_IdGroupT]):
 
 
 @dataclass(frozen=True)
-class PortAccess:
+class PortAccess(Generic[P]):
     port_id: PortID
     token: AuthToken
-    password: Password
+    password: P
 
 
 @dataclass(frozen=True)
@@ -116,7 +116,7 @@ def open_port_of(
 
 
 def activate_by(
-    access: PortAccess,
+    access: PortAccess[Password],
     password_hash_of: Callable[[Subject, AuthToken], Optional[PasswordHash]],
     hash_equals: Callable[[Password, PasswordHash], bool],
     id_of: Callable[[IdGroup, AuthToken], I],
