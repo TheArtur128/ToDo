@@ -60,3 +60,6 @@ def transactionally_for(
                 event.rollback()
 
     return transaction_from
+
+
+for_effect = eventually |then>> returnly |then>> optionally
