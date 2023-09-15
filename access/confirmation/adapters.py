@@ -16,20 +16,21 @@ def close_port_of(identifier: PortID, token: AuthToken) -> None:
     del ids_that(identifier.id_group)[token]
 
 
-def send_confirmation_mail_to(
-    email: Email, *, subject_name: Subject, url: URL, password: Password
-) -> bool:
-    text_message = f"Password to confirm {subject_name} in {url}: {password}"
-    html_message = render_to_string(
-        "mails/to-confirm.html",
-        dict(subject=subject_name, url=url, password=password),
+def send_confirmation_mail_to(view: PortAccessView[Email, URL]) -> bool:
+    text_message = "Password to confirm {} in {}: {}".format(
+        view.subject, view.access_token, view.password
     )
 
+    context = dict(
+        subject=view.subject, url=view.access_token, password=view.password
+    )
+    html_message = render_to_string("mails/to-confirm.html", context)
+
     return 1 == send_mail(
-        subject=f"Confirm {subject_name}",
+        subject=f"Confirm {view.subject}",
         message=text_message,
         html_message=html_message,
-        recipient_list=[email],
+        recipient_list=[view.id_],
         fail_silently=True
     )
 
@@ -43,7 +44,7 @@ ids_that = will(ChachRepository)(
 )
 
 
-def confirmation_page_url_of(port_id: PortID, *, token: AuthToken) -> URL:
+def confirmation_page_url_of(port_id: PortID, token: AuthToken) -> URL:
     relative_url = reverse(
         "access:confirm",
         args=[port_id.subject, port_id.id_group, token],
