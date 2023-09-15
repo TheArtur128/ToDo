@@ -57,28 +57,29 @@ class PortAccessView(Generic[I, A]):
 
 
 def open_port_of(
-    subject: Subject,
     *,
-    for_: contextual[IdGroup, I],
+    port_id: PortID,
+    for_: I,
     generate_auth_token: Callable[[], AuthToken],
     generate_password: Callable[[], Password],
     password_hash_of: Callable[Password, PasswordHash],
-    access_token_of: Callable[[Subject, AuthToken], A],
+    access_token_of: Callable[[PortID, AuthToken], A],
     notify_by: Callable[PortAccessView[I, A], bool],
-    create_port_from: Callable[[PortID, AuthToken, PasswordHash, I], bool],
+    create_port_from: Callable[[PortAccess[PasswordHash], I], bool],
 ) -> Optional[A]:
-    id_group, id_ = for_
+    id_ = for_
 
     auth_token = generate_auth_token()
     password = generate_password()
     password_hash = password_hash_of(password)
 
-    access_token = access_token_of(subject, auth_token)
+    access_token = access_token_of(port_id, auth_token)
 
     notify = will(notify_by)(PortView(id_, port_id.subject, access_token, password))
 
     create_port = will(create_port_from)(
-        PortID(subject, id_group), password_hash, id_
+        PortAccess(port_id=port_id, token=auth_token, password=password_hash),
+        id_,
     )
 
     return transactionally_for(access_token)(notify, create_port)
