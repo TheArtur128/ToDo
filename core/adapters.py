@@ -4,10 +4,10 @@ from act import K, V
 from django.core.cache import caches
 
 
-__all__ = ("ChachRepository", )
+__all__ = ("CacheRepository", )
 
 
-class ChachRepository(Generic[K, V]):
+class CacheRepository(Generic[K, V]):
     def __init__(self, subject: str, *, salt: str, location: str) -> None:
         self.__subject = subject
         self.__salt = salt
