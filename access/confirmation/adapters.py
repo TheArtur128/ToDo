@@ -12,8 +12,8 @@ from access.confirmation.core import PortID, AuthToken, Subject
 
 
 def create_port(access: PortAccess[PasswordHash], id_: str) -> None:
-    _password_hashes_of(access.port_id.subject)[access.token] = access.password
-    _ids_that(access.port_id.id_group)[access.token] = id_
+    password_hashes_of(access.port_id.subject)[access.token] = access.password
+    ids_that(access.port_id.id_group)[access.token] = id_
 
 
 def close_port_of(identifier: PortID, token: AuthToken) -> None:
@@ -76,8 +76,8 @@ class django_config_repository(Generic[I]):
     def has_of(port_id: PortID) -> bool:
         field_names = settings.PORTS[port_id.subject].keys()
 
-        return DjangoConfigRepository._HANDLERS_FIELD_NAME in field_names
+        return django_config_repository._HANDLERS_FIELD_NAME in field_names
 
     def create_for(port_id: PortID) -> None:
         config = settings.PORTS[port_id.subject]
-        config[DjangoConfigRepository._HANDLERS_FIELD_NAME] = dict()
+        config[django_config_repository._HANDLERS_FIELD_NAME] = dict()
