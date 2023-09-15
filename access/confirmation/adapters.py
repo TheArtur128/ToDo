@@ -56,3 +56,28 @@ def confirmation_page_url_of(port_id: PortID, token: AuthToken) -> URL:
     )
 
     return urljoin(settings.BASE_URL, relative_url)
+
+
+@via_indexer
+def _ViewHandlerFrom(id_annotation: Annotaton) -> Annotaton:
+    return Callable[[HttpRequest, id_annotation], Optional[HttpResponse]]
+
+
+@obj.of
+class django_config_repository(Generic[I]):
+    _HANDLERS_FIELD_NAME: Final[str] = "_HANDLERS"
+    
+    def get_of(port_id: PortID) -> dict[IdGroup, _ViewHandlerFrom[I]]:
+        handler_configs = settings.PORTS[port_id.subject]
+        handlers = handler_configs[DjangoConfigRepository._HANDLERS_FIELD_NAME]
+
+        return handlers[port_id.id_group]
+
+    def has_of(port_id: PortID) -> bool:
+        field_names = settings.PORTS[port_id.subject].keys()
+
+        return DjangoConfigRepository._HANDLERS_FIELD_NAME in field_names
+
+    def create_for(port_id: PortID) -> None:
+        config = settings.PORTS[port_id.subject]
+        config[DjangoConfigRepository._HANDLERS_FIELD_NAME] = dict()
