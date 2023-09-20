@@ -17,7 +17,7 @@ class UserRegistrationForm(UserCreationForm):
         fields = ("name", "email", "password1", "password2")
 
 
-class ConfirmForm(Form):
+class ConfirmationForm(Form):
     password = CharField(
         min_length=settings.PORT_PASSWORD_LENGTH,
         max_length=settings.PORT_PASSWORD_LENGTH,

@@ -16,7 +16,7 @@ from access import confirmation
 from access import services
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
-    RestoringAccessByEmailForm, ConfirmForm
+    RestoringAccessByEmailForm, ConfirmationForm
 )
 from access.utils import for_anonymous
 
@@ -36,9 +36,9 @@ def confirm(
     errors = tuple()
 
     if request.method == 'GET':
-        form = ConfirmForm()
+        form = ConfirmationForm()
     else:
-        form = ConfirmForm(data=form.POST)
+        form = ConfirmationForm(data=form.POST)
 
         if form.is_valid():
             port_access = confirmation.PortAccess(
