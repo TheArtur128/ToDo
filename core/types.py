@@ -1,4 +1,3 @@
-from typing import TypeAlias
 from typing import TypeAlias, Callable, Any
 
 from act import via_indexer, temp
@@ -26,3 +25,11 @@ def RepositoryFromTo(
         has_of=Callable[key_annotation, bool],
         create_for=Callable[key_annotation, Any],
     )
+
+
+@via_indexer
+def ActionOf(
+    parameters_annotation: Annotaton,
+    return_annotation: Annotaton,
+) -> temp:
+    return temp(__call__=Callable[parameters_annotation, return_annotation])
