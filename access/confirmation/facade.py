@@ -71,12 +71,15 @@ def open_port_of(
         adapters.generate_password(),
     )
 
-    return core.open(
-        endpoint,
-        access_to=adapters.confirmation_page_url_of,
-        sending_by=sending.by,
-        save=adapters.endpoint_repository.save,
-    )
+    with Transaction() as get_ok:
+        confirmation_page_url = core.open(
+            endpoint,
+            access_to=adapters.confirmation_page_url_of,
+            sending_by=sending.by,
+            save=adapters.endpoint_repository.save,
+        )
+
+    return confirmation_page_url if get_ok() else None
 
 
 @name_enum_of
@@ -97,7 +100,10 @@ class methods:
 
 @obj.of
 class via:
-    email = obj(method=methods.email, by=adapters.send_confirmation_mail_to)
+    email = obj(
+        method=methods.email,
+        by=rollbackable.binary(adapters.send_confirmation_mail_to),
+    )
 
 
 def _from_activation_to_access(
