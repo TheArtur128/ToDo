@@ -45,7 +45,7 @@ def confirm(
             activation = confirmation.facade.Activation(
                 subject, method, token, request.POST["password"]
             )
-            response = confirmation.activate_by(activation, request)
+            response = confirmation.facade.activate_by(activation, request)
 
             if response is not None:
                 return response
@@ -171,8 +171,8 @@ class LoginView(_ConfirmationOpeningView):
 
         confirmation_page_url = confirmation.facade.open_port_of(
             confirmation.facade.subjects.authorization,
+            confirmation.facade.via.email,
             for_=request.POST["email"],
-            method=confirmation.facade.methods.email,
         )
 
         return bad_or(confirmation_page_url)
@@ -211,9 +211,9 @@ class _EmailAccessRecoveryView(_ConfirmationOpeningView):
             return bad(None)
 
         confirmation_page_url = confirmation.facade.open_port_of(
-            confirmation.subjects.access_recovery.via_name,
+            confirmation.facade.subjects.access_recovery.via_name,
+            confirmation.facade.via.email,
             for_=user.email,
-            method=confirmation.methods.email,
         )
 
         return bad_or(confirmation_page_url)

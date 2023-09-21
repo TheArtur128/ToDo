@@ -1,25 +1,27 @@
 from dataclasses import dataclass
-from typing import TypeAlias, Optional
+from typing import TypeAlias, Optional, Any, Callable
 
-from act import _, a, b, then, will, rwill, partial, returnly, reformer_of, I
-from django.contrib.auth.hashers import make_password, check_password
+from act import will, returnly, temp, obj, via_indexer, reformer_of, I
 from django.http import HttpRequest, HttpResponse
 
-from core.tools import name_enum_of, for_effect
-from core.types import URL, Token, Password
+from core.tools import name_enum_of
+from core.types import URL, Token, Password, Annotaton
+from core.transactions import Transaction, rollbackable
 from access.confirmation import adapters
 from access.confirmation import core
-from access.confirmation import dto
 
 
-Subject: TypeAlias = str
-Method: TypeAlias = str
-ID: TypeAlias = str
+Subject: TypeAlias = adapters.Subject
+Method: TypeAlias = adapters.Method
 PortToken: TypeAlias = Token
 
 
-class Method:
-    def notify
+@via_indexer
+def SendingOf(id_annotation: Annotaton) -> temp:
+    return temp(
+        method=Method,
+        by=Callable[adapters.EndpointOf[id_annotation], Callable[URL, Any]],
+    )
 
 
 @dataclass(frozen=True)
@@ -34,50 +36,47 @@ def activate_by(
     activation: Activation,
     request: HttpRequest,
 ) -> Optional[HttpResponse]:
-    payload_of = (
-        adapters.payload_repository.get_of |then>> rwill(partial)(request)
-    )
+    endpoint_of = rollbackable.optionally(adapters.endpoint_repository.get_of)
 
-    return core.activate_by(
-        _from_activation_to_access(activation),
-        password_hash_of=_.adapters.password_hashes_of(a)[b],
-        hash_equals=check_password,
-        target_id_of=_.adapters._ids_that(a)[b],
-        payload_of=payload_of,
-        port_closing_by=will(for_effect)(adapters.PortEndpointRepository.close),
-    )
+    with Transaction() as get_ok:
+        result = core.activate_by(
+            _from_activation_to_access(activation),
+            endpoint_of=endpoint_of,
+            handling_of=adapters.view_handler_payload_of(request),
+            close=adapters.endpoint_repository.close,
+        )
+
+    return result if get_ok() else None
 
 
 def registrate_for(subject: Subject, method: Method) -> reformer_of[
-    adapters.ViewPayloadOf[I]
+    adapters.ViewHandlerOf[I]
 ]:
-    port_id = core.PortID(subject, method)
+    port = core.Port(subject, method)
+    registrate = will(adapters.endpoint_handler_repository.registrate_for)(port)
 
-    return returnly(will(adapters.payload_repository.registrate_for)(port_id))
+    return returnly(registrate)
 
 
 def open_port_of(
     subject: Subject,
+    sending: SendingOf[I],
     *,
-    for_: ID,
-    method: Method,
+    for_: I,
 ) -> Optional[URL]:
-    return core.open_port_of(
-        port_id=dto.PortID(subject=subject, id_group=method),
-        target_id=for_,
-        port_access_token=adapters.generate_port_access_token(),
-        password=adapters.generate_password(),
-        generate_password=adapters.generate_password(),
-        password_hash_of=make_password,
-        activation_access_of=adapters.confirmation_page_url_of,
-        notify_by=adapters.send_confirmation_mail_to,
-        open_port_endpoint_from=adapters.PortEndpointRepository.open,
+    endpoint = core.Endpoint(
+        adapters.generate_port_access_token(),
+        core.Port(subject, sending.method),
+        for_,
+        adapters.generate_password(),
     )
 
-
-@name_enum_of
-class methods:
-    email: Method
+    return core.open(
+        endpoint,
+        access_to=adapters.confirmation_page_url_of,
+        sending_by=sending.by,
+        save=adapters.endpoint_repository.save,
+    )
 
 
 @name_enum_of
@@ -91,11 +90,19 @@ class subjects:
         via_name: Subject
 
 
+@name_enum_of
+class methods:
+    email: Method
+
+
+@obj.of
+class via:
+    email = obj(method=methods.email, by=adapters.send_confirmation_mail_to)
+
+
 def _from_activation_to_access(
     activation: Activation,
-) -> adapters.ViewPortAccess:
-    return dto.PortAccess(
-        dto.PortID(activation.subject, activation.method),
-        activation.token,
-        activation.password,
-    )
+) -> adapters.AccessToEndpoint:
+    port = core.Port(activation.subject, activation.method)
+
+    return core.AccessToEndpoint(activation.token, port, activation.password)

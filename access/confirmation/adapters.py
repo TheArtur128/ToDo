@@ -2,131 +2,180 @@ from secrets import token_urlsafe
 from urllib.parse import urljoin
 from typing import TypeAlias, Callable, Optional, Generic, Final
 
-from act import will, via_indexer, obj, to, I
+from act import (
+    will, via_indexer, partial, partially, obj, then, to, func, rwill, v, I,
+    ActionT
+)
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 
 from core.adapters import CacheRepository
-from core.types import URL, Email, PasswordHash, Password, Annotaton
+from core.types import (
+    Token, URL, Email, Password, ID, RepositoryFromTo, Annotaton
+)
 from access.confirmation import core
 
 
 Subject: TypeAlias = str
-PortAccessToken: TypeAlias = str
-IDGroup: TypeAlias = str
+Method: TypeAlias = str
 
-PortID: TypeAlias = core.PortID[Subject, IDGroup]
-ViewPortAccess: TypeAlias = core.PortAccess[
-    core.PortID,
-    PortAccessToken,
-    Password,
-]
-PortAccess: TypeAlias = core.PortAccess[
-    core.PortID,
-    PortAccessToken,
-    PasswordHash,
-]
+Port: TypeAlias = core.Port[Subject, Method]
+AccessToEndpoint: TypeAlias = core.AccessToEndpoint[Token, Port, Password]
 
 
 @via_indexer
-def PortEndpointIDOf(targed_id_annotation: Annotaton) -> Annotaton:
-    return core.PortEndpointID[PortID, targed_id_annotation]
-
-
-@via_indexer
-def PortEndpointViewOf(targed_id_annotation: Annotaton) -> Annotaton:
-    return core.PortEndpointView[
-        PortEndpointIDOf[targed_id_annotation],
-        URL,
-        Password,
+def EndpointOf(notification_resource_annotation: Annotaton) -> Annotaton:
+    return core.Endpoint[
+        Token, Port, notification_resource_annotation, Password
     ]
+
+
+@via_indexer
+def ViewHandlerOf(id_annotation: Annotaton) -> Annotaton:
+    return Callable[[HttpRequest, id_annotation], Optional[HttpResponse]]
+
+
+@partially
+def handler_payload_of(
+    handling_of: Callable[Port, ViewHandlerOf[I]],
+    request: HttpRequest,
+) -> Callable[EndpointOf[I], Callable[I, Optional[HttpResponse]]]:
+    return func((v.port) |then>> handling_of |then>> rwill(partial)(request))
+
+
+def confirmation_page_url_of(endpoint: EndpointOf[Email]) -> URL:
+    args = [
+        endpoint.port.subject,
+        endpoint.port.notification_resource_type,
+        endpoint.id,
+    ]
+
+    relative_url = reverse("access:confirm", args=args)
+
+    return urljoin(settings.BASE_URL, relative_url)
+
+
+def send_confirmation_mail_by(
+    endpoint: EndpointOf[Email],
+    page_url: URL,
+) -> bool:
+    context = dict(
+        subject=endpoint.port.subject,
+        url=page_url,
+        password=endpoint.password,
+    )
+
+    text_message_template = "Password to confirm {subject} in {url}: {password}"
+    text_message = text_message_template.format(**context)
+
+    html_message = render_to_string("mails/to-confirm.html", context)
+
+    return 1 == send_mail(
+        subject=f"Confirm {endpoint.port.subject}",
+        message=text_message,
+        html_message=html_message,
+        recipient_list=[endpoint.id],
+        fail_silently=True,
+    )
 
 
 password_hashes_of = will(CacheRepository)(
     salt="passwordhash", location=settings.PORTS_CACHE_LOCATION
 )
 
-ids_that = will(CacheRepository)(
+ids_of = will(CacheRepository)(
     salt='ids', location=settings.PORTS_CACHE_LOCATION
 )
 
 
 @obj.of
-class PortEndpointRepository:
-    def open(access: PortAccess, id_: str) -> None:
-        password_hash_by_token = password_hashes_of(access.port_id.subject)
-        password_hash_by_token[access.token] = access.password
+class endpoint_repository:
+    def get_of(access: AccessToEndpoint) -> Optional[EndpointOf[ID]]:
+        password_hash_config = password_hashes_of(access.port.subject)
+        password_hash = password_hash_config[access.endpoint_id]
 
-        ids_that(access.port_id.id_group)[access.token] = id_
+        id_config = ids_of(access.port.notification_resource_type)
+        target_id = id_config[access.endpoint_id]
 
-    def close(port_id: PortID, token: PortAccessToken) -> None:
-        del password_hashes_of(port_id.subject)[token]
-        del ids_that(port_id.id_group)[token]
+        if password_hash is None or target_id is None:
+            return None
 
+        endpoint = core.Endpoint(
+            access.endpoint_id,
+            access.port,
+            target_id,
+            access.password,
+        )
 
-def send_confirmation_mail_to(view: PortEndpointViewOf[Email]) -> bool:
-    text_message = "Password to confirm {} in {}: {}".format(
-        view.port_endpoint_id.subject, view.activation_access, view.password
-    )
+        return endpoint
 
-    context = dict(
-        subject=view.port_endpoint_id.subject,
-        url=view.activation_access,
-        password=view.password,
-    )
-    html_message = render_to_string("mails/to-confirm.html", context)
+    def save(endpoint: EndpointOf[ID]) -> None:
+        password_hash_config = password_hashes_of(endpoint.port.subject)
+        password_hash_config[endpoint.id] = make_password(endpoint.password)
 
-    return 1 == send_mail(
-        subject=f"Confirm {view.subject}",
-        message=text_message,
-        html_message=html_message,
-        recipient_list=[view.id_],
-        fail_silently=True,
-    )
+        id_config = ids_of(endpoint.port.notification_resource_type)
+        id_config[endpoint.id] = endpoint.notification_resource
 
-
-def confirmation_page_url_of(port_id: PortID, token: PortAccessToken) -> URL:
-    relative_url = reverse(
-        "access:confirm",
-        args=[port_id.subject, port_id.id_group, token],
-    )
-
-    return urljoin(settings.BASE_URL, relative_url)
+    def close(endpoint: EndpointOf[ID]) -> None:
+        del password_hashes_of(endpoint.port.subject)[endpoint.id]
+        del ids_of(endpoint.port.notification_resource_type)[endpoint.id]
 
 
-@via_indexer
-def ViewPayloadOf(id_annotation: Annotaton) -> Annotaton:
-    return Callable[[HttpRequest, id_annotation], Optional[HttpResponse]]
+class _EndpointHandlerRepositoryOfConfig(Generic[ActionT]):
+    __ConfigRepository = RepositoryFromTo[Port, dict[Method, ActionT]]
+
+    def __init__(self, config_repository: __ConfigRepository) -> None:
+        self.__config_repository = config_repository
+
+    def get_of(self, port: Port) -> ActionT:
+        config = self.__config_repository.get_of(port)
+
+        return config[port.notification_resource_type]
+
+    def registrate_for(self, port: Port, handler: ActionT) -> None:
+        if not self.__config_repository.has_of(port):
+            self.__config_repository.create_for(port)
+
+        config = self.__config_repository.get_of(port)
+        config[port.notification_resource_type] = handler
 
 
 @obj.of
-class django_config_repository(Generic[I]):
+class _django_config_repository:
     _HANDLERS_FIELD_NAME: Final[str] = "_HANDLERS"
 
-    def get_of(port_id: PortID) -> dict[IDGroup, ViewPayloadOf[I]]:
-        handler_configs = settings.PORTS[port_id.subject]
+    def get_of(port: Port) -> dict[Method, ViewHandlerOf[I]]:
+        handler_configs = settings.PORTS[port.subject]
         handlers = (
-            handler_configs[django_config_repository._HANDLERS_FIELD_NAME]
+            handler_configs[_django_config_repository._HANDLERS_FIELD_NAME]
         )
 
-        return handlers[port_id.id_group]
+        return handlers[port.notification_resource_type]
 
-    def has_of(port_id: PortID) -> bool:
-        field_names = settings.PORTS[port_id.subject].keys()
+    def has_of(port: Port) -> bool:
+        field_names = settings.PORTS[port.subject].keys()
 
-        return django_config_repository._HANDLERS_FIELD_NAME in field_names
+        return _django_config_repository._HANDLERS_FIELD_NAME in field_names
 
-    def create_for(port_id: PortID) -> None:
-        config = settings.PORTS[port_id.subject]
-        config[django_config_repository._HANDLERS_FIELD_NAME] = dict()
+    def create_for(port: Port) -> None:
+        config = settings.PORTS[port.subject]
+        config[_django_config_repository._HANDLERS_FIELD_NAME] = dict()
 
 
-payload_repository = core.ConfigPayloadRepository(django_config_repository)
+endpoint_handler_repository = _EndpointHandlerRepositoryOfConfig(
+    _django_config_repository
+)
 
-generate_password = token_urlsafe |to| settings.PORT_PASSWORD_LENGTH
-generate_port_access_token = (
-    token_urlsafe |to| settings.PORT_ACCESS_TOKEN_LENGTH
+view_handler_payload_of = handler_payload_of(endpoint_handler_repository.get_of)
+
+generate_endpoint_password = (
+    token_urlsafe |to| settings.PORT_ENDPOINT_PASSWORD_LENGTH
+)
+
+generate_endpoint_token = (
+    token_urlsafe |to| settings.PORT_ENDPOINT_TOKEN_LENGTH
 )
