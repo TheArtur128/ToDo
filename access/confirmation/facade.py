@@ -4,11 +4,11 @@ from typing import TypeAlias, Optional, Any, Callable
 from act import will, returnly, temp, obj, via_indexer, reformer_of, I
 from django.http import HttpRequest, HttpResponse
 
-from core.tools import name_enum_of
-from core.types import URL, Token, Password, Annotaton
-from core.transactions import Transaction, rollbackable
 from access.confirmation import adapters
 from access.confirmation import core
+from shared.tools import name_enum_of
+from shared.types import URL, Token, Password, Annotaton
+from shared.transactions import Transaction, rollbackable
 
 
 Subject: TypeAlias = adapters.Subject

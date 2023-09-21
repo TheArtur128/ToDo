@@ -3,7 +3,7 @@ from typing import TypeVar, Callable, Generic, Any
 
 from act import via_indexer, temp, I, A, P, R, S, T, V
 
-from core.types import Annotaton
+from shared.types import Annotaton
 
 
 @dataclass(frozen=True)

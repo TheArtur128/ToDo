@@ -1,6 +1,6 @@
 from typing import Optional
 
-from core.types import Name, Email, Password, URL
+from shared.types import Name, Email, Password, URL
 
 
 def open_registration_port(  # todo: implement

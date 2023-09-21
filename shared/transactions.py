@@ -7,7 +7,7 @@ from act import (
     contextual, partially, Special, R, O, L, Pm
 )
 
-from core.types import Annotation, ActionOf
+from shared.types import Annotation, ActionOf
 
 
 @via_indexer

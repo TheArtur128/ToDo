@@ -25,8 +25,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    "core",
     "access",
+    "shared",
     "tasks",
 ]
 
@@ -55,7 +55,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
             ],
             "libraries": {
-                "common_tags": "core.templatetags.common_tags"}
+                "common_tags": "shared.templatetags.common_tags"
             }
         }
     }

@@ -13,11 +13,11 @@ from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from core.adapters import CacheRepository
-from core.types import (
+from access.confirmation import core
+from shared.adapters import CacheRepository
+from shared.types import (
     Token, URL, Email, Password, ID, RepositoryFromTo, Annotaton
 )
-from access.confirmation import core
 
 
 Subject: TypeAlias = str

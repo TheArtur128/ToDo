@@ -10,9 +10,6 @@ from django.urls import reverse
 from django.views import View
 from django.views.decorators.http import require_GET
 
-from core.models import User
-from core.tools import bad_or
-from core.types import Email, URL, ErrorMessage
 from access import confirmation
 from access import services
 from access.forms import (
@@ -20,6 +17,9 @@ from access.forms import (
     RestoringAccessByEmailForm, ConfirmationForm
 )
 from access.utils import for_anonymous
+from shared.models import User
+from shared.tools import bad_or
+from shared.types import Email, URL, ErrorMessage
 
 
 __all__ = (
