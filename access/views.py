@@ -30,9 +30,9 @@ __all__ = (
 
 def confirm(
     request: HttpRequest,
-    subject: confirmation.Subject,
-    id_group: confirmation.IdGroup,
-    token: confirmation.AuthToken,
+    subject: confirmation.facade.Subject,
+    method: confirmation.facade.Method,
+    token: confirmation.facade.PortToken,
 ) -> HttpResponse:
     errors = tuple()
 
@@ -42,13 +42,10 @@ def confirm(
         form = ConfirmationForm(data=form.POST)
 
         if form.is_valid():
-            port_access = confirmation.PortAccess(
-                confirmation.PortID(subject=subject, id_group=id_group),
-                token,
-                password,
+            activation = confirmation.facade.Activation(
+                subject, method, token, request.POST["password"]
             )
-
-            response = confirmation.activate_by(port_access, request)
+            response = confirmation.activate_by(activation, request)
 
             if response is not None:
                 return response
@@ -65,10 +62,10 @@ def confirm(
     return render(request, "pages/confirmation.html", context)
 
 
-@confirmation.handle(confirmation.PortID(
-    confirmation.subjects.authorization,
-    confirmation.id_groups.email,
-))
+@confirmation.facade.registrate_for(
+    confirmation.facade.subjects.authorization,
+    confirmation.facade.methods.email,
+)
 def authorization_confirmation(
     request: HttpRequest,
     email: Email,
@@ -172,9 +169,10 @@ class LoginView(_ConfirmationOpeningView):
         if user is None:
             return bad(None)
 
-        confirmation_page_url = confirmation.open_email_port_of(
-            confirmation.subjects.authorization,
+        confirmation_page_url = confirmation.facade.open_port_of(
+            confirmation.facade.subjects.authorization,
             for_=request.POST["email"],
+            method=confirmation.facade.methods.email,
         )
 
         return bad_or(confirmation_page_url)
@@ -212,9 +210,10 @@ class _EmailAccessRecoveryView(_ConfirmationOpeningView):
         if user is None:
             return bad(None)
 
-        confirmation_page_url = confirmation.open_email_port_of(
+        confirmation_page_url = confirmation.facade.open_port_of(
             confirmation.subjects.access_recovery.via_name,
             for_=user.email,
+            method=confirmation.methods.email,
         )
 
         return bad_or(confirmation_page_url)
