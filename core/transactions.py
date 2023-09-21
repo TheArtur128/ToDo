@@ -1,3 +1,15 @@
+from typing import (
+    Generic, ClassVar, Callable, Any, Optional, Type, Literal, NoReturn
+)
+
+from act import (
+    temp, obj, Flag, flag_about, Arguments, via_indexer, bad, left, of, func,
+    contextual, partially, Special, R, O, L, Pm
+)
+
+from core.types import Annotation, ActionOf
+
+
 @via_indexer
 def RollbackableBy(
     parameters_annotation: Annotation,

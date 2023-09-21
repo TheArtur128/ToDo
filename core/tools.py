@@ -1,11 +1,6 @@
-from typing import Iterable, Callable, Any, TypeAlias, Optional
+from typing import Iterable
 
-from act import (
-    temp, obj, Special, bad, will, to, then, eventually, returnly,
-    optionally, Pm, V, R
-)
-
-from core.types import Annotaton
+from act import temp, obj, Special, bad, V
 
 
 def name_enum_of(annotated: temp(__annotations__=Iterable[str])) -> obj:
