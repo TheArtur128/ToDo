@@ -1,6 +1,6 @@
 @via_indexer
 def RollbackableBy(
-    parameters_annotation: Annotaton,
+    parameters_annotation: Annotation,
     return_annotation: Annotation,
 ) -> temp:
     return temp(rollback=Callable[parameters_annotation, return_annotation])
