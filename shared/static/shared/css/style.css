@@ -75,3 +75,92 @@ div {
   border-radius: 5px;
   text-align: center;
 }
+
+.form-errors, .form-notification {
+  background-color: #2d2c2e;
+}
+
+.front-axis {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  transform: translate(-50%);
+}
+
+#login-form {
+  height: 300px;
+  position: relative;
+}
+
+#registration-form {
+  height: 419px;
+}
+
+#recovery-form {
+  height: 330px;
+}
+
+#recovery-form-title {
+  margin-bottom: 35px;
+}
+
+#recovery-form-push-button {
+  position: absolute;
+  left: 12px;
+  bottom: 0px;
+}
+
+.push-data {
+  width: 55px;
+  height: 30px;
+  font-size: 17px;
+}
+
+.form-fileds {
+  display: inline-block;
+  text-align: left;
+  width: 250px;
+  margin-top: -20px;
+  margin-left: 15px;
+}
+
+.to-change-form {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+}
+
+.to-regain-access {
+  position: absolute;
+  left: 12px;
+  bottom: 8px;
+}
+
+.form-errors, .form-notification {
+  display: inline-block;
+  border-radius: 5px;
+  position: static;
+  top: 38px;
+  width: 270px;
+  float: left;
+  right: 2px;
+  text-align: left;
+}
+
+.form-errors *, .form-notification * {
+  padding-left: 0px;
+  margin: 5px;
+}
+
+.form-errors {
+  color: #f7f0f1;
+  border: solid 2px #f74358;
+}
+
+.form-notification {
+  border: solid 2px #45FF76;
+}
+
+.form-notification * {
+  margin-left: 10px;
+}
