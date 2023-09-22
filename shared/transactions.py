@@ -143,7 +143,7 @@ class rollbackable:
         return result is None
 
     @_rollbackable_on
-    def maybe(result: Special[bad[R]]) -> bool:
+    def maybe(result: Special[bad[Any]]) -> bool:
         return of(bad, result)
 
     @_rollbackable_on
