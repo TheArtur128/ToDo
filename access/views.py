@@ -11,6 +11,7 @@ from django.views import View
 from django.views.decorators.http import require_GET
 
 import confirmation
+from access import payload
 from access import services
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
@@ -38,6 +39,19 @@ def authorization_confirmation(
     auth.login(request, user)
 
     return redirect(reverse("tasks:index"))
+
+
+@confirmation.payload.registrate_for(
+    confirmation.payload.subjects.registration,
+    confirmation.payload.methods.email,
+)
+def registration_confirmation(
+    request: HttpRequest,
+    email: Email,
+) -> Optional[HttpResponse]:
+    user = payload.registered_user_by(email, request)
+
+    return None if user is None else redirect(reverse("tasks:index"))
 
 
 @login_required
