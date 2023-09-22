@@ -22,49 +22,9 @@ from shared.tools import bad_or
 from shared.types_ import Email, URL, ErrorMessage
 
 
-__all__ = (
-    "confirm", "login", "registrate", "logout", "access_recovery_by_name",
-    "access_recovery_by_email"
-)
-
-
-def confirm(
-    request: HttpRequest,
-    subject: confirmation.facade.Subject,
-    method: confirmation.facade.Method,
-    token: confirmation.facade.PortToken,
-) -> HttpResponse:
-    errors = tuple()
-
-    if request.method == 'GET':
-        form = ConfirmationForm()
-    else:
-        form = ConfirmationForm(data=form.POST)
-
-        if form.is_valid():
-            activation = confirmation.facade.Activation(
-                subject, method, token, request.POST["password"]
-            )
-            response = confirmation.facade.activate_by(activation, request)
-
-            if response is not None:
-                return response
-
-            errors = [
-                "You entered the wrong password"
-                f" or the {subject} time has expired"
-            ]
-
-    context = dict(
-        subject=subject, form=form, errors=(*form.errors.values(), *errors)
-    )
-
-    return render(request, "pages/confirmation.html", context)
-
-
-@confirmation.facade.registrate_for(
-    confirmation.facade.subjects.authorization,
-    confirmation.facade.methods.email,
+@confirmation.payload.registrate_for(
+    confirmation.payload.subjects.authorization,
+    confirmation.payload.methods.email,
 )
 def authorization_confirmation(
     request: HttpRequest,
@@ -86,76 +46,6 @@ def logout(request: HttpRequest) -> HttpResponse:
     auth.logout(request)
 
     return redirect(reverse("tasks:index"))
-
-
-_FormT = TypeVar("_FormT", bound=Form)
-
-
-class ViewWithForm(View):
-    form_type = property(v._form_type)
-    template_name = property(v._template_name)
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        return render(
-            request, self._template_name, dict(form=self._form_type())
-        )
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        form = self._form_type(data=request.POST)
-        render_with = (
-            _.render(request, self._template_name, dict(form=form) | v)
-        )
-
-        if not form.is_valid():
-            return render_with(dict(errors=tuple(form.errors.values())))
-
-        result = self._service(
-            request=request, form=form, render_with=render_with
-        )
-
-        if of(bad, result):
-            return render_with(dict(errors=tuple(result.value)))
-
-        return result
-
-    _form_type: Type[_FormT]
-    _template_name: str
-
-    def _service(
-        self,
-        *,
-        request: HttpRequest,
-        form: _FormT,
-        render_with: Callable[Mapping, HttpResponse]
-    ) -> HttpResponse | bad[Iterable[ErrorMessage]]:
-        raise NotImplementedError
-
-
-class _ConfirmationOpeningView(ViewWithForm):
-    _default_confirmation_open_failure_message: ErrorMessage = (
-        "Make sure you have entered your information correctly"
-    )
-
-    def _open_port(
-        self,
-        request: HttpRequest,
-    ) -> ok[URL] | bad[Optional[ErrorMessage]]:
-        raise NotImplementedError
-
-    def _service(
-        self,
-        *,
-        request: HttpRequest,
-        render_with: Callable[Mapping, HttpResponse],
-    ) -> HttpResponse:
-        result = self._open_port(request)
-
-        if of(ok, result):
-            return redirect(result.value)
-
-        default_message = self._default_confirmation_open_failure_message
-
-        return saving_context(on(None, default_message))(result)
 
 
 class LoginView(_ConfirmationOpeningView):

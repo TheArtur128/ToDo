@@ -14,6 +14,8 @@ PasswordHash: TypeAlias = str
 
 Name: TypeAlias = str
 
+FormT = TypeVar("_FormT", bound=Form)
+
 
 @via_indexer
 def RepositoryFromTo(

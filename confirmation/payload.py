@@ -4,7 +4,7 @@ from typing import TypeAlias, Optional, Any, Callable
 from act import will, returnly, temp, obj, via_indexer, reformer_of, I
 from django.http import HttpRequest, HttpResponse
 
-from access.confirmation import adapters, core
+from confirmation import adapters, core
 from shared.tools import name_enum_of
 from shared.types_ import URL, Token, Password, Annotaton
 from shared.transactions import Transaction, rollbackable
@@ -35,7 +35,7 @@ class subjects:
 
 
 @name_enum_of
-class methods:
+class _methods:
     email: Method
 
 

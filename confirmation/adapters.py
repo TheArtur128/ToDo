@@ -54,7 +54,7 @@ def confirmation_page_url_of(endpoint: EndpointOf[Email]) -> URL:
         endpoint.id,
     ]
 
-    relative_url = reverse("access:confirm", args=args)
+    relative_url = reverse("confirmation:confirm", args=args)
 
     return urljoin(settings.BASE_URL, relative_url)
 
