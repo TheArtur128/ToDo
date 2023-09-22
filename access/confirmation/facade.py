@@ -7,7 +7,7 @@ from django.http import HttpRequest, HttpResponse
 from access.confirmation import adapters
 from access.confirmation import core
 from shared.tools import name_enum_of
-from shared.types import URL, Token, Password, Annotaton
+from shared.types_ import URL, Token, Password, Annotaton
 from shared.transactions import Transaction, rollbackable
 
 

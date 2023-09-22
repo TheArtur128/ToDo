@@ -15,7 +15,7 @@ from django.urls import reverse
 
 from access.confirmation import core
 from shared.adapters import CacheRepository
-from shared.types import (
+from shared.types_ import (
     Token, URL, Email, Password, ID, RepositoryFromTo, Annotaton
 )
 

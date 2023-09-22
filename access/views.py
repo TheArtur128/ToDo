@@ -19,7 +19,7 @@ from access.forms import (
 from access.utils import for_anonymous
 from shared.models import User
 from shared.tools import bad_or
-from shared.types import Email, URL, ErrorMessage
+from shared.types_ import Email, URL, ErrorMessage
 
 
 __all__ = (
