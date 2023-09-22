@@ -18,7 +18,7 @@ class CacheRepository(Generic[K, V]):
             type(self).__name__, self.__location, self.__salt, self.__subject
         )
 
-    def __getitem__(self, key: K) -> V:
+    def __getitem__(self, key: K) -> Optional[V]:
         return caches[self.__location].get(self.__key_for(key))
 
     def __setitem__(self, key: K, value: V) -> None:
