@@ -23,6 +23,30 @@ def SendingOf(id_annotation: Annotaton) -> temp:
     )
 
 
+@name_enum_of
+class subjects:
+    authorization: Subject
+    registration: Subject
+
+    @name_enum_of
+    class access_recovery:
+        via_email: Subject
+        via_name: Subject
+
+
+@name_enum_of
+class methods:
+    email: Method
+
+
+@obj.of
+class via:
+    email: SendingOf[Email] = obj(
+        method=methods.email,
+        by=rollbackable.binary(adapters.send_confirmation_mail_to),
+    )
+
+
 @dataclass(frozen=True)
 class Activation:
     subject: Subject
@@ -79,30 +103,6 @@ def open_port_of(
         )
 
     return confirmation_page_url if get_ok() else None
-
-
-@name_enum_of
-class subjects:
-    authorization: Subject
-    registration: Subject
-
-    @name_enum_of
-    class access_recovery:
-        via_email: Subject
-        via_name: Subject
-
-
-@name_enum_of
-class methods:
-    email: Method
-
-
-@obj.of
-class via:
-    email = obj(
-        method=methods.email,
-        by=rollbackable.binary(adapters.send_confirmation_mail_to),
-    )
 
 
 def _from_activation_to_access(
