@@ -98,7 +98,7 @@ AUTH_PASSWORD_VALIDATORS = [
     }
 ]
 
-AUTH_USER_MODEL = "core.User"
+AUTH_USER_MODEL = "shared.User"
 
 LOGIN_URL = "/sign-in"
 
