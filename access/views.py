@@ -69,8 +69,12 @@ def confirm(
 def authorization_confirmation(
     request: HttpRequest,
     email: Email,
-) -> HttpResponse:
-    user = User.objects.get(email=email)
+) -> Optional[HttpResponse]:
+    user = User.objects.filter(email=email).first()
+
+    if user is None:
+        return None
+
     auth.login(request, user)
 
     return redirect(reverse("tasks:index"))
