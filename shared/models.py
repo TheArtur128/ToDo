@@ -105,7 +105,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         TaskSettings,
         on_delete=PROTECT,
         blank=True,
-        null=True)
+        null=True,
+    )
 
     USERNAME_FIELD = "name"
     REQUIRED_FIELDS = ("email", "password")
