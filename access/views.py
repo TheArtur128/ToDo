@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.decorators.http import require_GET
 
-from access import confirmation
+import confirmation
 from access import services
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
@@ -63,9 +63,9 @@ class LoginView(_ConfirmationOpeningView):
         if user is None:
             return bad(None)
 
-        confirmation_page_url = confirmation.facade.open_port_of(
-            confirmation.facade.subjects.authorization,
-            confirmation.facade.via.email,
+        confirmation_page_url = confirmation.payload.open_port_of(
+            confirmation.payload.subjects.authorization,
+            confirmation.payload.via.email,
             for_=request.POST["email"],
         )
 
@@ -104,9 +104,9 @@ class _EmailAccessRecoveryView(_ConfirmationOpeningView):
         if user is None:
             return bad(None)
 
-        confirmation_page_url = confirmation.facade.open_port_of(
-            confirmation.facade.subjects.access_recovery.via_name,
-            confirmation.facade.via.email,
+        confirmation_page_url = confirmation.payload.open_port_of(
+            confirmation.payload.subjects.access_recovery.via_name,
+            confirmation.payload.via.email,
             for_=user.email,
         )
 
