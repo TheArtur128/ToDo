@@ -9,10 +9,6 @@ def open_confirmation_port_for(user_data: UserData) -> Optional[URL]:
     )
 
 
-@dataclass(unsafe_hash=True)
-class Notification:
-    method: confirmation.facade.Method
-    resource: str
 
 
 @obj.of
