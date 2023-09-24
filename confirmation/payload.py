@@ -1,50 +1,16 @@
 from dataclasses import dataclass
-from typing import TypeAlias, Optional, Any, Callable
+from typing import TypeAlias, Optional
 
-from act import will, returnly, temp, obj, via_indexer, reformer_of, I
 from django.http import HttpRequest, HttpResponse
 
 from confirmation import adapters, core
-from shared.tools import name_enum_of
-from shared.types_ import URL, Token, Password, Annotaton
+from shared.types_ import Token, Password
 from shared.transactions import Transaction, rollbackable
 
 
 Subject: TypeAlias = adapters.Subject
 Method: TypeAlias = adapters.Method
 PortToken: TypeAlias = Token
-
-
-@via_indexer
-def SendingOf(id_annotation: Annotaton) -> temp:
-    return temp(
-        method=Method,
-        by=Callable[adapters.EndpointOf[id_annotation], Callable[URL, Any]],
-    )
-
-
-@name_enum_of
-class subjects:
-    authorization: Subject
-    registration: Subject
-
-    @name_enum_of
-    class access_recovery:
-        via_email: Subject
-        via_name: Subject
-
-
-@name_enum_of
-class _methods:
-    email: Method
-
-
-@obj.of
-class via:
-    email: SendingOf[Email] = obj(
-        method=methods.email,
-        by=rollbackable.binary(adapters.send_confirmation_mail_to),
-    )
 
 
 @dataclass(frozen=True)
@@ -60,6 +26,8 @@ def activate_by(
     activation: Activation,
     request: HttpRequest,
 ) -> Optional[HttpResponse]:
+    do = transactionally(optionally.do, binary.do)
+
     handling_of = rollbackable.optionally(adapters.endpoint_handler_of)
     endpoint_of = rollbackable.optionally(
         adapters.endpoint_repository.endpoint_of,
@@ -75,38 +43,6 @@ def activate_by(
 
     return result if get_ok() else None
 
-
-def registrate_for(subject: Subject, method: Method) -> reformer_of[
-    adapters.ViewHandlerOf[I]
-]:
-    port = core.Port(subject, method)
-    registrate = will(adapters.endpoint_handler_repository.registrate_for)(port)
-
-    return returnly(registrate)
-
-
-def open_port_of(
-    subject: Subject,
-    sending: SendingOf[I],
-    *,
-    for_: I,
-) -> Optional[URL]:
-    endpoint = core.Endpoint(
-        adapters.generate_port_access_token(),
-        core.Port(subject, sending.method),
-        for_,
-        adapters.generate_password(),
-    )
-
-    with Transaction(sending.by) as get_ok:
-        confirmation_page_url = core.open(
-            endpoint,
-            access_to=adapters.confirmation_page_url_of,
-            sending_by=sending.by,
-            save=adapters.endpoint_repository.save,
-        )
-
-    return confirmation_page_url if get_ok() else None
 
 
 def _from_activation_to_access(
