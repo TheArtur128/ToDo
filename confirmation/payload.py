@@ -55,17 +55,21 @@ class Activation:
     password: Password
 
 
+@transaction
 def activate_by(
     activation: Activation,
     request: HttpRequest,
 ) -> Optional[HttpResponse]:
-    endpoint_of = rollbackable.optionally(adapters.endpoint_repository.get_of)
+    handling_of = rollbackable.optionally(adapters.endpoint_handler_of)
+    endpoint_of = rollbackable.optionally(
+        adapters.endpoint_repository.endpoint_of,
+    )
 
     with Transaction() as get_ok:
         result = core.activate_by(
             _from_activation_to_access(activation),
             endpoint_of=endpoint_of,
-            handling_of=adapters.view_handler_payload_of(request),
+            payload_of=adapters.payload_by(request, handling_of=handling_of),
             close=adapters.endpoint_repository.close,
         )
 
@@ -108,6 +112,6 @@ def open_port_of(
 def _from_activation_to_access(
     activation: Activation,
 ) -> adapters.AccessToEndpoint:
-    port = core.Port(activation.subject, activation.method)
+    port = adapters.Port(activation.subject, activation.method)
 
-    return core.AccessToEndpoint(activation.token, port, activation.password)
+    return adapters.AccessToEndpoint(activation.token, port, activation.password)
