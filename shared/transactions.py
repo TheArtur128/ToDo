@@ -192,3 +192,8 @@ def transaction(action: Callable[Pm, R]) -> Callable[Pm, R]:
             return rollback.cursor.result
 
     return decorated
+
+
+# Not implemetned
+def for_transaction() -> ...:
+    ...
