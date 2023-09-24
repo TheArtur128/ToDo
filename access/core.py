@@ -1,37 +1,39 @@
-from typing import Callable, Any
+from dataclasses import dataclass
+from typing import Callable, Generic
+
+from act import U, A, R
 
 from shared.tools import struct
 from shared.types_ import Name, Email, Password
 
 
-@struct
-class User:
-    name: Name
-    email: Email
-    password: Password
+@dataclass(frozen=True)
+class Registration(Generic[U, A]):
+    confirmation_access: A
+    user_reminder: U
 
 
-def open_registration_port_for(
-    user: User.T,
+def registration_for(
+    user: U,
     *,
-    already_have: Callable[User.T, bool],
-    open_confirmation_port_for: Callable[User.T, A],
-    remember: Callable[User.T, Any],
-) -> Optional[A]:
-    if already_have(user):
+    is_already_registered: Callable[U, bool],
+    confirmation_access_for: Callable[U, A],
+    reminder_of: Callable[U, R],
+) -> Optional[Registration[R, A]]:
+    if is_already_registered(user):
         return None
 
-    access_to_confirm = open_confirmation_port_for(user)
-    remember(user)
-
-    return access_to_confirm
+    return Registration(confirmation_access_for(user), reminder_of(user))
 
 
-def registrate(
-    user: User.T,
+def register_user_by(
+    user_id: I,
     *,
-    already_have: Callable[User.T, bool],
-    authorized: Callable[User.T, A],
+    remembered_user_by: Callable[I, U],
+    is_already_registered: Callable[U, bool],
+    authorized: Callable[U, A],
     saved: Callable[A, S],
-) -> S:
-    return None if already_have(user) else saved(authorized(user))
+) -> Optional[S]:
+    user = remembered_user_by(user_id)
+
+    return None if is_already_registered(user) else saved(authorized(user))

@@ -23,7 +23,7 @@ from shared.tools import bad_or
 from shared.types_ import Email, URL, ErrorMessage
 
 
-@confirmation.payload.registrate_for(
+@confirmation.payload.register_for(
     confirmation.payload.subjects.authorization,
     confirmation.payload.methods.email,
 )
@@ -41,7 +41,7 @@ def authorization_confirmation(
     return redirect(reverse("tasks:index"))
 
 
-@confirmation.payload.registrate_for(
+@confirmation.payload.register_for(
     confirmation.payload.subjects.registration,
     confirmation.payload.methods.email,
 )
@@ -49,7 +49,7 @@ def registration_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    user = payload.registered_user_by(email, request)
+    user = payload.register_user_by(email, request=request)
 
     return None if user is None else redirect(reverse("tasks:index"))
 
