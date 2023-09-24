@@ -18,66 +18,88 @@ def RollbackableBy(
     return temp(rollback=Callable[parameters_annotation, return_annotation])
 
 
-class TransactionError(Exception):
-    ...
+class _TransactionCursor(Generic[R]):
+    operations = property(c.__operations)
+
+    def __init__(
+        self,
+        operations: Iterable[Special[
+            RollbackableBy[[], R] | Callable[[], Any],
+            O,
+        ]],
+        result: R,
+    ) -> None:
+        self.__operations = tuple(operations)
+        self.result = result
+
+    def rollback(self) -> None:
+        for operation in reversed(self.__operations):
+            if isinstance(operation, RollbackableBy[[], Any]):
+                operation.rollback()
+
+    def combined_with(self, other: Self) -> Self:
+        return _TransactionCursor(
+            (*self.operations, *other.operations),
+            result=self.result,
+        )
 
 
-class TransactionRollback(Exception):
-    ...
+class _TransactionRollback(Generic[M, R], Exception):
+    def __init__(
+        self,
+        message: str = str(),
+        cursor: Optional[_TransactionCursor] = None
+    ) -> None:
+        super().__init__(message)
+        self.cursor = cursor
 
 
 class Transaction(Generic[O]):
-    __NO_RESULT: ClassVar[Flag] = flag_about("__NO_RESULT")
-    __result: R | __NO_RESULT = __NO_RESULT
-
     def __init__(
         self,
         *operations: Special[RollbackableBy[[], R] | Callable[[], Any], O],
     ) -> None:
-        self.__operations = tuple(operations)
+        self.__cursor = _TransactionCursor(operations, True)
 
     def __enter__(self) -> Callable[[], bool]:
-        def get_result() -> contextual[bool, R]:
-            if self.__result is not type(self).__NO_RESULT:
-                return self.__result
-
-            raise TransactionError("getting results of an active transaction")
-
-        return get_result
+        return to(self.__cursor.result)
 
     def __exit__(
         self,
-        error_type: Optional[Type[Special[TransactionRollback, Exception]]],
-        error: Special[TransactionRollback, Exception],
+        error_type: Optional[Type[Special[_TransactionRollback, Exception]]],
+        rollback: Special[_TransactionRollback, Exception],
         traceback: Any,
     ) -> bool:
-        if not issubclass(error_type, TransactionRollback):
+        if not issubclass(error_type, _TransactionRollback):
             return False
 
-        self.__result = self.__rollback_operations()
+        self.__cursor.result = False
+        self.__cursor_when(rollback).rollback()
 
         return True
 
     def run(self) -> bool:
         with self as get_ok:
-            for operation in filter(callable, self.__operations):
+            for operation in filter(callable, self.__cursor.operations):
                 operation()
 
         return get_ok()
 
-    def __rollback_operations(self) -> bool:
-        ok = True
+    def __cursor_when(
+        self,
+        rollback: _TransactionRollback[R],
+    ) -> _TransactionRollback[R]:
+        if rollback.cursor is None:
+            return self.__cursor
 
-        for operation in reversed(self.__operations):
-            if isinstance(operation, RollbackableBy[[], Any]):
-                ok = False
-                operation.rollback()
-
-        return ok
+        return self.__cursor.combined_with(rollback.cursor)
 
 
-def rollback() -> NoReturn:
-    raise TransactionRollback("rollback a transaction outside of a transaction")
+def rollback(*, cursor: Optional[_TransactionCursor] = None) -> NoReturn:
+    raise _TransactionRollback(
+        "rollback a transaction outside of a transaction",
+        cursor,
+    )
 
 
 @func
