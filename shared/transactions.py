@@ -104,12 +104,20 @@ def rollback(*, cursor: Optional[_TransactionCursor] = None) -> NoReturn:
 
 @func
 class _rollbackable:
+    __OPERATION_ANNOTATION: ClassVar[Final[TypeAlias[Annotation]]]
+    __OPERATION_ANNOTATION = (
+        ActionOf[Pm, R] & RollbackableBy[Pm, L] | ActionOf[Pm, R]
+    )
+
     __arguments_to_rollback: Optional[Arguments] = None
 
-    def __init__(
-        self,
-        operation: ActionOf[Pm, R] & RollbackableBy[Pm, L] | ActionOf[Pm, R],
-    ) -> None:
+    def __new__(cls, operation: __OPERATION_ANNOTATION | Self) -> Self:
+        if isinstance(operation, _rollbackable):
+            return operation
+
+        return super().__new__(cls)
+
+    def __init__(self, operation: __OPERATION_ANNOTATION) -> None:
         self.__operation = operation
 
     def __call__(self, *args: Pm.args, **kwargs: Pm.kwargs) -> R:
