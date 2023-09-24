@@ -179,3 +179,16 @@ class rollbackable:
     @_rollbackable_on
     def either(result: Special[left[Any]]) -> bool:
         return of(left, result)
+
+
+def transaction(action: Callable[Pm, R]) -> Callable[Pm, R]:
+    @wraps(action)
+    def decorated(*args: Pm.args, **kwargs: Pm.kwargs) -> Special[R]:
+        try:
+            result = action(*args, **kwargs)
+        except _TransactionRollback as rollback:
+            rollback.cursor.rollback()
+
+            return rollback.cursor.result
+
+    return decorated
