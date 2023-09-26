@@ -249,6 +249,7 @@ class rollbackable:
 
 
 
+@partially
 def transaction(action: Callable[Pm, R]) -> Callable[Pm, R]:
     @wraps(action)
     def decorated(*args: Pm.args, **kwargs: Pm.kwargs) -> Special[R]:
