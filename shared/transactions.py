@@ -1,13 +1,18 @@
+from dataclasses import dataclass, field
+from functools import cached_property, reduce, wraps
+from itertools import count
 from typing import (
-    Generic, ClassVar, Callable, Any, Optional, Type, Literal, NoReturn
+    Generic, ClassVar, Callable, Any, Optional, Type, Literal, NoReturn, Final,
+    Iterable, Iterator, Self, Generator, TypeAlias, ParamSpec
 )
 
 from act import (
-    temp, obj, Flag, flag_about, Arguments, via_indexer, bad, left, of, func,
-    contextual, partially, Special, R, O, L, Pm
+    temp, obj, Arguments, ActionChain, via_indexer, bad, left, of, to, tmap,
+    func, partially, a, m, s, c, r, o, Special, Unia, A, B, R, O, L, M, Pm
 )
 
-from shared.types import Annotation, ActionOf
+from shared.tools import frm
+from shared.types_ import Annotation, ActionOf
 
 
 @via_indexer
@@ -119,15 +124,22 @@ class _TransactionRollback(Exception):
         self.operations = operations
 
 
+@dataclass
+class _TransactionResult(Generic[R]):
+    results: tuple[R] = tuple()
+    ok: bool = True
+
+
 class Transaction(Generic[O]):
     def __init__(
         self,
         *operations: Special[RollbackableBy[[], R] | Callable[[], Any], O],
     ) -> None:
         self.__operations = _TransactionOperations(operations)
+        self.__result = _TransactionResult()
 
-    def __enter__(self) -> Callable[[], bool]:
-        return to(self.__cursor.result)
+    def __enter__(self) -> _TransactionResult[R]:
+        return self.__result
 
     def __exit__(
         self,
@@ -138,17 +150,17 @@ class Transaction(Generic[O]):
         if not isinstance(rollback, _TransactionRollback):
             return False
 
-        self.__cursor.result = False
-        self.__cursor_when(rollback).rollback()
+        self.__result.results = self.__operations_when(rollback).rollback()
+        self.__result.ok = False
 
         return True
 
-    def run(self) -> bool:
-        with self as get_ok:
-            for operation in filter(callable, self.__cursor.operations):
+    def run(self) -> _TransactionResult[R]:
+        with self as result:
+            for operation in filter(callable, self.__operations.operations):
                 operation()
 
-        return get_ok()
+        return result
 
     def __operations_when(
         self,
