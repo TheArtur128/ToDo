@@ -261,8 +261,3 @@ def transaction(action: Callable[Pm, R]) -> Callable[Pm, R]:
             return rollback_mark.operations.bad_result
 
     return decorated
-
-
-# Not implemetned
-def for_transaction() -> ...:
-    ...
