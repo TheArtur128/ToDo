@@ -135,7 +135,7 @@ class Transaction(Generic[O]):
         rollback: Special[_TransactionRollback, Exception],
         traceback: Any,
     ) -> bool:
-        if not issubclass(error_type, _TransactionRollback):
+        if not isinstance(rollback, _TransactionRollback):
             return False
 
         self.__cursor.result = False
