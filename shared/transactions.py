@@ -188,8 +188,6 @@ class _rollbackable:
         ActionOf[Pm, R] & RollbackableBy[Pm, L] | ActionOf[Pm, R]
     )
 
-    __arguments_to_rollback: Optional[Arguments] = None
-
     def __new__(cls, operation: __OPERATION_ANNOTATION | Self) -> Self:
         if isinstance(operation, _rollbackable):
             return operation
@@ -198,22 +196,21 @@ class _rollbackable:
 
     def __init__(self, operation: __OPERATION_ANNOTATION) -> None:
         self.__operation = operation
+        self.__arguments_to_rollback = list()
 
     def __call__(self, *args: Pm.args, **kwargs: Pm.kwargs) -> R:
-        self.__arguments_to_rollback = Arguments(args, kwargs)
+        self.__arguments_to_rollback.append(Arguments(args, kwargs))
 
         return self.__operation(*args, **kwargs)
 
-    def rollback(self) -> Optional[L]:
-        can_rollback = (
-            self.__arguments_to_rollback is not None
-            and isinstance(self.__operation, RollbackableBy[..., Any])
+    def rollback(self) -> tuple[L]:
+        if not isinstance(self.__operation, RollbackableBy[..., Any]):
+            return tuple()
+
+        return tmap(
+            a.call._(self.__operation.rollback),
+            self.__arguments_to_rollback,
         )
-
-        if not can_rollback:
-            return None
-
-        return self.__arguments_to_rollback.call(self.__operation.rollback)
 
 
 @partially
