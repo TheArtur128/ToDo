@@ -4,7 +4,7 @@ from act import via_indexer, temp
 
 
 ErrorMessage: TypeAlias = str
-Annotaton: TypeAlias = Any
+Annotation: TypeAlias = Any
 
 URL: TypeAlias = str
 ID: TypeAlias = str
@@ -19,8 +19,8 @@ FormT = TypeVar("_FormT", bound=Form)
 
 @via_indexer
 def RepositoryFromTo(
-    key_annotation: Annotaton,
-    value_annotation: Annotaton,
+    key_annotation: Annotation,
+    value_annotation: Annotation,
 ) -> temp:
     return temp(
         get_of=Callable[key_annotation, value_annotation],
@@ -31,7 +31,7 @@ def RepositoryFromTo(
 
 @via_indexer
 def ActionOf(
-    parameters_annotation: Annotaton,
-    return_annotation: Annotaton,
+    parameters_annotation: Annotation,
+    return_annotation: Annotation,
 ) -> temp:
     return temp(__call__=Callable[parameters_annotation, return_annotation])
