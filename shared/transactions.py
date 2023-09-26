@@ -253,7 +253,7 @@ def transaction(action: Callable[Pm, R]) -> Callable[Pm, R]:
     @wraps(action)
     def decorated(*args: Pm.args, **kwargs: Pm.kwargs) -> Special[R]:
         try:
-            result = action(*args, **kwargs)
+            return action(*args, **kwargs)
         except _TransactionRollback as rollback_mark:
             rollback_mark.operations.rollback()
 
