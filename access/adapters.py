@@ -22,7 +22,7 @@ class user_local_repository:
     _config: dict[Email, User] = dict()
 
     get_of = _config.get
-    save = _._config[u.email].mset(user)
+    save = _._config[u.email].mset(u)
     has = _._config.values_().has(u)
 
 
