@@ -18,40 +18,99 @@ def RollbackableBy(
     return temp(rollback=Callable[parameters_annotation, return_annotation])
 
 
-class _TransactionCursor(Generic[R]):
-    operations = property(c.__operations)
+class _TransactionOperations(Generic[R]):
+    __Operation: ClassVar[Annotation] = Special[RollbackableBy[[], R]]
+
+    @dataclass(frozen=True)
+    class __MarkedOperation:
+        operation: "_TransactionOperations.__Operation"
+        id: int = field(default_factory=next |to| count())
+
+    bad_result = property(o.__bad_result)
 
     def __init__(
         self,
-        operations: Iterable[Special[
-            RollbackableBy[[], R] | Callable[[], Any],
-            O,
-        ]],
-        result: R,
+        operations: Iterable[__Operation | __MarkedOperation] = tuple(),
+        bad_result: R = None,
+        _is_operations_safe: bool = False,
     ) -> None:
-        self.__operations = tuple(operations)
-        self.result = result
-
-    def rollback(self) -> None:
-        for operation in reversed(self.__operations):
-            if isinstance(operation, RollbackableBy[[], Any]):
-                operation.rollback()
-
-    def combined_with(self, other: Self) -> Self:
-        return _TransactionCursor(
-            (*self.operations, *other.operations),
-            result=self.result,
+        self.__bad_result = bad_result
+        self._marked_operations = (
+            operations
+            if _is_operations_safe
+            else tmap(_TransactionOperations.__MarkedOperation, operations)
         )
 
+    def rollback(self) -> tuple[R]:
+        return tuple(
+            operation.rollback()
+            for operation in reversed(self._marked_operations)
+            if isinstance(operation, RollbackableBy[[], Any])
+        )
 
-class _TransactionRollback(Generic[M, R], Exception):
+    def combined_with(self, other: Self) -> Self:
+        marked_operations = self.__marked_operation_combination_between(
+            self._marked_operations,
+            other._marked_operations,
+        )
+
+        return _TransactionOperations(
+            tuple(marked_operations),
+            bad_result=self.__bad_result,
+            _is_operations_safe=True,
+        )
+
+    @staticmethod
+    def __marked_operation_combination_between(
+        first_ones: tuple[__MarkedOperation],
+        second_ones: tuple[__MarkedOperation],
+    ) -> Generator[__MarkedOperation, None, None]:
+        first_ones_index = 0
+        second_ones_index = 0
+
+        is_first_ones_ended = False
+        is_second_ones_ended = False
+
+        while True:
+            is_first_ones_ended = (
+                is_first_ones_ended
+                or first_ones_index > len(first_ones) - 1
+            )
+            is_second_ones_ended = (
+                is_second_ones_ended
+                or second_ones_index > len(second_ones) - 1
+            )
+
+            if is_first_ones_ended and is_second_ones_ended:
+                return
+
+            elif is_first_ones_ended:
+                yield from second_ones[second_ones_index:]
+                is_second_ones_ended = True
+
+            elif is_second_ones_ended:
+                yield from first_ones[first_ones_index:]
+                is_first_ones_ended = True
+
+            elif (
+                first_ones[first_ones_index].id
+                <= second_ones[second_ones_index].id
+            ):
+                yield first_ones[first_ones_index]
+                first_ones_index += 1
+            else:
+                yield second_ones[second_ones_index]
+                second_ones_index += 1
+
+
+class _TransactionRollback(Exception):
     def __init__(
         self,
         message: str = str(),
-        cursor: Optional[_TransactionCursor] = None
+        operations: _TransactionOperations = _TransactionOperations(),
     ) -> None:
         super().__init__(message)
-        self.cursor = cursor
+        self.operations = operations
 
 
 class Transaction(Generic[O]):
@@ -59,7 +118,7 @@ class Transaction(Generic[O]):
         self,
         *operations: Special[RollbackableBy[[], R] | Callable[[], Any], O],
     ) -> None:
-        self.__cursor = _TransactionCursor(operations, True)
+        self.__operations = _TransactionOperations(operations)
 
     def __enter__(self) -> Callable[[], bool]:
         return to(self.__cursor.result)
@@ -85,20 +144,23 @@ class Transaction(Generic[O]):
 
         return get_ok()
 
-    def __cursor_when(
+    def __operations_when(
         self,
-        rollback: _TransactionRollback[R],
-    ) -> _TransactionRollback[R]:
-        if rollback.cursor is None:
-            return self.__cursor
+        rollback: _TransactionRollback,
+    ) -> _TransactionOperations:
+        if rollback.operations is None:
+            return self.__operations
 
-        return self.__cursor.combined_with(rollback.cursor)
+        return self.__operations.combined_with(rollback.operations)
 
 
-def rollback(*, cursor: Optional[_TransactionCursor] = None) -> NoReturn:
+def rollback(
+    *,
+    _operations: Optional[_TransactionOperations] = None,
+) -> NoReturn:
     raise _TransactionRollback(
         "rollback a transaction outside of a transaction",
-        cursor,
+        _operations,
     )
 
 
@@ -186,10 +248,10 @@ def transaction(action: Callable[Pm, R]) -> Callable[Pm, R]:
     def decorated(*args: Pm.args, **kwargs: Pm.kwargs) -> Special[R]:
         try:
             result = action(*args, **kwargs)
-        except _TransactionRollback as rollback:
-            rollback.cursor.rollback()
+        except _TransactionRollback as rollback_mark:
+            rollback_mark.operations.rollback()
 
-            return rollback.cursor.result
+            return rollback_mark.operations.bad_result
 
     return decorated
 
