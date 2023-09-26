@@ -182,9 +182,8 @@ def rollback(
     )
 
 
-@func
 class _rollbackable:
-    __OPERATION_ANNOTATION: ClassVar[Final[TypeAlias[Annotation]]]
+    __OPERATION_ANNOTATION: ClassVar[TypeAlias]
     __OPERATION_ANNOTATION = (
         ActionOf[Pm, R] & RollbackableBy[Pm, L] | ActionOf[Pm, R]
     )
