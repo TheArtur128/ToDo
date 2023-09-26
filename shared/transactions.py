@@ -246,7 +246,106 @@ class rollbackable:
     maybe = _rollback_on(of(left))
 
 
+class do:
+    __RT: ClassVar[TypeAlias] = Unia(M, Callable)
+    __ModeT: ClassVar[TypeAlias] = Callable[Callable[Pm, R], __RT]
+    __completed_operation_cache: Optional[_TransactionOperations] = None
 
+    def __init__(
+        self,
+        *transaction_modes: __ModeT,
+        else_: L = None,
+        _parent: Optional[Self] = None,
+    ) -> None:
+        self.__transaction_modes = ActionChain(transaction_modes)
+        self.__operations = _TransactionOperations(bad_result=else_)
+        self.__parent = _parent
+        self.__childs = list()
+
+    @property(s.__operations).setter
+    def _operations(self, operations: _TransactionOperations) -> None:
+        self.__operations = operations
+        self._clear_network_cache()
+
+    @property
+    def _completed_operations(self) -> _TransactionOperations:
+        if self.__parent is not None:
+            return self.__parent._completed_operations
+        elif self.__completed_operation_cache is not None:
+            return self.__completed_operation_cache
+        else:
+            self.__completed_operation_cache = self.__operations.combined_with(
+                self._child_operations,
+            )
+
+            return self.__completed_operation_cache
+
+    @cached_property
+    def _child_operations(self) -> _TransactionOperations:
+        if not self.__childs:
+            return _TransactionOperations()
+
+        return (
+            self.__childs
+            |frm| (map |to| c._child_operations)
+            |frm| (reduce |to| _TransactionOperations.combined_with)
+        )
+
+    def __iter__(self) -> Iterator[Self]:
+        return map(self.create_child_for, self.__transaction_modes)
+
+    def create_child_for(self, mode: __ModeT) -> Self:
+        child = do(
+            mode,
+            else_=self.__operations.bad_result,
+            _parent=self,
+        )
+
+        self._adopt(child)
+        return child
+
+    def __call__(self, operation: Callable[Pm, R]) -> __RT:
+        if not self.__is_accepted(operation):
+            self.__accept(operation)
+
+        return self.__decorated(operation)
+
+    def _adopt(self, child: Self) -> None:
+        self.__childs.append(child)
+        self._clear_network_cache()
+
+    def _clear_network_cache(self) -> None:
+        self.__dict__.pop("_child_operations", None)
+        self.__parent._clear_network_cache()
+
+    def __accept(self, operation: Callable[Pm, R]) -> None:
+        operations_to_combine = _TransactionOperations([operation])
+        self.__operations = self.__operations.combined_with(
+            operations_to_combine,
+        )
+
+    def __is_accepted(self, operation: Callable[Pm, R]) -> bool:
+        return operation in self._completed_operations
+
+    def __decorated(self, operation: Callable[Pm, R]) -> Callable:
+        if self.__is_accepted(operation):
+            return self.__transaction_modes(operation)
+
+        @self.__transaction_modes
+        def decorated_operation(*args, **kwargs):
+            try:
+                return operation(*args, **kwargs)
+            except _TransactionRollback as rollback_mark:
+                operations = self._completed_operations
+
+                if rollback_mark.operations is not None:
+                    operations = operations.combined_with(
+                        rollback_mark.operations,
+                    )
+
+                rollback(_operations=operations)
+
+        return decorated_operation
 
 
 @partially
