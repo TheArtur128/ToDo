@@ -26,23 +26,14 @@ def activate_by(
     activation: Activation,
     request: HttpRequest,
 ) -> Optional[HttpResponse]:
-    do = transactionally(optionally.do, binary.do)
+    do = do(rollbackable.optionally)
 
-    handling_of = rollbackable.optionally(adapters.endpoint_handler_of)
-    endpoint_of = rollbackable.optionally(
-        adapters.endpoint_repository.endpoint_of,
+    return core.activate_by(
+        _from_activation_to_access(activation),
+        endpoint_of=do(endpoint_of_),
+        payload_of=adapters.payload_by(request, handling_of=do(handling_of)),
+        close=adapters.endpoint_repository.close,
     )
-
-    with Transaction() as get_ok:
-        result = core.activate_by(
-            _from_activation_to_access(activation),
-            endpoint_of=endpoint_of,
-            payload_of=adapters.payload_by(request, handling_of=handling_of),
-            close=adapters.endpoint_repository.close,
-        )
-
-    return result if get_ok() else None
-
 
 
 def _from_activation_to_access(
