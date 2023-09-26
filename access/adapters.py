@@ -31,3 +31,6 @@ class user_django_orm_repository:
     get_of = _.User.objects.filter(email=e).first._()
     save = User.save
     has = u.id.is_not(None)
+
+
+authorized = returnly(flipped(auth.login))
