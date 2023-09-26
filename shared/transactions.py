@@ -41,6 +41,12 @@ class _TransactionOperations(Generic[R]):
             else tmap(_TransactionOperations.__MarkedOperation, operations)
         )
 
+    def __len__(self) -> int:
+        return len(self._marked_operations)
+
+    def __contains__(self, operation: Any) -> bool:
+        return operation in tmap(m.operation, self._marked_operations)
+
     def rollback(self) -> tuple[R]:
         return tuple(
             operation.rollback()
