@@ -214,7 +214,7 @@ class _rollbackable:
 
 
 @partially
-def _rollbackable_on(
+def _rollback_on(
     is_to_rollback: Callable[R, bool],
     operation: ActionOf[Pm, R] & RollbackableBy[Pm, L] | ActionOf[Pm, R],
 ) -> ActionOf[Pm, R] & RollbackableBy[[], Optional[L]]:
@@ -240,21 +240,13 @@ def _rollbackable_on(
 class rollbackable:
     __call__ = _rollbackable
 
-    @_rollbackable_on
-    def binary(result: Special[Literal[False]]) -> bool:
-        return result is False
+    binary = _rollback_on(r.is_(False))
+    optionally = _rollback_on(r.is_(None))
+    maybe = _rollback_on(of(bad))
+    maybe = _rollback_on(of(left))
 
-    @_rollbackable_on
-    def optionally(result: Special[None]) -> bool:
-        return result is None
 
-    @_rollbackable_on
-    def maybe(result: Special[bad[Any]]) -> bool:
-        return of(bad, result)
 
-    @_rollbackable_on
-    def either(result: Special[left[Any]]) -> bool:
-        return of(left, result)
 
 
 def transaction(action: Callable[Pm, R]) -> Callable[Pm, R]:
