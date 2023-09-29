@@ -23,8 +23,9 @@ def RollbackableBy(
     return temp(rollback=Callable[parameters_annotation, return_annotation])
 
 
-class _TransactionOperations(Generic[R]):
-    __Operation: ClassVar[Annotation] = Special[RollbackableBy[[], R]]
+class _TransactionOperations:
+    __Operation: ClassVar[Annotation]
+    __Operation = Special[RollbackableBy[[], B] | Callable[[], R]]
 
     @dataclass(frozen=True)
     class __MarkedOperation:
