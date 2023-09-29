@@ -83,7 +83,7 @@ class _RegistrationView(confirmation.OpeningView):
             password=request.POST["password1"],
         )
 
-        confirmation_page_url = do(services.open_registration_port_for(user))
+        confirmation_page_url = do(services.open_registration_port_for)(user)
 
         return confirmation_page_url
 
