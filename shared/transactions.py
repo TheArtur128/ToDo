@@ -249,9 +249,11 @@ class _rollbackable:
         self.__arguments_to_rollback = list()
 
     def __call__(self, *args: Pm.args, **kwargs: Pm.kwargs) -> R:
+        result = self.__operation(*args, **kwargs)
+
         self.__arguments_to_rollback.append(Arguments(args, kwargs))
 
-        return self.__operation(*args, **kwargs)
+        return result
 
     def rollback(self) -> tuple[L]:
         if not isinstance(self.__operation, RollbackableBy[..., Any]):
