@@ -162,14 +162,8 @@ class _TransactionOperations:
                 second_ones_index += 1
 
 
-class _TransactionRollback(Exception):
-    def __init__(
-        self,
-        message: str = str(),
-        operations: _TransactionOperations = _TransactionOperations(),
-    ) -> None:
-        super().__init__(message)
-        self.operations = operations
+class _TransactionRollbackMark(Exception):
+    ...
 
 
 @dataclass
@@ -191,42 +185,28 @@ class Transaction(Generic[O]):
 
     def __exit__(
         self,
-        error_type: Optional[Type[Special[_TransactionRollback, Exception]]],
-        rollback: Special[_TransactionRollback, Exception],
+        error_type: Optional[Type[Exception]],
+        rollback_mark: Special[_TransactionRollbackMark, Exception],
         traceback: Any,
     ) -> bool:
-        if not isinstance(rollback, _TransactionRollback):
+        if not isinstance(rollback_mark, _TransactionRollbackMark):
             return False
 
-        self.__result.results = self.__operations_when(rollback).rollback()
+        self.__result.rollbacks = self.__operations.rollback()
         self.__result.ok = False
 
         return True
 
     def run(self) -> _TransactionResult[R]:
         with self as result:
-            for operation in filter(callable, self.__operations.operations):
-                operation()
+            self.__operations.run()
 
         return result
 
-    def __operations_when(
-        self,
-        rollback: _TransactionRollback,
-    ) -> _TransactionOperations:
-        if rollback.operations is None:
-            return self.__operations
 
-        return self.__operations.combined_with(rollback.operations)
-
-
-def rollback(
-    *,
-    _operations: Optional[_TransactionOperations] = None,
-) -> NoReturn:
-    raise _TransactionRollback(
+def rollback() -> NoReturn:
+    raise _TransactionRollbackMark(
         "rollback a transaction outside of a transaction",
-        _operations,
     )
 
 
