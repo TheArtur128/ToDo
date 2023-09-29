@@ -2,13 +2,14 @@ from dataclasses import dataclass, field
 from functools import cached_property, reduce, wraps
 from itertools import count
 from typing import (
-    Generic, ClassVar, Callable, Any, Optional, Type, Literal, NoReturn, Final,
-    Iterable, Iterator, Self, Generator, TypeAlias, ParamSpec
+    Generic, ClassVar, Callable, Any, Optional, Type, NoReturn, Iterable,
+    Iterator, Self, Generator, TypeAlias, Concatenate, ParamSpec
 )
 
 from act import (
-    temp, obj, Arguments, ActionChain, via_indexer, bad, left, of, to, tmap,
-    func, partially, a, m, s, c, r, o, Special, Unia, A, B, R, O, L, M, Pm
+    temp, obj, Arguments, ActionChain, via_indexer, bad, left, of, to, by,
+    then, tfilter, tmap, partially, flag_about, will, rwill, partial, func, a,
+    m, s, c, r, Special, A, B, R, O, L, ActionT, Pm
 )
 
 from shared.tools import frm
@@ -322,34 +323,28 @@ class rollbackable:
     either = transaction_mode_of(of(left))
 
 
-class do:
-    __RT: ClassVar[TypeAlias] = Unia(M, Callable)
-    __ModeT: ClassVar[TypeAlias] = Callable[Callable[Pm, R], __RT]
-    __completed_operation_cache: Optional[_TransactionOperations] = None
+class _TransactionCursor:
+    ModeT: ClassVar[TypeAlias] = Callable[Callable[Pm, R], ActionT]
+    __network_operations_cache: Optional[_TransactionOperations] = None
 
-    def __init__(
-        self,
-        *transaction_modes: __ModeT,
-        else_: L = None,
-        _parent: Optional[Self] = None,
-    ) -> None:
-        self.__transaction_modes = ActionChain(transaction_modes)
-        self.__operations = _TransactionOperations(bad_result=else_)
+    def __init__(self, *modes: ModeT, _parent: Optional[Self] = None) -> None:
+        self.__modes = ActionChain(modes)
+        self.__operations = _TransactionOperations()
         self.__parent = _parent
         self.__childs = list()
 
     @property
-    def _completed_operations(self) -> _TransactionOperations:
+    def network_operations(self) -> _TransactionOperations:
         if self.__parent is not None:
-            return self.__parent._completed_operations
-        elif self.__completed_operation_cache is not None:
-            return self.__completed_operation_cache
+            return self.__parent.network_operations
+        elif self.__network_operations_cache is not None:
+            return self.__network_operations_cache
         else:
-            self.__completed_operation_cache = self.__operations.combined_with(
+            self.__network_operations_cache = self._operations.combined_with(
                 self._child_operations,
             )
 
-            return self.__completed_operation_cache
+            return self.__network_operations_cache
 
     @property(s.__operations).setter
     def _operations(self, operations: _TransactionOperations) -> None:
@@ -368,23 +363,23 @@ class do:
         )
 
     def __iter__(self) -> Iterator[Self]:
-        return map(self.create_child_for, self.__transaction_modes)
+        return map(self.child_for, self.__modes)
 
-    def create_child_for(self, mode: __ModeT) -> Self:
-        child = do(
-            mode,
-            else_=self.__operations.bad_result,
+    def __call__(self, operation: Callable[Pm, R]) -> ActionT:
+        if not self.__is_accepted(operation):
+            self.__accept(operation)
+
+        return self.__modes(operation)
+
+    def child_for(self, *modes: ModeT) -> Self:
+        child = type(self)(
+            *modes,
+            else_=self._operations.bad_result,
             _parent=self,
         )
 
         self._adopt(child)
         return child
-
-    def __call__(self, operation: Callable[Pm, R]) -> __RT:
-        if not self.__is_accepted(operation):
-            self.__accept(operation)
-
-        return self.__decorated(operation)
 
     def _adopt(self, child: Self) -> None:
         self.__childs.append(child)
@@ -392,47 +387,45 @@ class do:
 
     def _clear_network_cache(self) -> None:
         self.__dict__.pop("_child_operations", None)
-        self.__parent._clear_network_cache()
+        self.__network_operations_cache = None
+
+        if self.__parent is not None:
+            self.__parent._clear_network_cache()
 
     def __accept(self, operation: Callable[Pm, R]) -> None:
         operations_to_combine = _TransactionOperations([operation])
-        self.__operations = self.__operations.combined_with(
+        self._operations = self._operations.combined_with(
             operations_to_combine,
         )
 
     def __is_accepted(self, operation: Callable[Pm, R]) -> bool:
-        return operation in self._completed_operations
+        return operation in self.network_operations
 
-    def __decorated(self, operation: Callable[Pm, R]) -> Callable:
-        if self.__is_accepted(operation):
-            return self.__transaction_modes(operation)
 
-        @self.__transaction_modes
-        def decorated_operation(*args, **kwargs):
+Do: TypeAlias = _TransactionCursor
+
+
+@obj.of
+class do:
+    rollbacks = flag_about("rollbacks")
+
+    def __call__(
+        *modes: _TransactionCursor.ModeT,
+        else_: Special[rollbacks, L] = None,
+    ) -> Callable[Pm, Special[R | L]]:
+        @will
+        def decorated(
+            action: Callable[Concatenate[Do, Pm], R],
+            *args: Pm.args,
+            **kwargs: Pm.kwargs
+        ) -> Callable[Pm, Special[R | L]]:
+            cursor = _TransactionCursor(*modes)
+
             try:
-                return operation(*args, **kwargs)
-            except _TransactionRollback as rollback_mark:
-                operations = self._completed_operations
+                return action(cursor, *args, **kwargs)
+            except _TransactionRollbackMark:
+                rollbacks = cursor.network_operations.rollback()
 
-                if rollback_mark.operations is not None:
-                    operations = operations.combined_with(
-                        rollback_mark.operations,
-                    )
+                return rollbacks if else_ == do.rollbacks else else_
 
-                rollback(_operations=operations)
-
-        return decorated_operation
-
-
-@partially
-def transaction(action: Callable[Pm, R]) -> Callable[Pm, R]:
-    @wraps(action)
-    def decorated(*args: Pm.args, **kwargs: Pm.kwargs) -> Special[R]:
-        try:
-            return action(*args, **kwargs)
-        except _TransactionRollback as rollback_mark:
-            rollback_mark.operations.rollback()
-
-            return rollback_mark.operations.bad_result
-
-    return decorated
+        return decorated

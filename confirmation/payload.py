@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse
 
 from confirmation import adapters, core
 from shared.types_ import Token, Password
-from shared.transactions import Transaction, rollbackable
+from shared.transactions import do, rollbackable, Do
 
 
 Subject: TypeAlias = adapters.Subject
@@ -21,13 +21,12 @@ class Activation:
     password: Password
 
 
-@transaction
+@do(rollbackable.optionally)
 def activate_by(
+    do: Do,
     activation: Activation,
     request: HttpRequest,
 ) -> Optional[HttpResponse]:
-    do = do(rollbackable.optionally)
-
     return core.activate_by(
         _from_activation_to_access(activation),
         endpoint_of=do(endpoint_of_),
