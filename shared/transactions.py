@@ -317,7 +317,7 @@ class rollbackable:
     binary = transaction_mode_of(r.is_(False))
     optionally = transaction_mode_of(r.is_(None))
     maybe = transaction_mode_of(of(bad))
-    maybe = transaction_mode_of(of(left))
+    either = transaction_mode_of(of(left))
 
 
 class do:
