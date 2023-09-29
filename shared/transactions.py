@@ -80,7 +80,21 @@ class _TransactionOperations:
             if isinstance(marked_operation.operation, RollbackableBy[[], Any])
         )
 
+    @__to_map
+    def mapped_by(
+        self,
+        decorated: Callable[__Operation, __Operation],
+    ) -> tuple[__MarkedOperation]:
+        return (tmap |by| self._marked_operations)(
+            m.operation |then>> decorated |then>> type(self).__MarkedOperation
         )
+
+    @__to_map
+    def filtered_by(
+        self,
+        is_ok: Callable[__Operation, bool],
+    ) -> tuple[__MarkedOperation]:
+        return (tfilter |by| self._marked_operations)(m.operation |then>> is_ok)
 
     @__to_map
     def combined_with(self, other: Self) -> tuple[__MarkedOperation]:
