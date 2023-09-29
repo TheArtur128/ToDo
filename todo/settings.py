@@ -138,10 +138,6 @@ PORT_ENDPOINT_PASSWORD_LENGTH = 8
 PORT_ACTIVITY_MINUTES = 5
 PORTS_CACHE_LOCATION = "ports"
 
-PORTS = {
-    "registration": {"FOR_AUTHORIZED": False},
-    "authorization": {"FOR_AUTHORIZED": False},
-}
 
 
 CACHES = {
