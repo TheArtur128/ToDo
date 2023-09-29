@@ -14,12 +14,7 @@ def open_registration_port_for(do: Do, user: User) -> URL:
 
 
 @do(rollbackable.optionally)
-def register_user_by(
-    do: Do,
-    email: Email,
-    *,
-    request: HttpRequest,
-) -> User:
+def register_user_by(do: Do, email: Email, *, request: HttpRequest) -> User:
     return core.register_user_by(
         email,
         remembered_user_by=do(adapters.user_local_repository.get_of),
