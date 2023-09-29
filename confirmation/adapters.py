@@ -96,11 +96,11 @@ def send_confirmation_mail_by(
 
 
 password_hashes_of = will(CacheRepository)(
-    salt="passwordhash", location=settings.PORTS_CACHE_LOCATION
+    salt="passwordhash", location=settings.CONFIRMATION_CACHE_LOCATION
 )
 
 ids_of = will(CacheRepository)(
-    salt='ids', location=settings.PORTS_CACHE_LOCATION
+    salt='ids', location=settings.CONFIRMATION_CACHE_LOCATION
 )
 
 
@@ -151,9 +151,9 @@ endpoint_handler_of = func(
 )
 
 generate_endpoint_password = (
-    token_urlsafe |to| settings.PORT_ENDPOINT_PASSWORD_LENGTH
+    token_urlsafe |to| settings.CONFIRMATION_ENDPOINT_PASSWORD_LENGTH
 )
 
 generate_endpoint_token = (
-    token_urlsafe |to| settings.PORT_ENDPOINT_TOKEN_LENGTH
+    token_urlsafe |to| settings.CONFIRMATION_ENDPOINT_TOKEN_LENGTH
 )
