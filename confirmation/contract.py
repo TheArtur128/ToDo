@@ -1,9 +1,9 @@
 from typing import Callable, Any, Optional
 
-from act import will, returnly, via_indexer, temp, obj, reformer_of, I
+from act import will, via_indexer, temp, obj, reformer_of, I
 
 from confirmation import adapters, core, payload
-from shared.tools import name_enum_of
+from shared.tools import name_enum_of, io
 from shared.types_ import Annotaton, URL
 from shared.transactions import Transaction, rollbackable
 
@@ -47,7 +47,7 @@ def register_for(
     port = adapters.Port(subject, method)
     registrate = will(adapters.endpoint_handler_repository.register_for)(port)
 
-    return returnly(registrate)
+    return io(registrate)
 
 
 def open_port_of(

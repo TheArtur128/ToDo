@@ -4,6 +4,7 @@ from act import _, u
 
 import confirmation
 from shared import models
+from shared.tools import io
 from shared.types_ import Email
 
 
@@ -33,4 +34,4 @@ class user_django_orm_repository:
     has = u.id.is_not(None)
 
 
-authorized = returnly(flipped(auth.login))
+authorized = io(flipped(auth.login))

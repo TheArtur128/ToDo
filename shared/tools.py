@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Iterable, TypeVar, Self, Callable, Concatenate
 
-from act import temp, obj, bad, to, Special, Unia, Pm, V, A, R
+from act import temp, obj, bad, to, returnly, Special, Unia, Pm, V, A, R
 
 
 def name_enum_of(annotated: temp(__annotations__=Iterable[str])) -> obj:
@@ -38,3 +38,4 @@ class _CallingInfix:
 
 
 frm = _CallingInfix('frm')
+io = returnly
