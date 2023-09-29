@@ -10,20 +10,20 @@ from shared.types_ import Name, Email, Password
 @dataclass(frozen=True)
 class Registration(Generic[U, A]):
     access_to_confirm: A
-    user_reminder: U
+    remembering_for_user: U
 
 
 def registration_for(
     user: U,
     *,
     is_already_registered: Callable[U, bool],
-    confirmation_access_for: Callable[U, A],
-    reminder_of: Callable[U, R],
+    access_to_confirm_for: Callable[U, A],
+    remembering_for: Callable[U, R],
 ) -> Optional[Registration[R, A]]:
     if is_already_registered(user):
         return None
 
-    return Registration(confirmation_access_for(user), reminder_of(user))
+    return Registration(access_to_confirm_for(user), remembering_for(user))
 
 
 def register_user_by(
