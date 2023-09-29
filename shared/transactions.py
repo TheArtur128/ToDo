@@ -79,17 +79,32 @@ class _TransactionOperations(Generic[R]):
             if isinstance(marked_operation.operation, RollbackableBy[[], Any])
         )
 
-    def combined_with(self, other: Self) -> Self:
-        marked_operations = self.__marked_operation_combination_between(
-            self._marked_operations,
-            other._marked_operations,
         )
 
-        return _TransactionOperations(
-            tuple(marked_operations),
-            bad_result=self.__bad_result,
-            _is_operations_safe=True,
+    @__to_map
+    def combined_with(self, other: Self) -> tuple[__MarkedOperation]:
+        if self._to_left_than(other):
+            return (*self._marked_operations, *other._marked_operations)
+        elif other._to_left_than(self):
+            return (*other._marked_operations, *self._marked_operations)
+        else:
+            return tuple(self.__marked_operation_combination_between(
+                self._marked_operations,
+                other._marked_operations,
+            ))
+
+    def _to_left_than(self, other: Self) -> bool:
+        if not self._marked_operations or not other._marked_operations:
+            return True
+
+        is_strat_on_left = (
+            self._marked_operations[0].id <= other._marked_operations[0].id
         )
+        is_end_on_left = (
+            self._marked_operations[-1].id <= other._marked_operations[-1].id
+        )
+
+        return is_strat_on_left and is_end_on_left
 
     @staticmethod
     def __marked_operation_combination_between(
