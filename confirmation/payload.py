@@ -4,8 +4,8 @@ from typing import TypeAlias, Optional
 from django.http import HttpRequest, HttpResponse
 
 from confirmation import adapters, core
-from shared.types_ import Token, Password
 from shared.transactions import do, rollbackable, Do
+from shared.types_ import Token, Password
 
 
 Subject: TypeAlias = adapters.Subject
