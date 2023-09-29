@@ -338,11 +338,6 @@ class do:
         self.__parent = _parent
         self.__childs = list()
 
-    @property(s.__operations).setter
-    def _operations(self, operations: _TransactionOperations) -> None:
-        self.__operations = operations
-        self._clear_network_cache()
-
     @property
     def _completed_operations(self) -> _TransactionOperations:
         if self.__parent is not None:
@@ -355,6 +350,11 @@ class do:
             )
 
             return self.__completed_operation_cache
+
+    @property(s.__operations).setter
+    def _operations(self, operations: _TransactionOperations) -> None:
+        self.__operations = operations
+        self._clear_network_cache()
 
     @cached_property
     def _child_operations(self) -> _TransactionOperations:
