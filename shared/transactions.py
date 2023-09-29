@@ -33,7 +33,6 @@ class _TransactionOperations:
         operation: "_TransactionOperations.__Operation"
         id: int = field(default_factory=next |to| count())
 
-    bad_result = property(o.__bad_result)
     def __to_map(
         marked_operations_by: Callable[
             Concatenate[Self, Pm],
@@ -51,10 +50,8 @@ class _TransactionOperations:
     def __init__(
         self,
         operations: Iterable[__Operation | __MarkedOperation] = tuple(),
-        bad_result: R = None,
         _is_operations_safe: bool = False,
     ) -> None:
-        self.__bad_result = bad_result
         self._marked_operations = (
             operations
             if _is_operations_safe
