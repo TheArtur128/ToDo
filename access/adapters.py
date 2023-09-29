@@ -19,6 +19,20 @@ open_registration_confirmation_for = _.confirmation.open_port_of(
 )
 
 
+open_access_recovery_confirmation_for = _.confirmation.open_port_of(
+    confirmation.subjects.access_recovery,
+    confirmation.via.email,
+    for_=u.email,
+)
+
+
+open_authorization_confirmation_for = _.confirmation.open_port_of(
+    confirmation.subjects.authorization,
+    confirmation.via.email,
+    for_=u.email,
+)
+
+
 user_to_authorize_from = _.auth.authenticate(
     r,
     username=r.POST["name"],
@@ -38,6 +52,8 @@ class user_local_repository:
 @obj.of
 class user_django_orm_repository:
     get_by_email = _.User.objects.filter(email=e).first._()
+    get_by_name = _.User.objects.filter(name=n).first._()
+
     save = User.save
     has = u.id.is_not(None)
 

@@ -51,3 +51,21 @@ def authorize_by(do: Do, email: Email, *, request: HttpRequest) -> User:
         user_by=do(adapters.user_django_orm_repository.get_by_email),
         authorized=adapters.authorized |by| request,
     )
+
+
+@do(rollbackable.optionally)
+def access_recovery_via_email_by(do: Do, email: Email) -> URL:
+    return cases.access_recovery_by(
+        email,
+        user_by=do(adapters.user_django_orm_repository.get_by_email),
+        open_port_for=do(adapters.open_access_recovery_confirmation_for),
+    )
+
+
+@do(rollbackable.optionally)
+def access_recovery_via_name_by(do: Do, name: str) -> URL:
+    return cases.access_recovery_by(
+        name,
+        user_by=do(adapters.user_django_orm_repository.get_by_name),
+        open_port_for=do(adapters.open_access_recovery_confirmation_for),
+    )

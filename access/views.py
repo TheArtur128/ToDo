@@ -85,47 +85,33 @@ class _RegistrationView(confirmation.OpeningView):
 
         confirmation_page_url = do(services.open_registration_port_for(user))
 
-class _EmailAccessRecoveryView(_ConfirmationOpeningView):
-    _form_type = RestoringAccessByNameForm
-    _template_name = "pages/access-recovery-by-name.html"
-
-    def _user_of(self, request: HttpRequest) -> Optional[User]:
-        raise NotImplementedError
-
-    def _open_port(
-        self,
-        request: HttpRequest,
-    ) -> URL | bad[Optional[ErrorMessage]]:
-        user = self._user_of(request)
-
-        if user is None:
-            return bad(None)
-
-        confirmation_page_url = confirmation.payload.open_port_of(
-            confirmation.payload.subjects.access_recovery.via_name,
-            confirmation.payload.via.email,
-            for_=user.email,
-        )
-
-        return bad_or(confirmation_page_url)
+        return confirmation_page_url
 
 
-class _AccessRecoveryByNameView(_ConfirmationOpeningView):
+class _AccessRecoveryByNameView(confirmation.OpeningView):
     _form_type = RestoringAccessByNameForm
     _template_name = "pages/access-recovery-by-name.html"
 
     @staticmethod
-    def _user_of(request: HttpRequest) -> Optional[User]:
-        return User.objects.filter(name=request.POST["name"]).first()
+    def _open_port(request: HttpRequest) -> Optional[URL]:
+        confirmation_page_url = services.access_recovery_via_name_by(
+            request.POST["name"],
+        )
+
+        return confirmation_page_url
 
 
-class _AccessRecoveryByEmailView(_ConfirmationOpeningView):
+class _AccessRecoveryByEmailView(confirmation.OpeningView):
     _form_type = RestoringAccessByEmailForm
     _template_name = "pages/access-recovery-by-email.html"
 
     @staticmethod
-    def _user_of(request: HttpRequest) -> Optional[User]:
-        return User.objects.filter(email=request.POST["email"]).first()
+    def _open_port(request: HttpRequest) -> Optional[URL]:
+        confirmation_page_url = services.access_recovery_via_email_by(
+            request.POST["email"],
+        )
+
+        return confirmation_page_url
 
 
 registrate = for_anonymous(_RegistrationView.as_view())

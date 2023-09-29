@@ -49,6 +49,19 @@ def authorization_by(
     return access_to_confirm
 
 
+def access_recovery_by(
+    user_id: I,
+    *,
+    user_by: Callable[I, U],
+    open_port_for: Callable[U, A],
+) -> A:
+    user = user_by(user_id)
+
+    access_to_confirm = open_port_for(user)
+
+    return access_to_confirm
+
+
 def authorize_by(
     user_id: I,
     *,
