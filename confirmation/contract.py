@@ -5,7 +5,7 @@ from act import will, via_indexer, temp, obj, reformer_of, I
 from confirmation import adapters, core, payload
 from shared.tools import name_enum_of, io
 from shared.types_ import Annotaton, URL
-from shared.transactions import Transaction, rollbackable
+from shared.transactions import do, Do
 
 
 @via_indexer
@@ -50,12 +50,14 @@ def register_for(
     return io(registrate)
 
 
+@do()
 def open_port_of(
+    do: Do,
     subject: payload.Subject,
     sending: _SendingOf[I],
     *,
     for_: I,
-) -> Optional[URL]:
+) -> URL:
     endpoint = adapters.Endpoint(
         adapters.generate_port_access_token(),
         adapters.Port(subject, sending.method),
@@ -63,12 +65,11 @@ def open_port_of(
         adapters.generate_password(),
     )
 
-    with Transaction(sending.by) as get_ok:
-        opned_endpoint = core.opened(
-            endpoint,
-            access_to=adapters.confirmation_page_url_of,
-            sending_by=sending.by,
-            saving_for=adapters.endpoint_repository.save,
-        )
+    opned_endpoint = core.opened(
+        endpoint,
+        access_to=adapters.confirmation_page_url_of,
+        sending_by=do(sending.by),
+        saving_for=adapters.endpoint_repository.save,
+    )
 
-    return opned_endpoint.access_to if get_ok() else None
+    return opned_endpoint.access_to
