@@ -52,7 +52,14 @@ class _TransactionOperations(Generic[R]):
     def __contains__(self, operation: Any) -> bool:
         return operation in tmap(m.operation, self._marked_operations)
 
-    def rollback(self) -> tuple[R]:
+    def run(self) -> Generator[R, None, None]:
+        return (
+            marked_operation.operation()
+            for marked_operation in self._marked_operations
+            if callable(marked_operation.operation)
+        )
+
+    def rollback(self) -> tuple[B]:
         return tuple(
             operation.rollback()
             for operation in reversed(self._marked_operations)
