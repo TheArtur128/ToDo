@@ -61,9 +61,9 @@ class _TransactionOperations(Generic[R]):
 
     def rollback(self) -> tuple[B]:
         return tuple(
-            operation.rollback()
-            for operation in reversed(self._marked_operations)
-            if isinstance(operation, RollbackableBy[[], Any])
+            marked_operation.operation.rollback()
+            for marked_operation in reversed(self._marked_operations)
+            if isinstance(marked_operation.operation, RollbackableBy[[], Any])
         )
 
     def combined_with(self, other: Self) -> Self:
