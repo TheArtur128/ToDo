@@ -4,15 +4,15 @@ from act import of, bad, ok, v, saving_context, on, _
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
-from confirmation import payload, forms
+from confirmation import services, forms
 from shared.types_ import URL, ErrorMessage
 
 
 def confirm(
     request: HttpRequest,
-    subject: payload.Subject,
-    method: payload.Method,
-    token: payload.PortToken,
+    subject: services.Subject,
+    method: services.Method,
+    token: services.PortToken,
 ) -> HttpResponse:
     errors = tuple()
 
@@ -22,10 +22,10 @@ def confirm(
         form = forms.ConfirmationForm(data=form.POST)
 
         if form.is_valid():
-            activation = payload.Activation(
+            activation = services.Activation(
                 subject, method, token, request.POST["password"]
             )
-            response = payload.activate_by(activation, request)
+            response = services.activate_by(activation, request)
 
             if response is not None:
                 return response

@@ -31,7 +31,7 @@ def authorization_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    user = payload.authorize_user_by(email, request=request)
+    user = services.authorize_user_by(email, request=request)
 
     return None if user is None else redirect(reverse("tasks:index"))
 
@@ -44,7 +44,7 @@ def registration_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    user = payload.register_user_by(email, request=request)
+    user = services.register_user_by(email, request=request)
 
     return None if user is None else redirect(reverse("tasks:index"))
 

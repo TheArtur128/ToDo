@@ -17,8 +17,8 @@ def open_registration_port_for(do: Do, user: User) -> URL:
     registration = core.registration_for(
         user,
         is_already_registered=adapters.user_django_orm_repository.has,
-        confirmation_access_for=do(adapters.open_confirmation_port_for),
-        reminder_of=adapters.user_local_repository.save,
+        access_to_confirm_for=do(adapters.open_confirmation_port_for),
+        remembering_for=adapters.user_local_repository.save,
     )
 
     return registration.access_to_confirm
