@@ -32,6 +32,19 @@ class _TransactionOperations(Generic[R]):
         id: int = field(default_factory=next |to| count())
 
     bad_result = property(o.__bad_result)
+    def __to_map(
+        marked_operations_by: Callable[
+            Concatenate[Self, Pm],
+            tuple[__MarkedOperation],
+        ],
+    ) -> Callable[Concatenate[Self, Pm], Self]:
+        def method(self, *args: Pm.args, **kwargs: Pm.kwargs) -> Self:
+            return _TransactionOperations(
+                marked_operations_by(self, *args, **kwargs),
+                _is_operations_safe=True,
+            )
+
+        return method
 
     def __init__(
         self,
