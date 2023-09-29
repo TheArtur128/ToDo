@@ -168,7 +168,7 @@ class _TransactionRollbackMark(Exception):
 
 @dataclass
 class _TransactionResult(Generic[R]):
-    results: tuple[R] = tuple()
+    rollbacks: tuple[R] = tuple()
     ok: bool = True
 
 
