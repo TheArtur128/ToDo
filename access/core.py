@@ -37,3 +37,12 @@ def register_user_by(
     user = remembered_user_by(user_id)
 
     return None if is_already_registered(user) else saved(authorized(user))
+
+
+def authorize_user_by(
+    user_id: I,
+    *,
+    user_by: Callable[I, U],
+    authorized: Callable[U, A],
+) -> A:
+    return authorized(user_by(user_id))

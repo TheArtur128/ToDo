@@ -33,3 +33,12 @@ def register_user_by(do: Do, email: Email, *, request: HttpRequest) -> User:
         authorized=adapters.authorized |by| request,
         saved=io(adapters.user_django_orm_repository.save),
     )
+
+
+@do(rollbackable.optionally)
+def authorize_user_by(do: Do, email: Email, *, request: HttpRequest) -> User:
+    return core.authorize_user_by(
+        email,
+        user_by=do(adapters.user_django_orm_repository.get_of),
+        authorized=adapters.authorized |by| request,
+    )

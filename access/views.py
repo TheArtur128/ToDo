@@ -31,14 +31,9 @@ def authorization_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    user = User.objects.filter(email=email).first()
+    user = payload.authorize_user_by(email, request=request)
 
-    if user is None:
-        return None
-
-    auth.login(request, user)
-
-    return redirect(reverse("tasks:index"))
+    return None if user is None else redirect(reverse("tasks:index"))
 
 
 @confirmation.payload.register_for(
