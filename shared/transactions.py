@@ -263,12 +263,32 @@ class _rollbackable:
         )
 
 
+_Pm2 = ParamSpec("_Pm2")
+_Pm3 = ParamSpec("_Pm3")
+_Pm4 = ParamSpec("_Pm4")
+
+
 @partially
 def _rollback_on(
     is_to_rollback: Callable[R, bool],
     operation: ActionOf[Pm, R] & RollbackableBy[Pm, L] | ActionOf[Pm, R],
 ) -> ActionOf[Pm, R] & RollbackableBy[[], Optional[L]]:
     operation = _rollbackable(operation)
+def _map_rollbackable(
+    operation: ActionOf[_Pm3, A] & RollbackableBy[_Pm4, B] | ActionOf[_Pm3, A],
+    main_decorated: Callable[Callable[_Pm3, A], Callable[Pm, R]],
+    rollback_decorated: Callable[Callable[_Pm4, B], Callable[_Pm2, L]] = r,
+) -> ActionOf[Pm, R] & RollbackableBy[_Pm2, L] | ActionOf[Pm, R]:
+    with_decorated_main = obj(__call__=main_decorated(operation))
+
+    if isinstance(operation, RollbackableBy[..., Any]):
+        with_decorated_rollback = obj(
+            rollback=rollback_decorated(operation.rollback),
+        )
+    else:
+        with_decorated_rollback = obj()
+
+    return obj.of(operation) & with_decorated_main & with_decorated_rollback
 
     @obj.of
     class rollbackable_operation:
@@ -289,6 +309,7 @@ def _rollback_on(
 @obj.of
 class rollbackable:
     __call__ = _rollbackable
+    map = _map_rollbackable
 
     binary = _rollback_on(r.is_(False))
     optionally = _rollback_on(r.is_(None))
