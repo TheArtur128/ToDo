@@ -1,10 +1,7 @@
 from dataclasses import dataclass
-from typing import Callable, Generic
+from typing import Callable, Generic, Optional
 
-from act import U, A, R
-
-from shared.tools import struct
-from shared.types_ import Name, Email, Password
+from act import U, A, R, D, I, S
 
 
 @dataclass(frozen=True)
@@ -26,7 +23,7 @@ def registration_for(
     return Registration(access_to_confirm_for(user), remembering_for(user))
 
 
-def register_user_by(
+def register_by(
     user_id: I,
     *,
     remembered_user_by: Callable[I, U],
@@ -39,7 +36,20 @@ def register_user_by(
     return None if is_already_registered(user) else saved(authorized(user))
 
 
-def authorize_user_by(
+def authorization_by(
+    user_data: D,
+    *,
+    user_by: Callable[D, U],
+    open_port_for: Callable[U, A],
+) -> A:
+    user = user_by(user_data)
+
+    access_to_confirm = open_port_for(user)
+
+    return access_to_confirm
+
+
+def authorize_by(
     user_id: I,
     *,
     user_by: Callable[I, U],

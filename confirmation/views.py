@@ -1,11 +1,11 @@
 from typing import Optional, Callable, Mapping
 
-from act import of, bad, ok, v, saving_context, on, _
+from act import bad
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
 from confirmation import services, forms
-from shared.types_ import URL, ErrorMessage
+import shared
 
 
 def confirm(
@@ -42,15 +42,12 @@ def confirm(
     return render(request, "pages/confirmation.html", context)
 
 
-class ConfirmationOpeningView(shared.views.ViewWithForm):
-    _default_confirmation_open_failure_message: ErrorMessage = (
+class OpeningView(shared.views.ViewWithForm):
+    _failure_message: shared.types_.ErrorMessage = (
         "Make sure you have entered your information correctly"
     )
 
-    def _open_port(
-        self,
-        request: HttpRequest,
-    ) -> ok[URL] | bad[Optional[ErrorMessage]]:
+    def _open_port(self, request: HttpRequest) -> Optional[shared.types_.URL]:
         raise NotImplementedError
 
     def _service(
@@ -61,9 +58,7 @@ class ConfirmationOpeningView(shared.views.ViewWithForm):
     ) -> HttpResponse:
         result = self._open_port(request)
 
-        if of(ok, result):
-            return redirect(result.value)
+        if result is None:
+            return [bad(self._failure_message)]
 
-        default_message = self._default_confirmation_open_failure_message
-
-        return saving_context(on(None, default_message))(result)
+        return redirect(result)

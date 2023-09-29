@@ -1,3 +1,13 @@
+from typing import Callable, Mapping, Type, Iterable
+
+from act import bad, of, v, _
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
+from django.views.generic import View
+
+from shared.types_ import ErrorMessage, FormT
+
+
 class ViewWithForm(View):
     form_type = property(v._form_type)
     template_name = property(v._template_name)

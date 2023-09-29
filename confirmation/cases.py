@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-from typing import TypeVar, Callable, Generic, Any
+from typing import Callable, Generic
 
-from act import via_indexer, temp, I, A, P, R, S, T, V
-
-from shared.types_ import Annotaton
+from act import I, A, R, S, V, E, N, C
 
 
 @dataclass(frozen=True)

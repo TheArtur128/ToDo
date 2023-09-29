@@ -1,11 +1,11 @@
+from collections import defaultdict
+from dataclasses import dataclass
+from operators import getitem, setitem
 from secrets import token_urlsafe
 from urllib.parse import urljoin
-from typing import TypeAlias, Callable, Optional, Generic, Final
+from typing import TypeAlias, Callable, Optional, Generic
 
-from act import (
-    will, via_indexer, partial, partially, obj, then, to, func, rwill, v, I,
-    ActionT
-)
+from act import will, via_indexer, partially, obj, then, to, func, v, I, N
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -13,11 +13,8 @@ from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from access.confirmation import core
 from shared.adapters import CacheRepository
-from shared.types_ import (
-    Token, URL, Email, Password, ID, RepositoryFromTo, Annotaton
-)
+from shared.types_ import Token, URL, Email, Password, ID, Annotaton
 
 
 Subject: TypeAlias = str
@@ -119,7 +116,7 @@ class endpoint_repository:
         if password_hash is None or target_id is None:
             return None
 
-        endpoint = core.Endpoint(
+        endpoint = Endpoint(
             access.endpoint_token,
             access.port,
             target_id,
@@ -148,7 +145,7 @@ class local_endpoint_handler_repository:
     save_for = setitem |to| _config
 
 
-endpoint_handler_of: Callable[Port, Optional[ViewHandlerOf[I]]]
+endpoint_handler_of: Callable[Endpoint, Optional[ViewHandlerOf[I]]]
 endpoint_handler_of = func(
     (v.port) |then>> local_endpoint_handler_repository.get_of
 )

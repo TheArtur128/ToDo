@@ -1,15 +1,11 @@
 from dataclasses import dataclass
 from typing import Iterable, TypeVar, Self, Callable, Concatenate
 
-from act import temp, obj, bad, to, returnly, Special, Unia, Pm, V, A, R
+from act import temp, obj, returnly, Unia, Pm, A, R
 
 
 def name_enum_of(annotated: temp(__annotations__=Iterable[str])) -> obj:
     return obj.of({name: name for name in annotated.__annotations__.keys()})
-
-
-def bad_or(value: Special[None, V]) -> V | bad[None]:
-    return bad(None) if value is None else value
 
 
 def struct(type_: type) -> Unia[temp, temp(T=TypeVar)]:

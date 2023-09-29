@@ -3,7 +3,7 @@ from typing import TypeAlias
 from act import by
 from django.http import HttpRequest
 
-from access import adapters, core
+from access import adapters, cases
 from shared.tools import io
 from shared.transactions import do, rollbackable, Do
 from shared.types_ import URL, Email
@@ -14,10 +14,10 @@ User: TypeAlias = adapters.User
 
 @do(rollbackable.optionally)
 def open_registration_port_for(do: Do, user: User) -> URL:
-    registration = core.registration_for(
+    registration = cases.registration_for(
         user,
         is_already_registered=adapters.user_django_orm_repository.has,
-        access_to_confirm_for=do(adapters.open_confirmation_port_for),
+        access_to_confirm_for=do(adapters.open_registration_confirmation_for),
         remembering_for=adapters.user_local_repository.save,
     )
 
@@ -25,8 +25,8 @@ def open_registration_port_for(do: Do, user: User) -> URL:
 
 
 @do(rollbackable.optionally)
-def register_user_by(do: Do, email: Email, *, request: HttpRequest) -> User:
-    return core.register_user_by(
+def register_by(do: Do, email: Email, *, request: HttpRequest) -> User:
+    return cases.register_by(
         email,
         remembered_user_by=do(adapters.user_local_repository.get_of),
         is_already_registered=adapters.user_django_orm_repository.has,
@@ -36,9 +36,18 @@ def register_user_by(do: Do, email: Email, *, request: HttpRequest) -> User:
 
 
 @do(rollbackable.optionally)
-def authorize_user_by(do: Do, email: Email, *, request: HttpRequest) -> User:
-    return core.authorize_user_by(
+def authorization_by(do: Do, request: HttpRequest) -> URL:
+    return cases.authorization_by(
+        request,
+        user_by=do(adapters.user_to_authorize_from),
+        open_port_for=do(adapters.open_authorization_confirmation_for),
+    )
+
+
+@do(rollbackable.optionally)
+def authorize_by(do: Do, email: Email, *, request: HttpRequest) -> User:
+    return cases.authorize_by(
         email,
-        user_by=do(adapters.user_django_orm_repository.get_of),
+        user_by=do(adapters.user_django_orm_repository.get_by_email),
         authorized=adapters.authorized |by| request,
     )

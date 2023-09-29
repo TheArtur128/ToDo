@@ -1,52 +1,54 @@
-from typing import Type, TypeVar, Optional, Callable, Mapping, Iterable
+from typing import Optional
 
-from act import of, bad, ok, v, saving_context, on, _
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
-from django.forms import Form
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
-from django.views import View
 from django.views.decorators.http import require_GET
 
-import confirmation
-from access import payload
 from access import services
 from access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
-    RestoringAccessByEmailForm, ConfirmationForm
+    RestoringAccessByEmailForm
 )
+from access.input import confirmation
 from access.utils import for_anonymous
 from shared.models import User
-from shared.tools import bad_or
-from shared.types_ import Email, URL, ErrorMessage
+from shared.transactions import do, rollbackable, Do
+from shared.types_ import Email, URL
 
 
-@confirmation.payload.register_for(
-    confirmation.payload.subjects.authorization,
-    confirmation.payload.methods.email,
+@confirmation.register_for(
+    confirmation.subjects.authorization,
+    confirmation.methods.email,
 )
 def authorization_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    user = services.authorize_user_by(email, request=request)
+    user = services.authorize_by(email, request=request)
 
-    return None if user is None else redirect(reverse("tasks:index"))
+    if user is None:
+        return None
+
+    return redirect(reverse("tasks:index"))
 
 
-@confirmation.payload.register_for(
-    confirmation.payload.subjects.registration,
-    confirmation.payload.methods.email,
+@confirmation.register_for(
+    confirmation.subjects.registration,
+    confirmation.methods.email,
 )
 def registration_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    user = services.register_user_by(email, request=request)
+    user = services.register_by(email, request=request)
 
-    return None if user is None else redirect(reverse("tasks:index"))
+    if user is None:
+        return None
+
+    return redirect(reverse("tasks:index"))
 
 
 @login_required
@@ -57,45 +59,31 @@ def logout(request: HttpRequest) -> HttpResponse:
     return redirect(reverse("tasks:index"))
 
 
-class LoginView(_ConfirmationOpeningView):
+class LoginView(confirmation.OpeningView):
     _form_type = UserLoginForm
     _template_name = "pages/login.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> URL | bad[Optional[ErrorMessage]]:
-        user = auth.authenticate(
-            request,
-            username=request.POST["name"],
-            password=request.POST["password"],
-        )
+    def _open_port(request: HttpRequest) -> Optional[URL]:
+        confirmation_page_url = services.authorization_by(request)
 
-        if user is None:
-            return bad(None)
-
-        confirmation_page_url = confirmation.payload.open_port_of(
-            confirmation.payload.subjects.authorization,
-            confirmation.payload.via.email,
-            for_=request.POST["email"],
-        )
-
-        return bad_or(confirmation_page_url)
+        return confirmation_page_url
 
 
-class _RegistrationView(_ConfirmationOpeningView):
+class _RegistrationView(confirmation.OpeningView):
     _form_type = UserRegistrationForm
     _template_name = "pages/registration.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> URL | bad[Optional[ErrorMessage]]:
-        # Not implemented
-        confirmation_page_url = services.open_registration_port(
+    @do(rollbackable.optionally)
+    def _open_port(do: Do, request: HttpRequest) -> URL:
+        user = User(
             name=request.POST["name"],
             email=request.POST["email"],
             password=request.POST["password1"],
         )
 
-        return bad_or(confirmation_page_url)
-
+        confirmation_page_url = do(services.open_registration_port_for(user))
 
 class _EmailAccessRecoveryView(_ConfirmationOpeningView):
     _form_type = RestoringAccessByNameForm

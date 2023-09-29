@@ -3,7 +3,7 @@ from typing import TypeAlias, Optional
 
 from django.http import HttpRequest, HttpResponse
 
-from confirmation import adapters, core
+from confirmation import adapters, cases
 from shared.transactions import do, rollbackable, Do
 from shared.types_ import Token, Password
 
@@ -27,10 +27,15 @@ def activate_by(
     activation: Activation,
     request: HttpRequest,
 ) -> Optional[HttpResponse]:
-    return core.activate_by(
+    payload_of = adapters.payload_by(
+        request,
+        handling_of=do(adapters.endpoint_handler_of),
+    )
+
+    return cases.activate_by(
         _from_activation_to_access(activation),
-        endpoint_of=do(endpoint_of_),
-        payload_of=adapters.payload_by(request, handling_of=do(handling_of)),
+        endpoint_of=do(adapters.endpoint_repository.get_of),
+        payload_of=payload_of,
         close=adapters.endpoint_repository.close,
     )
 
@@ -40,4 +45,8 @@ def _from_activation_to_access(
 ) -> adapters.AccessToEndpoint:
     port = adapters.Port(activation.subject, activation.method)
 
-    return adapters.AccessToEndpoint(activation.token, port, activation.password)
+    return adapters.AccessToEndpoint(
+        activation.token,
+        port,
+        activation.password,
+    )

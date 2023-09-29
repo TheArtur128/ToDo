@@ -1,4 +1,4 @@
-from typing import Generic
+from typing import Generic, Optional
 
 from act import K, V
 from django.core.cache import caches

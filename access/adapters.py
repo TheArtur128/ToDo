@@ -1,8 +1,9 @@
 from typing import TypeAlias
 
-from act import _, u
+from act import obj, flipped, u, r, e, n, _
+from django.contrib import auth
 
-import confirmation
+from access.input import confirmation
 from shared import models
 from shared.tools import io
 from shared.types_ import Email
@@ -11,10 +12,17 @@ from shared.types_ import Email
 User: TypeAlias = models.User
 
 
-open_confirmation_port_for = _.confirmation.contract.open_port_of(
-    confirmation.contract.subjects.registration,
-    confirmation.contract.via.email,
+open_registration_confirmation_for = _.confirmation.open_port_of(
+    confirmation.subjects.registration,
+    confirmation.via.email,
     for_=u.email,
+)
+
+
+user_to_authorize_from = _.auth.authenticate(
+    r,
+    username=r.POST["name"],
+    password=r.POST["password"],
 )
 
 
@@ -29,7 +37,7 @@ class user_local_repository:
 
 @obj.of
 class user_django_orm_repository:
-    get_of = _.User.objects.filter(email=e).first._()
+    get_by_email = _.User.objects.filter(email=e).first._()
     save = User.save
     has = u.id.is_not(None)
 
