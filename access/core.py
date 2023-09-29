@@ -9,7 +9,7 @@ from shared.types_ import Name, Email, Password
 
 @dataclass(frozen=True)
 class Registration(Generic[U, A]):
-    confirmation_access: A
+    access_to_confirm: A
     user_reminder: U
 
 

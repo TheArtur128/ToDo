@@ -10,7 +10,7 @@ def open_registration_port_for(do: Do, user: User) -> URL:
         reminder_of=adapters.user_local_repository.save,
     )
 
-    return registration.confirmation_access
+    return registration.access_to_confirm
 
 
 @do(rollbackable.optionally)
