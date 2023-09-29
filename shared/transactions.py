@@ -269,11 +269,6 @@ _Pm4 = ParamSpec("_Pm4")
 
 
 @partially
-def _rollback_on(
-    is_to_rollback: Callable[R, bool],
-    operation: ActionOf[Pm, R] & RollbackableBy[Pm, L] | ActionOf[Pm, R],
-) -> ActionOf[Pm, R] & RollbackableBy[[], Optional[L]]:
-    operation = _rollbackable(operation)
 def _map_rollbackable(
     operation: ActionOf[_Pm3, A] & RollbackableBy[_Pm4, B] | ActionOf[_Pm3, A],
     main_decorated: Callable[Callable[_Pm3, A], Callable[Pm, R]],
@@ -290,20 +285,28 @@ def _map_rollbackable(
 
     return obj.of(operation) & with_decorated_main & with_decorated_rollback
 
-    @obj.of
-    class rollbackable_operation:
-        def __call__(*args: Pm.args, **kwargs: Pm.kwargs) -> R:
-            result = operation(*args, **kwargs)
+
+_Mode: TypeAlias = Callable[
+    ActionOf[Pm, R] & RollbackableBy[_Pm2, L] | ActionOf[Pm, R],
+    ActionOf[Pm, R] & RollbackableBy[[], tuple],
+]
+
+
+def transaction_mode_of(is_to_rollback: Callable[R, bool]) -> _Mode:
+    @rwill(partial(_map_rollbackable, rollback_decorated=r))
+    def decorated(main: Callable[Pm, R]) -> Callable[Pm, R]:
+        @wraps(main)
+        def decorated_main(*args: Pm.args, **kwargs: Pm.kwargs) -> R:
+            result = main(*args, **kwargs)
 
             if is_to_rollback(result):
                 rollback()
 
             return result
 
-        def rollback(*args: Pm.args, **kwargs: Pm.kwargs) -> L:
-            return operation.rollback(*args, **kwargs)
+        return decorated_main
 
-    return rollbackable_operation
+    return func(decorated |then>> _rollbackable)
 
 
 @obj.of
@@ -311,10 +314,10 @@ class rollbackable:
     __call__ = _rollbackable
     map = _map_rollbackable
 
-    binary = _rollback_on(r.is_(False))
-    optionally = _rollback_on(r.is_(None))
-    maybe = _rollback_on(of(bad))
-    maybe = _rollback_on(of(left))
+    binary = transaction_mode_of(r.is_(False))
+    optionally = transaction_mode_of(r.is_(None))
+    maybe = transaction_mode_of(of(bad))
+    maybe = transaction_mode_of(of(left))
 
 
 class do:
