@@ -12,7 +12,7 @@ from shared.transactions import rollbackable, do, Do
 def _SendingOf(id_annotation: Annotaton) -> temp:
     return temp(
         method=services.Method,
-        by=Callable[adapters.EndpointOf[id_annotation], Callable[URL, Any]],
+        by=Callable[adapters.Endpoint[id_annotation], Callable[URL, Any]],
     )
 
 
@@ -32,7 +32,7 @@ class _methods:
 class via:
     email: _SendingOf[Email] = obj(
         method=_methods.email,
-        by=rollbackable.binary(adapters.send_confirmation_mail_to),
+        by=rollbackable.binary(adapters.send_confirmation_mail_by),
     )
 
 
