@@ -12,8 +12,10 @@ ID: TypeAlias = str
 Email: TypeAlias = str
 Password: TypeAlias = str
 PasswordHash: TypeAlias = str
+Token = str
 
 Name: TypeAlias = str
+Annotaton: TypeAlias = Any
 
 FormT = TypeVar("_FormT", bound=Form)
 
