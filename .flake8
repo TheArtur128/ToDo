@@ -1,8 +1,0 @@
-[flake8]
-
-extend-ignore = F811, E225
-
-exclude = migrations, test.py
-
-max-line-length = 80
-count = True
