@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
 from confirmation import services, forms
-import shared
+from shared import views, types_
 
 
 def confirm(
@@ -42,12 +42,12 @@ def confirm(
     return render(request, "pages/confirmation.html", context)
 
 
-class OpeningView(shared.views.ViewWithForm):
-    _failure_message: shared.types_.ErrorMessage = (
+class OpeningView(views.ViewWithForm):
+    _failure_message: types_.ErrorMessage = (
         "Make sure you have entered your information correctly"
     )
 
-    def _open_port(self, request: HttpRequest) -> Optional[shared.types_.URL]:
+    def _open_port(self, request: HttpRequest) -> Optional[types_.URL]:
         raise NotImplementedError
 
     def _service(

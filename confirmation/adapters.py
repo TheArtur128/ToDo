@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from operators import getitem, setitem
+from operator import getitem, setitem
 from secrets import token_urlsafe
 from urllib.parse import urljoin
 from typing import TypeAlias, Callable, Optional, Generic

@@ -1,4 +1,4 @@
-import confirmation
+from confirmation import output as confirmation
 
 
-confirmation = confirmation.output
+confirmation = confirmation
