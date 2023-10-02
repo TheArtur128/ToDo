@@ -55,7 +55,7 @@ class OpeningView(shared.views.ViewWithForm):
         *,
         request: HttpRequest,
         render_with: Callable[Mapping, HttpResponse],
-    ) -> HttpResponse:
+    ) -> HttpResponse | list[bad[types_.ErrorMessage]]:
         result = self._open_port(request)
 
         if result is None:
