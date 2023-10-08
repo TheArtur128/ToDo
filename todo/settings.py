@@ -133,36 +133,25 @@ DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL")
 EMAIL_ADMIN = getenv("EMAIL_ADMIN", default=DEFAULT_FROM_EMAIL)
 
 
-CONFIRMATION_ENDPOINT_TOKEN_LENGTH = 64
-CONFIRMATION_ENDPOINT_PASSWORD_LENGTH = 8
+CONFIRMATION_SESSION_CODE_LENGTH = 64
+CONFIRMATION_ACTIVATION_CODE_LENGTH = 8
 CONFIRMATION_ACTIVITY_MINUTES = 5
-CONFIRMATION_CACHE_LOCATION = "cnfrm"
 
 
 CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            'db': '0'
-        }
-    },
     "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379",
+        "LOCATION": "redis://localhost:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            'db': '1',
         }
     },
-    "ports": {
+    "confirmation": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379",
+        "LOCATION": "redis://localhost:6379/1",
         "TIMEOUT": 60 * CONFIRMATION_ACTIVITY_MINUTES,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            'db': '2'
         }
     },
 }

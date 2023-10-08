@@ -1,7 +1,7 @@
 from typing import Callable, Any
 
 from act import (
-    will, via_indexer, temp, obj, name_enum_of, io, rollbackable, do, Do,
+    to, via_indexer, temp, obj, name_enum_of, io, rollbackable, do, Do,
     reformer_of, I, Annotaton
 )
 
@@ -40,9 +40,9 @@ class via:
 def register_for(
     subject: services.Subject,
     method: services.Method,
-) -> reformer_of[adapters.ViewHandlerOf[I]]:
+) -> reformer_of[adapters.HandlerOf[I]]:
     port = adapters.Port(subject, method)
-    registrate = will(adapters.endpoint_handler_repository.register_for)(port)
+    registrate = adapters.handler_repository.save_for |to| port
 
     return io(registrate)
 
@@ -55,18 +55,13 @@ def open_port_of(
     *,
     for_: I,
 ) -> URL:
-    endpoint = adapters.Endpoint(
-        adapters.generate_port_access_token(),
+    opned_endpoint = cases.endpoint.open_for(
         adapters.Port(subject, sending.method),
         for_,
-        adapters.generate_password(),
-    )
-
-    opned_endpoint = cases.opened(
-        endpoint,
-        access_to=adapters.confirmation_page_url_of,
-        sending_by=do(sending.by),
-        saving_for=adapters.endpoint_repository.save,
+        generate_activation_code=adapters.generate_activation_code,
+        endpoint_for=adapters.Endpoint,
+        send_access_of=do(sending.by),
+        save=adapters.endpoint_repository.save,
     )
 
     return opned_endpoint.access_to

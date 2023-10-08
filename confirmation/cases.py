@@ -1,43 +1,60 @@
-from dataclasses import dataclass
-from typing import Callable, Generic
+from typing import Callable, Optional
 
-from act import I, A, R, S, V, E, N, C
-
-
-@dataclass(frozen=True)
-class OpenedEndpoint[A, S]:
-    access_to: A
-    saving: S
+from act import struct, obj, P, H, E, U, C, I, N, V, A, D, X
 
 
-def opened(
-    endpoint: E,
-    *,
-    access_to: Callable[E, A],
-    sending_by: Callable[E, Callable[A, N]],
-    saving_for: Callable[E, V],
-) -> OpenedEndpoint[N, V]:
-    sended = sending_by(endpoint)
+@obj.of
+class endpoint:
+    @struct
+    class Opening[N, V]:
+        sending: N
+        saving: V
 
-    return OpenedEndpoint(sended(access_to(endpoint)), saving_for(endpoint))
+    @struct
+    class Result[P, D]:
+        payload: P
+        deletion: D
 
+    def open_for(
+        port: P,
+        user_id: U,
+        *,
+        generate_activation_code: Callable[[], C],
+        endpoint_for: Callable[[P, U, C], E],
+        send_access_of: Callable[E, N],
+        save: Callable[E, V],
+    ) -> Opening[N, V]:
+        activation_code = generate_activation_code()
 
-@dataclass(frozen=True)
-class EndpointActivation[R, C]:
-    result: R
-    closure: C
+        endpoint = endpoint_for(port, user_id, activation_code)
 
+        sending_result = send_access_of(endpoint)
+        saving_result = save(endpoint)
 
-def activate_by(
-    endpoint_id: I,
-    *,
-    endpoint_of: Callable[I, E],
-    payload_of: Callable[E, R],
-    close: Callable[E, C],
-) -> EndpointActivation[R, C]:
-    endpoint = endpoint_of(endpoint_id)
+        return endpoint.Opening(sending_result, saving_result)
 
-    return EndpointActivation(
-        result=payload_of(endpoint),
-        closure=close(endpoint),
-    )
+    def activate_by(
+        endpoint_id: I,
+        *,
+        input_activation_code: A,
+        endpoint_of: Callable[I, E],
+        saved_activation_code_of: Callable[E, X],
+        are_matched: Callable[[A, X], bool],
+        handling_of: Callable[E, H],
+        contextualized: Callable[H, Callable[U, P]],
+        user_id_of: Callable[E, U],
+        delete: Callable[E, D],
+    ) -> Optional[Result[P, D]]:
+        endpoint = endpoint_of(endpoint_id)
+
+        saved_activation_code = saved_activation_code_of(endpoint)
+
+        if not are_matched(input_activation_code, saved_activation_code):
+            return None
+
+        handle = contextualized(handling_of(endpoint))
+        payload = handle(user_id_of(endpoint))
+
+        deletion = delete(endpoint)
+
+        return endpoint.Result(payload, deletion)

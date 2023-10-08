@@ -1,52 +1,37 @@
-from dataclasses import dataclass
-from typing import TypeAlias
-
-from act import do, Do, optionally
+from act import do, Do, optionally, fun, by
+from act.cursors.static import e
 from django.http import HttpRequest, HttpResponse
 
 from confirmation import adapters, cases
-from shared.types_ import Token, Password
+from shared.types_ import Password
 
 
-Subject: TypeAlias = adapters.Subject
-Method: TypeAlias = adapters.Method
-PortToken: TypeAlias = Token
-
-
-@dataclass(frozen=True)
-class Activation:
-    subject: Subject
-    method: Method
-    token: PortToken
-    password: Password
+type Subject = adapters.Subject
+type Method = adapters.Method
+type SessionToken = adapters.SessionCode
 
 
 @do(optionally)
-def activate_by(
+def activate_endpoint_by(
     do: Do,
-    activation: Activation,
+    subject: Subject,
+    method: Method,
+    session_token: SessionToken,
+    password: Password,
     request: HttpRequest,
 ) -> HttpResponse:
-    payload_of = adapters.payload_by(
-        request,
-        handling_of=do(adapters.endpoint_handler_of),
-    )
+    view = adapters.EndpointView(subject, method, session_token)
 
-    return cases.activate_by(
-        _from_activation_to_access(activation),
+    result = do(cases.endpoint.activate_by)(
+        view,
+        input_activation_code=password,
         endpoint_of=do(adapters.endpoint_repository.get_of),
-        payload_of=payload_of,
-        close=adapters.endpoint_repository.close,
+        saved_activation_code_of=fun(e.activation_code),
+        are_matched=adapters.are_activation_codes_matched,
+        handling_of=do(adapters.handler_repository.get_of),
+        contextualized=adapters.contextualized |by| request,
+        user_id_of=fun(e.user_id),
+        delete=do(adapters.endpoint_repository.delete),
     )
 
-
-def _from_activation_to_access(
-    activation: Activation,
-) -> adapters.AccessToEndpoint:
-    port = adapters.Port(activation.subject, activation.method)
-
-    return adapters.AccessToEndpoint(
-        activation.token,
-        port,
-        activation.password,
-    )
+    return result.payload

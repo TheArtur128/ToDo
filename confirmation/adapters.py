@@ -1,70 +1,58 @@
-from collections import defaultdict
-from dataclasses import dataclass
-from operator import getitem, setitem
+from dataclasses import dataclass, field
+from operator import setitem
 from secrets import token_urlsafe
 from urllib.parse import urljoin
-from typing import TypeAlias, Callable, Optional, Generic
+from typing import Callable, Optional
 
-from act import will, via_indexer, partially, obj, to, I, N, Annotaton
-from act.cursors.static import fun, v, _
+from act import (
+    via_indexer, partial, obj, to, as_method, do, optionally, fun, I, Annotaton
+)
+from act.cursors.static import e, _
+from django.core.cache import caches
 from django.core.mail import send_mail
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from shared.adapters import CacheRepository
-from shared.types_ import Token, URL, Email, Password, ID
+from shared.types_ import Token, URL, Email
 
 
-Subject: TypeAlias = str
-Method: TypeAlias = str
+type Subject = str
+type Method = str
+type SessionCode = Token
+type ActivationCode = Token
 
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass(frozen=True)
 class Port:
     subject: Subject
     notification_method: Method
 
 
 @dataclass(frozen=True)
-class AccessToEndpoint:
-    endpoint_token: Token
+class Endpoint[I]:
     port: Port
-    password: Password
+    user_id: I
+    activation_code: ActivationCode
+    session_code: SessionCode = field(default_factory=(
+        token_urlsafe |to| settings.CONFIRMATION_SESSION_CODE_LENGTH
+    ))
 
 
 @dataclass(frozen=True)
-class Endpoint(Generic[N]):
-    token: Token
-    port: Port
-    notification_resource: N
-    password: Password
+class EndpointView:
+    subject: Subject
+    notification_method: Method
+    session_code: SessionCode
 
 
-@via_indexer
-def ViewHandlerOf(id_annotation: Annotaton) -> Annotaton:
-    return Callable[[HttpRequest, id_annotation], Optional[HttpResponse]]
-
-
-@partially
-def payload_by(
-    request: HttpRequest,
-    endpoint: Endpoint[N],
-    *,
-    handling_of: Callable[Endpoint[N], ViewHandlerOf[N]],
-) -> Optional[HttpResponse]:
-    payload_of = handling_of(endpoint)
-
-    return payload_of(request, endpoint.notification_resource)
-
-
-def confirmation_page_url_of(endpoint: Endpoint[Email]) -> URL:
+def _confirmation_page_url_of(endpoint: Endpoint[Email]) -> URL:
     args = [
         endpoint.port.subject,
         endpoint.port.notification_method,
-        endpoint.token,
+        endpoint.session_code,
     ]
 
     relative_url = reverse("confirmation:confirm", args=args)
@@ -72,14 +60,11 @@ def confirmation_page_url_of(endpoint: Endpoint[Email]) -> URL:
     return urljoin(settings.BASE_URL, relative_url)
 
 
-def send_confirmation_mail_by(
-    endpoint: Endpoint[Email],
-    page_url: URL,
-) -> bool:
+def send_confirmation_mail_by(endpoint: Endpoint[Email]) -> bool:
     context = dict(
         subject=endpoint.port.subject,
-        url=page_url,
-        password=endpoint.password,
+        url=_confirmation_page_url_of(endpoint),
+        password=endpoint.activation_code,
     )
 
     text_message_template = "Password to confirm {subject} in {url}: {password}"
@@ -87,72 +72,70 @@ def send_confirmation_mail_by(
 
     html_message = render_to_string("mails/to-confirm.html", context)
 
-    return 1 == send_mail(
+    result_code = send_mail(
         subject=f"Confirm {endpoint.port.subject}",
         message=text_message,
         html_message=html_message,
-        recipient_list=[endpoint.token],
+        recipient_list=[endpoint.user_id],
         fail_silently=True,
     )
 
-
-password_hashes_of = will(CacheRepository)(
-    salt="passwordhash", location=settings.CONFIRMATION_CACHE_LOCATION
-)
-
-ids_of = will(CacheRepository)(
-    salt='ids', location=settings.CONFIRMATION_CACHE_LOCATION
-)
+    return result_code == 1
 
 
 @obj.of
 class endpoint_repository:
-    def get_of(access: AccessToEndpoint) -> Optional[Endpoint[ID]]:
-        password_hash_config = password_hashes_of(access.port.subject)
-        password_hash = password_hash_config[access.endpoint_token]
+    _cache = caches["confirmation"].raw_client
 
-        id_config = ids_of(access.port.notification_method)
-        target_id = id_config[access.endpoint_token]
-
-        if password_hash is None or target_id is None:
-            return None
-
-        endpoint = Endpoint(
-            access.endpoint_token,
-            access.port,
-            target_id,
-            access.password,
+    @as_method
+    @do(optionally)
+    def get_of(do, self, view: EndpointView) -> Endpoint[str]:
+        user_id = do(self._cache.hget)(view.session_code, "user_id")
+        activation_code = do(self._cache.hget)(
+            view.session_code,
+            "activation_code",
         )
+
+        port = Port(view.subject, view.notification_method)
+        endpoint = Endpoint(port, user_id, view.session_code, activation_code)
 
         return endpoint
 
-    def save(endpoint: Endpoint[ID]) -> None:
-        password_hash_config = password_hashes_of(endpoint.port.subject)
-        password_hash_config[endpoint.token] = make_password(endpoint.password)
+    @as_method
+    def save(self, endpoint: Endpoint[str]) -> None:
+        self._cache.hset(endpoint.session_code, "user_id", endpoint.user_id)
+        self._cache.hset(
+            endpoint.session_code,
+            "activation_code",
+            make_password(endpoint.activation_code),
+        )
 
-        id_config = ids_of(endpoint.port.notification_method)
-        id_config[endpoint.token] = endpoint.notification_resource
+    @as_method
+    def delete(self, endpoint: Endpoint[str]) -> None:
+        self._cache.raw_command("HDEL", endpoint.session_code, "user_id")
+        self._cache.raw_command(
+            "HDEL",
+            endpoint.session_code,
+            "activation_code",
+        )
 
-    def close(endpoint: Endpoint[ID]) -> None:
-        del password_hashes_of(endpoint.port.subject)[endpoint.token]
-        del ids_of(endpoint.port.notification_method)[endpoint.token]
+
+@via_indexer
+def HandlerOf(id_annotation: Annotaton) -> Annotaton:
+    return Callable[[HttpRequest, id_annotation], Optional[HttpResponse]]
 
 
-@obj.of
-class local_endpoint_handler_repository:
-    _config: defaultdict[Port, ViewHandlerOf[I]] = defaultdict()
+class handler_repository:
+    _config: dict[Port, HandlerOf[I]] = dict()
 
-    get_of = getitem |to| _config
+    get_of = fun(_._config.get(e.port))
     save_for = setitem |to| _config
 
 
-endpoint_handler_of: Callable[Endpoint, Optional[ViewHandlerOf[I]]]
-endpoint_handler_of = fun(_.local_endpoint_handler_repository.get_of(v.port))
+contextualized = partial
 
-generate_endpoint_password = (
-    token_urlsafe |to| settings.CONFIRMATION_ENDPOINT_PASSWORD_LENGTH
-)
+are_activation_codes_matched = check_password
 
-generate_endpoint_token = (
-    token_urlsafe |to| settings.CONFIRMATION_ENDPOINT_TOKEN_LENGTH
+generate_activation_code = (
+    token_urlsafe |to| settings.CONFIRMATION_ACTIVATION_CODE_LENGTH
 )
