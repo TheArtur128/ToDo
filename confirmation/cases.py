@@ -5,7 +5,7 @@ from act import I, A, R, S, V, E, N, C
 
 
 @dataclass(frozen=True)
-class OpenedEndpoint(Generic[A, S]):
+class OpenedEndpoint[A, S]:
     access_to: A
     saving: S
 
@@ -23,7 +23,7 @@ def opened(
 
 
 @dataclass(frozen=True)
-class EndpointActivation(Generic[A, S]):
+class EndpointActivation[R, C]:
     result: R
     closure: C
 
