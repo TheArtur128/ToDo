@@ -1,3 +1,4 @@
 act4==3.1.0
 Django==4.2.6
+django-redis==5.4.0
 python-dotenv==1.0.0
