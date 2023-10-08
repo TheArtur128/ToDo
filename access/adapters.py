@@ -1,5 +1,3 @@
-from typing import TypeAlias
-
 from act import obj, flipped, io, fun
 from act.cursors.static import u, r, e, n, _
 from django.contrib import auth
@@ -9,7 +7,7 @@ from shared import models
 from shared.types_ import Email
 
 
-User: TypeAlias = models.User
+type User = models.User
 
 
 open_registration_confirmation_for = fun(_.confirmation.open_port_of(
@@ -30,6 +28,14 @@ open_authorization_confirmation_for = fun(_.confirmation.open_port_of(
     confirmation.subjects.authorization,
     confirmation.via.email,
     for_=u.email,
+))
+
+
+user_to_register_from = fun(_.User(
+    name=r.POST["name"],
+    email=r.POST["email"],
+    password=r.POST["password1"],
+
 ))
 
 

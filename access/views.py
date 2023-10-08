@@ -1,6 +1,5 @@
 from typing import Optional
 
-from act import do, Do, optionally
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -15,7 +14,6 @@ from access.forms import (
 )
 from access.input import confirmation
 from access.utils import for_anonymous
-from shared.models import User
 from shared.types_ import Email, URL
 
 
@@ -27,9 +25,9 @@ def authorization_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    user = services.authorize_by(email, request=request)
+    ok = services.authorization.complete_by(email, request=request)
 
-    if user is None:
+    if not ok:
         return None
 
     return redirect(reverse("tasks:index"))
@@ -43,9 +41,9 @@ def registration_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    user = services.register_by(email, request=request)
+    ok = services.registration.complete_by(email, request=request)
 
-    if user is None:
+    if not ok:
         return None
 
     return redirect(reverse("tasks:index"))
@@ -65,7 +63,7 @@ class LoginView(confirmation.OpeningView):
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:
-        confirmation_page_url = services.authorization_by(request)
+        confirmation_page_url = services.authorization.open_using(request)
 
         return confirmation_page_url
 
@@ -75,15 +73,8 @@ class _RegistrationView(confirmation.OpeningView):
     _template_name = "pages/registration.html"
 
     @staticmethod
-    @do(optionally)
-    def _open_port(do: Do, request: HttpRequest) -> URL:
-        user = User(
-            name=request.POST["name"],
-            email=request.POST["email"],
-            password=request.POST["password1"],
-        )
-
-        confirmation_page_url = do(services.open_registration_port_for)(user)
+    def _open_port(request: HttpRequest) -> Optional[URL]:
+        confirmation_page_url = services.registration.open_using(request)
 
         return confirmation_page_url
 
@@ -94,7 +85,7 @@ class _AccessRecoveryByNameView(confirmation.OpeningView):
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:
-        confirmation_page_url = services.access_recovery_via_name_by(
+        confirmation_page_url = services.access_recovery.open_via_name_using(
             request.POST["name"],
         )
 
@@ -107,7 +98,7 @@ class _AccessRecoveryByEmailView(confirmation.OpeningView):
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:
-        confirmation_page_url = services.access_recovery_via_email_by(
+        confirmation_page_url = services.access_recovery.open_via_email_using(
             request.POST["email"],
         )
 
