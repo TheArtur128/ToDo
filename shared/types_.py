@@ -15,7 +15,6 @@ PasswordHash: TypeAlias = str
 Token = str
 
 Name: TypeAlias = str
-Annotaton: TypeAlias = Any
 
 FormT = TypeVar("_FormT", bound=Form)
 
@@ -30,11 +29,3 @@ def RepositoryFromTo(
         has_of=Callable[key_annotation, bool],
         create_for=Callable[key_annotation, Any],
     )
-
-
-@via_indexer
-def ActionOf(
-    parameters_annotation: Annotation,
-    return_annotation: Annotation,
-) -> temp:
-    return temp(__call__=Callable[parameters_annotation, return_annotation])

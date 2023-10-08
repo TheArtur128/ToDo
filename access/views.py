@@ -1,5 +1,6 @@
 from typing import Optional
 
+from act import do, Do, optionally
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -15,7 +16,6 @@ from access.forms import (
 from access.input import confirmation
 from access.utils import for_anonymous
 from shared.models import User
-from shared.transactions import do, rollbackable, Do
 from shared.types_ import Email, URL
 
 
@@ -75,7 +75,7 @@ class _RegistrationView(confirmation.OpeningView):
     _template_name = "pages/registration.html"
 
     @staticmethod
-    @do(rollbackable.optionally)
+    @do(optionally)
     def _open_port(do: Do, request: HttpRequest) -> URL:
         user = User(
             name=request.POST["name"],

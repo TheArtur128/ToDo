@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import TypeAlias, Optional
+from typing import TypeAlias
 
+from act import do, Do, optionally
 from django.http import HttpRequest, HttpResponse
 
 from confirmation import adapters, cases
-from shared.transactions import do, rollbackable, Do
 from shared.types_ import Token, Password
 
 
@@ -21,12 +21,12 @@ class Activation:
     password: Password
 
 
-@do(rollbackable.optionally)
+@do(optionally)
 def activate_by(
     do: Do,
     activation: Activation,
     request: HttpRequest,
-) -> Optional[HttpResponse]:
+) -> HttpResponse:
     payload_of = adapters.payload_by(
         request,
         handling_of=do(adapters.endpoint_handler_of),

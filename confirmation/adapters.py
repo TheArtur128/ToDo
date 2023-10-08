@@ -5,7 +5,8 @@ from secrets import token_urlsafe
 from urllib.parse import urljoin
 from typing import TypeAlias, Callable, Optional, Generic
 
-from act import will, via_indexer, partially, obj, then, to, func, v, I, N
+from act import will, via_indexer, partially, obj, to, I, N, Annotaton
+from act.cursors.static import fun, v, _
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -14,7 +15,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 from shared.adapters import CacheRepository
-from shared.types_ import Token, URL, Email, Password, ID, Annotaton
+from shared.types_ import Token, URL, Email, Password, ID
 
 
 Subject: TypeAlias = str
@@ -146,9 +147,7 @@ class local_endpoint_handler_repository:
 
 
 endpoint_handler_of: Callable[Endpoint, Optional[ViewHandlerOf[I]]]
-endpoint_handler_of = func(
-    (v.port) |then>> local_endpoint_handler_repository.get_of
-)
+endpoint_handler_of = fun(_.local_endpoint_handler_repository.get_of(v.port))
 
 generate_endpoint_password = (
     token_urlsafe |to| settings.CONFIRMATION_ENDPOINT_PASSWORD_LENGTH

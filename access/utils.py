@@ -1,6 +1,6 @@
-from typing import Callable, Concatenate
+from typing import Callable
 
-from act import partially, Pm
+from act import partially, Pm, Cn
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
@@ -11,10 +11,10 @@ __all__ = ("for_anonymous", )
 
 @partially
 def for_anonymous(
-    view_action: Callable[Concatenate[HttpRequest, Pm], HttpResponse],
+    view_action: Callable[Cn[HttpRequest, Pm], HttpResponse],
     *,
     redirect_to: str = settings.URL_TO_REDIRECT_NON_ANONYMOUS,
-) -> Callable[Concatenate[HttpRequest, Pm], HttpResponse]:
+) -> Callable[Cn[HttpRequest, Pm], HttpResponse]:
     def wrapper(
         request: HttpRequest, *args: Pm.args, **kwargs: Pm.kwargs
     ) -> HttpResponse:

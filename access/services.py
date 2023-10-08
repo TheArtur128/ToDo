@@ -1,18 +1,16 @@
 from typing import TypeAlias
 
-from act import by
+from act import do, Do, optionally, by, io
 from django.http import HttpRequest
 
 from access import adapters, cases
-from shared.tools import io
-from shared.transactions import do, rollbackable, Do
 from shared.types_ import URL, Email
 
 
 User: TypeAlias = adapters.User
 
 
-@do(rollbackable.optionally)
+@do(optionally)
 def open_registration_port_for(do: Do, user: User) -> URL:
     registration = cases.registration_for(
         user,
@@ -24,7 +22,7 @@ def open_registration_port_for(do: Do, user: User) -> URL:
     return registration.access_to_confirm
 
 
-@do(rollbackable.optionally)
+@do(optionally)
 def register_by(do: Do, email: Email, *, request: HttpRequest) -> User:
     return cases.register_by(
         email,
@@ -35,7 +33,7 @@ def register_by(do: Do, email: Email, *, request: HttpRequest) -> User:
     )
 
 
-@do(rollbackable.optionally)
+@do(optionally)
 def authorization_by(do: Do, request: HttpRequest) -> URL:
     return cases.authorization_by(
         request,
@@ -44,7 +42,7 @@ def authorization_by(do: Do, request: HttpRequest) -> URL:
     )
 
 
-@do(rollbackable.optionally)
+@do(optionally)
 def authorize_by(do: Do, email: Email, *, request: HttpRequest) -> User:
     return cases.authorize_by(
         email,
@@ -53,7 +51,7 @@ def authorize_by(do: Do, email: Email, *, request: HttpRequest) -> User:
     )
 
 
-@do(rollbackable.optionally)
+@do(optionally)
 def access_recovery_via_email_by(do: Do, email: Email) -> URL:
     return cases.access_recovery_by(
         email,
@@ -62,7 +60,7 @@ def access_recovery_via_email_by(do: Do, email: Email) -> URL:
     )
 
 
-@do(rollbackable.optionally)
+@do(optionally)
 def access_recovery_via_name_by(do: Do, name: str) -> URL:
     return cases.access_recovery_by(
         name,
