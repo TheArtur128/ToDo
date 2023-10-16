@@ -8,13 +8,14 @@ from act import (
     via_indexer, partial, obj, to, do, optionally, fun, I, Annotation
 )
 from act.cursors.static import e, _
-from django.core.cache import caches
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
 from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django_redis import get_redis_connection
+from redis import Redis
 
 from shared.types_ import Token, URL, Email
 
@@ -85,13 +86,15 @@ def send_confirmation_mail_by(endpoint: Endpoint[Email]) -> bool:
 
 @obj.of
 class endpoint_repository:
-    _cache = caches["confirmation"].raw_client
+    def connect() -> Redis:
+        return get_redis_connection("confirmation")
 
-    @as_method
     @do(optionally)
-    def get_of(do, self, view: EndpointView) -> Endpoint[str]:
-        user_id = do(self._cache.hget)(view.session_code, "user_id")
-        activation_code = do(self._cache.hget)(
+    def get_of(do, view: EndpointView) -> Endpoint[str]:
+        connection = endpoint_repository.connect()
+
+        user_id = do(connection.hget)(view.session_code, "user_id")
+        activation_code = do(connection.hget)(
             view.session_code,
             "activation_code",
         )
@@ -101,19 +104,21 @@ class endpoint_repository:
 
         return endpoint
 
-    @as_method
-    def save(self, endpoint: Endpoint[str]) -> None:
-        self._cache.hset(endpoint.session_code, "user_id", endpoint.user_id)
-        self._cache.hset(
+    def save(endpoint: Endpoint[str]) -> None:
+        connection = endpoint_repository.connect()
+
+        connection.hset(endpoint.session_code, "user_id", endpoint.user_id)
+        connection.hset(
             endpoint.session_code,
             "activation_code",
             make_password(endpoint.activation_code),
         )
 
-    @as_method
-    def delete(self, endpoint: Endpoint[str]) -> None:
-        self._cache.raw_command("HDEL", endpoint.session_code, "user_id")
-        self._cache.raw_command(
+    def delete(endpoint: Endpoint[str]) -> None:
+        connection = endpoint_repository.connect()
+
+        connection.raw_command("HDEL", endpoint.session_code, "user_id")
+        connection.raw_command(
             "HDEL",
             endpoint.session_code,
             "activation_code",
