@@ -1,0 +1,28 @@
+{% extends 'shared/base.html' %}
+
+
+{% block body %}
+    <div class="front-axis">
+        <form method="POST" class="block" {% block attrs %}{% endblock %}>
+            {% csrf_token %}
+            {% block title %}{% endblock %}
+            <div class="form-fileds">{% block fileds %}{% endblock %}</div>
+            <div class="push"><button type="submit" class="push-data">Push</button></div>
+            {% block extension %}{% endblock %}
+        </form>
+        {% if errors or form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in (*errors, *form.non_field_errors) %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if notifications %}
+            <div class="form-notification">
+                {% for notification in notifications %}
+                    <p>{{ notification }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
