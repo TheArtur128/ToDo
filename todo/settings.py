@@ -139,16 +139,23 @@ CONFIRMATION_ACTIVITY_MINUTES = 5
 
 
 CACHES = {
-    "sessions": {
+    "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://localhost:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
-    "confirmation": {
+    "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://localhost:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "confirmation": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://localhost:6379/2",
         "TIMEOUT": 60 * CONFIRMATION_ACTIVITY_MINUTES,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
