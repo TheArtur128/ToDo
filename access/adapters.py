@@ -57,10 +57,10 @@ class user_local_repository:
 
 @obj.of
 class user_django_orm_repository:
-    get_by_email = fun(_.User.objects.filter(email=e).first())
-    get_by_name = fun(_.User.objects.filter(name=n).first())
+    get_by_email = fun(_.models.User.objects.filter(email=e).first())
+    get_by_name = fun(_.models.User.objects.filter(name=n).first())
 
-    save = User.save
+    save = models.User.save
     has = fun(u.id.is_not(None))
 
 

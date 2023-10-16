@@ -19,7 +19,7 @@ from shared.types_ import Email, URL
 
 @confirmation.register_for(
     confirmation.subjects.authorization,
-    confirmation.methods.email,
+    confirmation.via.email,
 )
 def authorization_confirmation(
     request: HttpRequest,
@@ -35,7 +35,7 @@ def authorization_confirmation(
 
 @confirmation.register_for(
     confirmation.subjects.registration,
-    confirmation.methods.email,
+    confirmation.via.email,
 )
 def registration_confirmation(
     request: HttpRequest,

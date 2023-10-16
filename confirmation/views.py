@@ -12,7 +12,7 @@ def confirm(
     request: HttpRequest,
     subject: services.Subject,
     method: services.Method,
-    token: services.PortToken,
+    token: services.SessionToken,
 ) -> HttpResponse:
     errors = tuple()
 

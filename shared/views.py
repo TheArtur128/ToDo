@@ -1,6 +1,7 @@
 from typing import Callable, Mapping, Type, Iterable
 
-from act import bad, of, v, _
+from act import bad, of, fun
+from act.cursors.static import v, _
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.generic import View
@@ -9,7 +10,7 @@ from shared.types_ import ErrorMessage, FormT
 
 
 class ViewWithForm(View):
-    form_type = property(v._form_type)
+    form_type = property(fun(v._form_type))
     template_name = property(v._template_name)
 
     def get(self, request: HttpRequest) -> HttpResponse:
@@ -19,7 +20,7 @@ class ViewWithForm(View):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         form = self._form_type(data=request.POST)
-        render_with = (
+        render_with = fun(
             _.render(request, self._template_name, dict(form=form) | v)
         )
 

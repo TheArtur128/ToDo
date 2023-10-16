@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 from typing import Callable, Optional
 
 from act import (
-    via_indexer, partial, obj, to, as_method, do, optionally, fun, I, Annotaton
+    via_indexer, partial, obj, to, do, optionally, fun, I, Annotation
 )
 from act.cursors.static import e, _
 from django.core.cache import caches
@@ -121,7 +121,7 @@ class endpoint_repository:
 
 
 @via_indexer
-def HandlerOf(id_annotation: Annotaton) -> Annotaton:
+def HandlerOf(id_annotation: Annotation) -> Annotation:
     return Callable[[HttpRequest, id_annotation], Optional[HttpResponse]]
 
 
