@@ -1,6 +1,6 @@
 from typing import Callable, Optional
 
-from act import obj, struct, U, A, M, D, I, S
+from act import obj, struct, contextual, U, A, M, D, I, S
 
 
 @obj.of
@@ -17,16 +17,16 @@ class registration:
         is_already_registered: Callable[U, bool],
         access_to_confirm_for: Callable[U, A],
         memorization_of: Callable[U, M],
-    ) -> Optional[Opening[A, M]]:
+    ) -> Optional[contextual[M, A]]:
         user = user_of(user_data)
 
         if is_already_registered(user):
             return None
 
-        return registration.Opening(
-            access_to_confirm_for(user),
-            memorization_of(user),
-        )
+        confirmation_access = access_to_confirm_for(user)
+        memorization = memorization_of(user)
+
+        return contextual(memorization, confirmation_access)
 
     def complete_by(
         user_id: I,

@@ -55,7 +55,7 @@ def open_port_of(
     *,
     for_: I,
 ) -> URL:
-    opned_endpoint = cases.endpoint.open_for(
+    confirmation_page_url = cases.endpoint.open_for(
         adapters.Port(subject, send.method),
         for_,
         generate_activation_code=adapters.generate_activation_code,
@@ -64,7 +64,7 @@ def open_port_of(
         save=adapters.endpoint_repository.save,
     )
 
-    return opned_endpoint.access_to
+    return confirmation_page_url.value
 
 
 OpeningView = views.OpeningView

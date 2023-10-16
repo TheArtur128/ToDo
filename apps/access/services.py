@@ -14,7 +14,7 @@ class registration:
     def open_using(do: Do, request: HttpRequest) -> URL:
         access_to_confirm_for = do(adapters.open_registration_confirmation_for)
 
-        opening = cases.registration.open_using(
+        confirmation_page_url = cases.registration.open_using(
             request,
             user_of=adapters.user_to_register_from,
             is_already_registered=adapters.user_django_orm_repository.has,
@@ -22,7 +22,7 @@ class registration:
             memorization_of=adapters.user_local_repository.save,
         )
 
-        return opening.access_to_confirm
+        return confirmation_page_url.value
 
     @fbind_by(... |then>> on(None, False, else_=True))
     @do(optionally)

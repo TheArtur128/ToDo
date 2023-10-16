@@ -34,4 +34,4 @@ def activate_endpoint_by(
         delete=do(adapters.endpoint_repository.delete),
     )
 
-    return result.payload
+    return result.value

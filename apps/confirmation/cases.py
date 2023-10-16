@@ -1,6 +1,6 @@
 from typing import Callable, Optional
 
-from act import struct, obj, P, H, E, U, C, I, N, V, A, D, X
+from act import struct, obj, contextual, P, H, E, U, C, I, N, V, A, D, X
 
 
 @obj.of
@@ -10,11 +10,6 @@ class endpoint:
         sending: N
         saving: V
 
-    @struct
-    class Result[P, D]:
-        payload: P
-        deletion: D
-
     def open_for(
         port: P,
         user_id: U,
@@ -23,7 +18,7 @@ class endpoint:
         endpoint_for: Callable[[P, U, C], E],
         send_access_of: Callable[E, N],
         save: Callable[E, V],
-    ) -> Opening[N, V]:
+    ) -> contextual[Opening[N, V], C]:
         activation_code = generate_activation_code()
 
         endpoint = endpoint_for(port, user_id, activation_code)
@@ -31,7 +26,9 @@ class endpoint:
         sending_result = send_access_of(endpoint)
         saving_result = save(endpoint)
 
-        return endpoint.Opening(sending_result, saving_result)
+        opening = endpoint.Opening(sending_result, saving_result)
+
+        return contextual(opening, activation_code)
 
     def activate_by(
         endpoint_id: I,
@@ -44,7 +41,7 @@ class endpoint:
         contextualized: Callable[H, Callable[U, P]],
         user_id_of: Callable[E, U],
         delete: Callable[E, D],
-    ) -> Optional[Result[P, D]]:
+    ) -> Optional[contextual[D, P]]:
         endpoint = endpoint_of(endpoint_id)
 
         saved_activation_code = saved_activation_code_of(endpoint)
@@ -57,4 +54,4 @@ class endpoint:
 
         deletion = delete(endpoint)
 
-        return endpoint.Result(payload, deletion)
+        return contextual(deletion, payload)
