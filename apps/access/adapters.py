@@ -35,7 +35,6 @@ user_to_register_from = fun(_.User(
     name=r.POST["name"],
     email=r.POST["email"],
     password=r.POST["password1"],
-
 ))
 
 
