@@ -59,7 +59,7 @@ def logout(request: HttpRequest) -> HttpResponse:
 
 class LoginView(confirmation.OpeningView):
     _form_type = UserLoginForm
-    _template_name = "pages/login.html"
+    _template_name = "access/login.html"
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:
@@ -70,7 +70,7 @@ class LoginView(confirmation.OpeningView):
 
 class _RegistrationView(confirmation.OpeningView):
     _form_type = UserRegistrationForm
-    _template_name = "pages/registration.html"
+    _template_name = "access/registration.html"
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:
@@ -81,7 +81,7 @@ class _RegistrationView(confirmation.OpeningView):
 
 class _AccessRecoveryByNameView(confirmation.OpeningView):
     _form_type = RestoringAccessByNameForm
-    _template_name = "pages/access-recovery-by-name.html"
+    _template_name = "access/recovery-by-name.html"
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:
@@ -94,7 +94,7 @@ class _AccessRecoveryByNameView(confirmation.OpeningView):
 
 class _AccessRecoveryByEmailView(confirmation.OpeningView):
     _form_type = RestoringAccessByEmailForm
-    _template_name = "pages/access-recovery-by-email.html"
+    _template_name = "access/recovery-by-email.html"
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:

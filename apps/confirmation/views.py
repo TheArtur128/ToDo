@@ -1,6 +1,7 @@
 from typing import Optional, Callable, Mapping
 
 from act import bad
+from django.forms import Form
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
@@ -54,6 +55,7 @@ class OpeningView(views.ViewWithForm):
         self,
         *,
         request: HttpRequest,
+        form: Form,
         render_with: Callable[Mapping, HttpResponse],
     ) -> HttpResponse | list[bad[types_.ErrorMessage]]:
         result = self._open_port(request)

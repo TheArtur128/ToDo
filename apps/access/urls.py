@@ -14,11 +14,11 @@ urlpatterns = [
     path(
         "recover-access-by-name",
         access_recovery_by_name,
-        name="recover-access-by-name"
+        name="recover-by-name"
     ),
     path(
         "recover-access-by-email",
         access_recovery_by_email,
-        name="recover-access-by-email"
+        name="recover-by-email"
     ),
 ]

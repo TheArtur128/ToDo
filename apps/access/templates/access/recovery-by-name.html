@@ -1,9 +1,9 @@
-{% extends 'pages/access-recovery.html' %}
+{% extends 'access/recovery.html' %}
 
 
 {% block attrs %}
     {{ block.super }}
-    {% url 'access:recover-access-by-name' %}
+    {% url 'access:recover-by-name' %}
 {% endblock %}
 
 {% block fields %}
@@ -15,5 +15,5 @@
 {% endblock %}
 
 {% block extension %}
-    <a class="to-change-form" href="{% url 'access:recover-access-by-email' %}">Via email</a>
+    <a class="to-change-form" href="{% url 'access:recover-by-email' %}">Via email</a>
 {% endblock %}

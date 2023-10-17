@@ -1,4 +1,4 @@
-{% extends 'pages/form.html' %}
+{% extends 'shared/form.html' %}
 
 
 {% block body %}
@@ -14,7 +14,8 @@
 
 {% block attrs %}id="registration-form" action="{% url 'access:sign-up' %}"{% endblock %}
 
-{% block title %}<h1>Sign up</h1>{% endblock %}
+{% block title %}Sign up{% endblock %}
+{% block form_title %}<h1>Sign up</h1>{% endblock %}
 
 {% block fileds %}
     <p>
