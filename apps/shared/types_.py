@@ -1,6 +1,5 @@
-from typing import TypeAlias, Callable, Any, TypeVar
+from typing import TypeAlias, Any, TypeVar
 
-from act import via_indexer, temp
 from django.forms import Form
 
 
@@ -17,15 +16,3 @@ Token = str
 Name: TypeAlias = str
 
 FormT = TypeVar("_FormT", bound=Form)
-
-
-@via_indexer
-def RepositoryFromTo(
-    key_annotation: Annotation,
-    value_annotation: Annotation,
-) -> temp:
-    return temp(
-        get_of=Callable[key_annotation, value_annotation],
-        has_of=Callable[key_annotation, bool],
-        create_for=Callable[key_annotation, Any],
-    )
