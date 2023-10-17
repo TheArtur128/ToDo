@@ -49,7 +49,7 @@ class EndpointView:
     session_code: SessionCode
 
 
-def _confirmation_page_url_of(endpoint: Endpoint[Email]) -> URL:
+def confirmation_page_url_of(endpoint: Endpoint[Email]) -> URL:
     args = [
         endpoint.port.subject,
         endpoint.port.notification_method,
@@ -61,10 +61,10 @@ def _confirmation_page_url_of(endpoint: Endpoint[Email]) -> URL:
     return urljoin(settings.BASE_URL, relative_url)
 
 
-def send_confirmation_mail_by(endpoint: Endpoint[Email]) -> bool:
+def send_confirmation_mail_by(endpoint: Endpoint[Email], url: URL) -> bool:
     context = dict(
         subject=endpoint.port.subject,
-        url=_confirmation_page_url_of(endpoint),
+        url=url,
         password=endpoint.activation_code,
     )
 

@@ -1,7 +1,7 @@
 from typing import Callable, Any
 
 from act import (
-    to, via_indexer, temp, obj, name_enum_of, io, rollbackable, do, Do,
+    to, via_indexer, temp, obj, name_enum_of, io, will, rollbackable, do, Do,
     reformer_of, I, Annotation
 )
 
@@ -33,7 +33,7 @@ class _methods:
 class via:
     email: _SendingOf[Email] = obj(
         method=_methods.email,
-        by=rollbackable.binary(adapters.send_confirmation_mail_by),
+        by=will(rollbackable.binary(adapters.send_confirmation_mail_by)),
     )
 
 
@@ -60,7 +60,8 @@ def open_port_of(
         for_,
         generate_activation_code=adapters.generate_activation_code,
         endpoint_for=adapters.Endpoint,
-        send_access_of=do(send.by),
+        place_to_activate=adapters.confirmation_page_url_of,
+        sending_of=do(send.by),
         save=adapters.endpoint_repository.save,
     )
 

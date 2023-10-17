@@ -1,6 +1,6 @@
 from typing import Callable, Optional
 
-from act import struct, obj, contextual, P, H, E, U, C, I, N, V, A, D, X
+from act import struct, obj, contextual, P, H, E, U, C, I, N, V, A, D, X, L
 
 
 @obj.of
@@ -16,19 +16,23 @@ class endpoint:
         *,
         generate_activation_code: Callable[[], C],
         endpoint_for: Callable[[P, U, C], E],
-        send_access_of: Callable[E, N],
+        place_to_activate: Callable[E, L],
+        sending_of: Callable[E, Callable[L, N]],
         save: Callable[E, V],
     ) -> contextual[Opening[N, V], C]:
         activation_code = generate_activation_code()
 
         endpoint = endpoint_for(port, user_id, activation_code)
+        activation_place = place_to_activate(endpoint)
 
-        sending_result = send_access_of(endpoint)
+        send_to_user = sending_of(endpoint)
+
+        sending_result = send_to_user(activation_place)
         saving_result = save(endpoint)
 
         opening = endpoint.Opening(sending_result, saving_result)
 
-        return contextual(opening, activation_code)
+        return contextual(opening, activation_place)
 
     def activate_by(
         endpoint_id: I,
