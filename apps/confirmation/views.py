@@ -57,10 +57,10 @@ class OpeningView(views.ViewWithForm):
         request: HttpRequest,
         form: Form,
         render_with: Callable[Mapping, HttpResponse],
-    ) -> HttpResponse | list[bad[types_.ErrorMessage]]:
+    ) -> HttpResponse | bad[list[types_.ErrorMessage]]:
         result = self._open_port(request)
 
         if result is None:
-            return [bad(self._failure_message)]
+            return bad([self._failure_message])
 
         return redirect(result)
