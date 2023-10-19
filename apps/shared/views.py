@@ -1,6 +1,6 @@
 from typing import Callable, Mapping, Type, Iterable
 
-from act import bad, of, fun
+from act import bad, of, fun, flat
 from act.cursors.static import v, _
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -25,7 +25,7 @@ class ViewWithForm(View):
         )
 
         if not form.is_valid():
-            return render_with(dict(errors=tuple(form.errors.values())))
+            return render_with(dict(errors=flat(form.errors.values())))
 
         result = self._service(
             request=request, form=form, render_with=render_with
