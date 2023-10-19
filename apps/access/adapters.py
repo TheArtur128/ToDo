@@ -1,48 +1,56 @@
+from typing import Optional
+
 from act import obj, flipped, io, fun
-from act.cursors.static import u, r, e, n, _
+from act.cursors.static import u, e, n, _
 from django.contrib import auth
+from django.http import HttpRequest
 
 from apps.access.input import confirmation
 from apps.shared import models
-from apps.shared.types_ import Email
+from apps.shared.types_ import URL, Email
 
 
 type User = models.User
 
 
-open_registration_confirmation_for = fun(_.confirmation.open_port_of(
-    confirmation.subjects.registration,
-    confirmation.via.email,
-    for_=u.email,
-))
+def open_registration_confirmation_for(user: User) -> URL:
+    return confirmation.open_port_of(
+        confirmation.subjects.registration,
+        confirmation.via.email,
+        for_=user.email,
+    )
 
 
-open_access_recovery_confirmation_for = fun(_.confirmation.open_port_of(
-    confirmation.subjects.access_recovery,
-    confirmation.via.email,
-    for_=u.email,
-))
+def open_access_recovery_confirmation_for(user: User) -> URL:
+    return confirmation.open_port_of(
+        confirmation.subjects.access_recovery,
+        confirmation.via.email,
+        for_=user.email,
+    )
 
 
-open_authorization_confirmation_for = fun(_.confirmation.open_port_of(
-    confirmation.subjects.authorization,
-    confirmation.via.email,
-    for_=u.email,
-))
+def open_authorization_confirmation_for(user: User) -> URL:
+    return confirmation.open_port_of(
+        confirmation.subjects.authorization,
+        confirmation.via.email,
+        for_=user.email,
+    )
 
 
-user_to_register_from = fun(_.User(
-    name=r.POST["name"],
-    email=r.POST["email"],
-    password=r.POST["password1"],
-))
+def user_to_register_from(request: HttpRequest) -> User:
+    return models.User(
+        name=request.POST["name"],
+        email=request.POST["email"],
+        password=request.POST["password1"],
+    )
 
 
-user_to_authorize_from = fun(_.auth.authenticate(
-    r,
-    username=r.POST["name"],
-    password=r.POST["password"],
-))
+def user_to_authorize_from(request: HttpRequest) -> Optional[User]:
+    return auth.authenticate(
+        request,
+        username=request.POST["name"],
+        password=request.POST["password"],
+    )
 
 
 @obj.of
