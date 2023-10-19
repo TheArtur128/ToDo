@@ -10,12 +10,9 @@
             <div class="push"><button type="submit" class="push-data">Push</button></div>
             {% block extension %}{% endblock %}
         </form>
-        {% if errors or form.non_field_errors %}
+        {% if errors %}
             <div class="form-errors">
                 {% for error in errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
-                {% for error in form.non_field_errors %}
                     <p>{{ error }}</p>
                 {% endfor %}
             </div>
