@@ -96,6 +96,16 @@ div {
   height: 419px;
 }
 
+#confirmation-form {
+  padding-bottom: 5px;
+  overflow-wrap: break-word;
+}
+
+#confirmation-form .form-fileds {
+    margin-top: 5px;
+    margin-bottom: 27px;
+}
+
 #recovery-form {
   height: 330px;
 }

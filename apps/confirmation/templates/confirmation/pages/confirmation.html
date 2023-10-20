@@ -3,16 +3,11 @@
 
 {% block attrs %}id="confirmation-form" action="{% url 'confirmation:confirm' subject=subject method=method token=token %}"{% endblock %}
 
-{% block title %}<h1>Confirm {{ subject }}</h1>{% endblock %}
+{% block form_title %}<h1>Confirm {{ subject }}</h1>{% endblock %}
 
 {% block fileds %}
     <p>
         <label for="{{ form.password.id_for_label }}">Password</label>
         {{ form.password }}
     </p>
-{% endblock %}
-
-{% block extension %}
-    <a class="to-regain-access" href="{% url 'access:recover-access-by-name' %}">Forgot</a>
-    <a class="to-change-form" href="{% url 'access:sign-up' %}">Sign up</a>
 {% endblock %}
