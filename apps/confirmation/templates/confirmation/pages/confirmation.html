@@ -1,7 +1,7 @@
-{% extends 'confirmation/pages/form.html' %}
+{% extends 'shared/form.html' %}
 
 
-{% block attrs %}id="confirmation-form" action="{% url 'access:confirmation' %}"{% endblock %}
+{% block attrs %}id="confirmation-form" action="{% url 'confirmation:confirm' subject=subject method=method token=token %}"{% endblock %}
 
 {% block title %}<h1>Confirm {{ subject }}</h1>{% endblock %}
 

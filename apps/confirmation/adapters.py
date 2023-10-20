@@ -71,7 +71,10 @@ def send_confirmation_mail_by(endpoint: Endpoint[Email], url: URL) -> bool:
     text_message_template = "Password to confirm {subject} in {url}: {password}"
     text_message = text_message_template.format(**context)
 
-    html_message = render_to_string("mails/to-confirm.html", context)
+    html_message = render_to_string(
+        "confirmation/mails/to-confirm.html",
+        context,
+    )
 
     result_code = send_mail(
         subject=f"Confirm {endpoint.port.subject}",
