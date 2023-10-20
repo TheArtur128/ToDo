@@ -1,4 +1,4 @@
-from act import obj, do, Do, optionally, fbind_by, then, on, by, io
+from act import obj, do, Do, optionally, fbind_by, then, not_, by, io
 from django.http import HttpRequest
 
 from apps.access import adapters, cases
@@ -24,7 +24,7 @@ class registration:
 
         return confirmation_page_url.value
 
-    @fbind_by(... |then>> on(None, False, else_=True))
+    @fbind_by(... |then>> not_(None))
     @do(optionally)
     def complete_by(do: Do, email: Email, *, request: HttpRequest) -> User:
         return cases.registration.complete_by(
@@ -48,7 +48,7 @@ class authorization:
             access_to_confirm_for=access_to_confirm_for,
         )
 
-    @fbind_by(... |then>> on(None, False, else_=True))
+    @fbind_by(... |then>> not_(None))
     @do(optionally)
     def complete_by(do: Do, email: Email, *, request: HttpRequest) -> User:
         return cases.authorization.complete_by(
