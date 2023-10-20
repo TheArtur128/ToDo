@@ -20,13 +20,16 @@ def confirm(
     if request.method == 'GET':
         form = forms.ConfirmationForm()
     else:
-        form = forms.ConfirmationForm(data=form.POST)
+        form = forms.ConfirmationForm(data=request.POST)
 
         if form.is_valid():
-            activation = services.Activation(
-                subject, method, token, request.POST["password"]
+            response = services.activate_endpoint_by(
+                subject=subject,
+                method=method,
+                session_token=token,
+                password=request.POST["password"],
+                request=request,
             )
-            response = services.activate_by(activation, request)
 
             if response is not None:
                 return response
@@ -37,10 +40,14 @@ def confirm(
             ]
 
     context = dict(
-        subject=subject, form=form, errors=(*form.errors.values(), *errors)
+        subject=subject,
+        method=method,
+        token=token,
+        form=form,
+        errors=(*form.errors.values(), *errors),
     )
 
-    return render(request, "pages/confirmation.html", context)
+    return render(request, "confirmation/pages/confirmation.html", context)
 
 
 class OpeningView(views.ViewWithForm):
