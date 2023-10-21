@@ -98,12 +98,12 @@ def send_confirmation_mail_by(endpoint: Endpoint[Email], url: URL) -> bool:
 
 @obj.of
 class endpoint_repository:
-    def connect() -> Redis:
+    def _connect() -> Redis:
         return get_redis_connection("confirmation")
 
     @do(optionally)
     def get_of(do, view: EndpointView) -> Endpoint[str]:
-        connection = endpoint_repository.connect()
+        connection = endpoint_repository._connect()
 
         user_id = do(connection.hget)(view.session_code, "user_id")
         activation_code = do(connection.hget)(
@@ -117,7 +117,7 @@ class endpoint_repository:
         return endpoint
 
     def save(endpoint: Endpoint[str]) -> None:
-        connection = endpoint_repository.connect()
+        connection = endpoint_repository._connect()
 
         connection.hset(endpoint.session_code, "user_id", endpoint.user_id)
         connection.hset(
@@ -127,7 +127,6 @@ class endpoint_repository:
         )
 
     def delete(endpoint: Endpoint[str]) -> None:
-        connection = endpoint_repository.connect()
 
         connection.raw_command("HDEL", endpoint.session_code, "user_id")
         connection.raw_command(
@@ -135,6 +134,7 @@ class endpoint_repository:
             endpoint.session_code,
             "activation_code",
         )
+        connection = endpoint_repository._connect()
 
 
 @via_indexer
