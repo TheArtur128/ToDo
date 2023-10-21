@@ -30,13 +30,13 @@ class endpoint:
     ) -> contextual[Opening[N, V], C]:
         activation_code = generate_activation_code()
 
-        endpoint = endpoint_for(port, user_id, activation_code)
-        activation_place = place_to_activate(endpoint)
+        endpoint_ = endpoint_for(port, user_id, activation_code)
+        activation_place = place_to_activate(endpoint_)
 
-        send_to_user = sending_of(endpoint)
+        send_to_user = sending_of(endpoint_)
 
         sending_result = send_to_user(activation_place)
-        saving_result = save(endpoint)
+        saving_result = save(endpoint_)
 
         opening = endpoint.Opening(sending_result, saving_result)
 
