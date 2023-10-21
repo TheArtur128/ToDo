@@ -86,6 +86,7 @@ def send_confirmation_mail_by(endpoint: Endpoint[Email], url: URL) -> bool:
     )
 
     result_code = send_mail(
+        from_email=None,
         subject=f"Confirm {endpoint.port.subject}",
         message=text_message,
         html_message=html_message,
