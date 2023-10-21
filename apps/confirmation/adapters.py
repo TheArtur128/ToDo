@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from operator import setitem
-from secrets import token_urlsafe
 from urllib.parse import urljoin
 from typing import Callable, Optional
 
@@ -19,6 +18,7 @@ from redis import Redis
 
 from apps.confirmation import config
 from apps.shared.types_ import Token, URL, Email
+from apps.shared.tools import token_generator_with
 
 
 type Subject = config.Subject
@@ -38,8 +38,8 @@ class Endpoint[I]:
     port: Port
     user_id: I
     activation_code: ActivationCode
-    session_code: SessionCode = field(default_factory=(
-        token_urlsafe |to| settings.CONFIRMATION_SESSION_CODE_LENGTH
+    session_code: SessionCode = field(default_factory=token_generator_with(
+        length=settings.CONFIRMATION_SESSION_CODE_LENGTH,
     ))
 
 
@@ -153,6 +153,7 @@ contextualized = partial
 
 are_activation_codes_matched = check_password
 
-generate_activation_code = (
-    token_urlsafe |to| settings.CONFIRMATION_ACTIVATION_CODE_LENGTH
+generate_activation_code = token_generator_with(
+    length=settings.CONFIRMATION_ACTIVATION_CODE_LENGTH,
 )
+
