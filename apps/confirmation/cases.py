@@ -10,6 +10,14 @@ class endpoint:
         sending: N
         saving: V
 
+    def can_be_opened_for(
+        port: P,
+        *,
+        is_subject_correct: Callable[P, bool],
+        is_method_correct: Callable[P, bool],
+    ) -> bool:
+        return is_subject_correct(port) and is_method_correct(port)
+
     def open_for(
         port: P,
         user_id: U,

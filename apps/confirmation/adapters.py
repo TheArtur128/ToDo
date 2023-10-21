@@ -50,6 +50,14 @@ class EndpointView:
     session_code: SessionCode
 
 
+def is_subject_correct(port: Port) -> bool:
+    return port.subject in config.subjects.all
+
+
+def is_method_correct(port: Port) -> bool:
+    return port.notification_method in config.methods.all
+
+
 def confirmation_page_url_of(endpoint: Endpoint[Email]) -> URL:
     args = [
         endpoint.port.subject,

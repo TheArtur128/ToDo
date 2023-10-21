@@ -1,4 +1,6 @@
-from act import do, Do, optionally, fun, by
+from typing import Optional, Callable
+
+from act import obj, will, do, Do, optionally, fun, by
 from act.cursors.static import e
 from django.http import HttpRequest, HttpResponse
 
@@ -11,27 +13,43 @@ type Method = adapters.Method
 type SessionToken = adapters.SessionCode
 
 
-@do(optionally)
-def activate_endpoint_by(
-    do: Do,
-    subject: Subject,
-    method: Method,
-    session_token: SessionToken,
-    password: Password,
-    request: HttpRequest,
-) -> HttpResponse:
-    view = adapters.EndpointView(subject, method, session_token)
-
-    result = do(cases.endpoint.activate_by)(
-        view,
-        input_activation_code=password,
-        endpoint_of=do(adapters.endpoint_repository.get_of),
-        saved_activation_code_of=fun(e.activation_code),
-        are_matched=adapters.are_activation_codes_matched,
-        handling_of=do(adapters.handler_repository.get_of),
-        contextualized=adapters.contextualized |by| request,
-        user_id_of=fun(e.user_id),
-        delete=do(adapters.endpoint_repository.delete),
+@obj.of
+class endpoint_activation_of:
+    _can_endpoint_be_opened_of = will(cases.endpoint.can_be_opened_for)(
+        is_subject_correct=adapters.is_subject_correct,
+        is_method_correct=adapters.is_method_correct,
     )
 
-    return result.value
+    def __call__(
+        subject: Subject,
+        method: Method,
+    ) -> Optional[Callable]:
+        port = adapters.Port(subject, method)
+
+        if not endpoint_activation_of._can_endpoint_be_opened_of(port):
+            return None
+
+        @do(optionally)
+        def activate_endpoint_by(
+            do: Do,
+            session_token: SessionToken,
+            password: Password,
+            request: HttpRequest,
+        ) -> HttpResponse:
+            view = adapters.EndpointView(subject, method, session_token)
+
+            result = do(cases.endpoint.activate_by)(
+                view,
+                input_activation_code=password,
+                endpoint_of=do(adapters.endpoint_repository.get_of),
+                saved_activation_code_of=fun(e.activation_code),
+                are_matched=adapters.are_activation_codes_matched,
+                handling_of=do(adapters.handler_repository.get_of),
+                contextualized=adapters.contextualized |by| request,
+                user_id_of=fun(e.user_id),
+                delete=do(adapters.endpoint_repository.delete),
+            )
+
+            return result.value
+
+        return activate_endpoint_by

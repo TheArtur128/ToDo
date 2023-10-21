@@ -2,7 +2,7 @@ from typing import Optional, Callable, Mapping
 
 from act import bad
 from django.forms import Form
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render, redirect
 
 from apps.confirmation import services, forms
@@ -15,6 +15,11 @@ def confirm(
     method: services.Method,
     token: services.SessionToken,
 ) -> HttpResponse:
+    activate_endpoint_by = services.endpoint_activation_of(subject, method)
+
+    if activate_endpoint_by is None:
+        raise Http404("incorrect subject or method")
+
     errors = tuple()
 
     if request.method == 'GET':
@@ -23,9 +28,7 @@ def confirm(
         form = forms.ConfirmationForm(data=request.POST)
 
         if form.is_valid():
-            response = services.activate_endpoint_by(
-                subject=subject,
-                method=method,
+            response = activate_endpoint_by(
                 session_token=token,
                 password=request.POST["password"],
                 request=request,
