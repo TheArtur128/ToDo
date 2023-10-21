@@ -17,11 +17,12 @@ from django.urls import reverse
 from django_redis import get_redis_connection
 from redis import Redis
 
+from apps.confirmation import config
 from apps.shared.types_ import Token, URL, Email
 
 
-type Subject = str
-type Method = str
+type Subject = config.Subject
+type Method = config.Method
 type SessionCode = Token
 type ActivationCode = Token
 

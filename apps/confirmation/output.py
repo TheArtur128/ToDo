@@ -1,44 +1,38 @@
 from typing import Callable, Any
 
 from act import (
-    to, via_indexer, temp, obj, name_enum_of, io, will, rollbackable, do, Do,
-    reformer_of, I, Annotation
+    to, via_indexer, temp, obj, io, will, rollbackable, do, Do, reformer_of, I,
+    Annotation
 )
 
-from apps.confirmation import adapters, cases, services, views
+from apps.confirmation import adapters, cases, config, views
 from apps.shared.types_ import URL, Email
+
+
+__all__ = ("subjects", "via", "register_for", "open_port_of", "OpeningView")
+
+
+subjects = config.subjects
 
 
 @via_indexer
 def _SendingOf(id_annotation: Annotation) -> temp:
     return temp(
-        method=services.Method,
+        method=adapters.Method,
         by=Callable[adapters.Endpoint[id_annotation], Callable[URL, Any]],
     )
-
-
-@name_enum_of
-class subjects:
-    authorization: services.Subject
-    registration: services.Subject
-    access_recovery: services.Subject
-
-
-@name_enum_of
-class _methods:
-    email: services.Method
 
 
 @obj.of
 class via:
     email: _SendingOf[Email] = obj(
-        method=_methods.email,
+        method=config.methods.email,
         by=will(rollbackable.binary(adapters.send_confirmation_mail_by)),
     )
 
 
 def register_for(
-    subject: services.Subject,
+    subject: adapters.Subject,
     send: _SendingOf[I],
 ) -> reformer_of[adapters.HandlerOf[I]]:
     port = adapters.Port(subject, send.method)
@@ -50,7 +44,7 @@ def register_for(
 @do(else_=None)
 def open_port_of(
     do: Do,
-    subject: services.Subject,
+    subject: adapters.Subject,
     send: _SendingOf[I],
     *,
     for_: I,
