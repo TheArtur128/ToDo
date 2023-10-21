@@ -36,10 +36,10 @@ class endpoint_activation_of:
             password: Password,
             request: HttpRequest,
         ) -> HttpResponse:
-            view = adapters.EndpointView(subject, method, session_token)
+            id = adapters.EndpointID(subject, method, session_token)
 
             result = do(cases.endpoint.activate_by)(
-                view,
+                id,
                 input_activation_code=password,
                 endpoint_of=do(adapters.endpoint_repository.get_of),
                 saved_activation_code_of=fun(e.activation_code),

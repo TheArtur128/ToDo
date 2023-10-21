@@ -44,7 +44,7 @@ class Endpoint[I]:
 
 
 @dataclass(frozen=True)
-class EndpointView:
+class EndpointID:
     subject: Subject
     notification_method: Method
     session_code: SessionCode
