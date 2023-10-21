@@ -82,7 +82,7 @@ def send_confirmation_mail_by(endpoint: Endpoint[Email], url: URL) -> bool:
 
     html_message = render_to_string(
         "confirmation/mails/to-confirm.html",
-        context,
+        context | dict(link=url),
     )
 
     result_code = send_mail(
