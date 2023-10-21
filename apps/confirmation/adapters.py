@@ -99,21 +99,26 @@ def send_confirmation_mail_by(endpoint: Endpoint[Email], url: URL) -> bool:
 
 @obj.of
 class endpoint_repository:
+    _seconds_until_deletion = settings.CONFIRMATION_ACTIVITY_MINUTES * 60
+
     def _connect() -> Redis:
         return get_redis_connection("confirmation")
 
     @do(optionally)
-    def get_of(do, view: EndpointView) -> Endpoint[str]:
+    def get_of(do, id: EndpointID) -> Endpoint[str]:
         connection = endpoint_repository._connect()
 
-        user_id = do(connection.hget)(view.session_code, "user_id")
-        activation_code = do(connection.hget)(
-            view.session_code,
+        user_id_bytes = do(connection.hget)(id.session_code, "user_id")
+        activation_code_bytes = do(connection.hget)(
+            id.session_code,
             "activation_code",
         )
 
-        port = Port(view.subject, view.notification_method)
-        endpoint = Endpoint(port, user_id, view.session_code, activation_code)
+        user_id = user_id_bytes.decode()
+        activation_code = activation_code_bytes.decode()
+
+        port = Port(id.subject, id.notification_method)
+        endpoint = Endpoint(port, user_id, activation_code, id.session_code)
 
         return endpoint
 
@@ -127,15 +132,12 @@ class endpoint_repository:
             make_password(endpoint.activation_code),
         )
 
-    def delete(endpoint: Endpoint[str]) -> None:
+        seconds_until_deletion = endpoint_repository._seconds_until_deletion
+        connection.expire(endpoint.session_code, seconds_until_deletion)
 
-        connection.raw_command("HDEL", endpoint.session_code, "user_id")
-        connection.raw_command(
-            "HDEL",
-            endpoint.session_code,
-            "activation_code",
-        )
+    def delete(endpoint: Endpoint[str]) -> None:
         connection = endpoint_repository._connect()
+        connection.hdel(endpoint.session_code, "user_id", "activation_code")
 
 
 @via_indexer
