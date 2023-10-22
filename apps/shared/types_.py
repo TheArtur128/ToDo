@@ -1,18 +1,19 @@
-from typing import TypeAlias, Any, TypeVar
+from typing import Any, TypeVar
 
 from django.forms import Form
 
 
-ErrorMessage: TypeAlias = str
-Annotation: TypeAlias = Any
+type ErrorMessage = str
+type Annotation = Any
 
-URL: TypeAlias = str
-ID: TypeAlias = str
-Email: TypeAlias = str
-Password: TypeAlias = str
-PasswordHash: TypeAlias = str
-Token = str
+type URL = str
+type Email = str
 
-Name: TypeAlias = str
+type ID = str
+type Token = str
+type Name = str
+type Password = str
+type PasswordHash = str
+
 
 FormT = TypeVar("_FormT", bound=Form)
