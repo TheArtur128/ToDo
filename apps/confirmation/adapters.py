@@ -8,7 +8,6 @@ from act import (
 )
 from act.cursors.static import e, _
 from django.core.mail import send_mail
-from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
 from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
@@ -36,8 +35,8 @@ class Endpoint[I]:
     port: Port
     user_id: I
     activation_code: ActivationCode
-    session_code: SessionCode = field(default_factory=token_generator_with(
-        length=settings.CONFIRMATION_SESSION_CODE_LENGTH,
+    session_code: SessionCode = field(default_factory=(
+        input.tools.token_generator_with(length=input.session_code_length)
     ))
 
 
@@ -102,7 +101,7 @@ def send_confirmation_mail_by(
 
 @obj.of
 class endpoint_repository:
-    _seconds_until_deletion = settings.CONFIRMATION_ACTIVITY_MINUTES * 60
+    _seconds_until_deletion = input.activity_minutes * 60
 
     def _connect() -> Redis:
         return get_redis_connection("confirmation")
@@ -159,7 +158,7 @@ contextualized = partial
 
 are_activation_codes_matched = check_password
 
-generate_activation_code = token_generator_with(
-    length=settings.CONFIRMATION_ACTIVATION_CODE_LENGTH,
+generate_activation_code = input.tools.token_generator_with(
+    length=input.activation_code_length,
 )
 
