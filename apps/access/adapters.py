@@ -51,17 +51,6 @@ def user_to_authorize_from(request: HttpRequest) -> Optional[User]:
     )
 
 
-class UserRedisRepository:
-    def __init__(self, key_type: Name) -> None:
-        self.__key_type = key_type
-
-    def connect(self) -> Redis:
-        return get_redis_connection("registration")
-
-    def save(self, user: User) -> None:
-
-
-
 @obj.of
 class user_local_repository:
     _config: dict[types_.Email, User] = dict()
