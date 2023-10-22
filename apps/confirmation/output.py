@@ -5,8 +5,7 @@ from act import (
     Annotation
 )
 
-from apps.confirmation import adapters, cases, config, views
-from apps.shared.types_ import URL, Email
+from apps.confirmation import adapters, cases, config, input, views
 
 
 __all__ = ("subjects", "via", "register_for", "open_port_of", "OpeningView")
@@ -19,13 +18,16 @@ subjects = config.subjects
 def _SendingOf(id_annotation: Annotation) -> temp:
     return temp(
         method=adapters.Method,
-        by=Callable[adapters.Endpoint[id_annotation], Callable[URL, Any]],
+        by=Callable[
+            adapters.Endpoint[id_annotation],
+            Callable[input.types_.URL, Any],
+        ],
     )
 
 
 @obj.of
 class via:
-    email: _SendingOf[Email] = obj(
+    email: _SendingOf[input.types_.Email] = obj(
         method=config.methods.email,
         by=will(rollbackable.binary(adapters.send_confirmation_mail_by)),
     )
@@ -48,7 +50,7 @@ def open_port_of(
     send: _SendingOf[I],
     *,
     for_: I,
-) -> URL:
+) -> input.types_.URL:
     confirmation_page_url = cases.endpoint.open_for(
         adapters.Port(subject, send.method),
         for_,

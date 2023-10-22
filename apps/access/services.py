@@ -2,7 +2,7 @@ from act import obj, do, Do, optionally, fbind_by, then, not_, by, io
 from django.http import HttpRequest
 
 from apps.access import adapters, cases
-from apps.shared.types_ import URL, Email
+from apps.access.input import types_
 
 
 type User = adapters.User
@@ -11,7 +11,7 @@ type User = adapters.User
 @obj.of
 class registration:
     @do(optionally)
-    def open_using(do: Do, request: HttpRequest) -> URL:
+    def open_using(do: Do, request: HttpRequest) -> types_.URL:
         access_to_confirm_for = do(adapters.open_registration_confirmation_for)
 
         confirmation_page_url = cases.registration.open_using(
@@ -26,7 +26,7 @@ class registration:
 
     @fbind_by(... |then>> not_(None))
     @do(optionally)
-    def complete_by(do: Do, email: Email, *, request: HttpRequest) -> User:
+    def complete_by(do: Do, email: types_.Email, *, request: HttpRequest) -> User:
         return cases.registration.complete_by(
             email,
             memorized_user_of=do(adapters.user_local_repository.get_of),
@@ -39,7 +39,7 @@ class registration:
 @obj.of
 class authorization:
     @do(optionally)
-    def open_using(do: Do, request: HttpRequest) -> URL:
+    def open_using(do: Do, request: HttpRequest) -> types_.URL:
         access_to_confirm_for = do(adapters.open_authorization_confirmation_for)
 
         return cases.authorization.open_using(
@@ -50,7 +50,9 @@ class authorization:
 
     @fbind_by(... |then>> not_(None))
     @do(optionally)
-    def complete_by(do: Do, email: Email, *, request: HttpRequest) -> User:
+    def complete_by(
+        do: Do, email: types_.Email, *, request: HttpRequest
+    ) -> User:
         return cases.authorization.complete_by(
             email,
             user_of=do(adapters.user_django_orm_repository.get_by_email),
@@ -61,7 +63,7 @@ class authorization:
 @obj.of
 class access_recovery:
     @do(optionally)
-    def open_via_email_using(do: Do, email: Email) -> URL:
+    def open_via_email_using(do: Do, email: types_.Email) -> types_.URL:
         access_to_confirm_for = do(
             adapters.open_access_recovery_confirmation_for
         )
@@ -73,7 +75,7 @@ class access_recovery:
         )
 
     @do(optionally)
-    def open_via_name_using(do: Do, name: str) -> URL:
+    def open_via_name_using(do: Do, name: str) -> types_.URL:
         access_to_confirm_for = do(
             adapters.open_access_recovery_confirmation_for
         )

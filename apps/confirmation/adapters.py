@@ -16,15 +16,13 @@ from django.urls import reverse
 from django_redis import get_redis_connection
 from redis import Redis
 
-from apps.confirmation import config
-from apps.shared.types_ import Token, URL, Email
-from apps.shared.tools import token_generator_with
+from apps.confirmation import config, input
 
 
 type Subject = config.Subject
 type Method = config.Method
-type SessionCode = Token
-type ActivationCode = Token
+type SessionCode = input.types_.Token
+type ActivationCode = input.types_.Token
 
 
 @dataclass(frozen=True)
@@ -58,7 +56,9 @@ def is_method_correct(port: Port) -> bool:
     return port.notification_method in config.methods.all
 
 
-def confirmation_page_url_of(endpoint: Endpoint[Email]) -> URL:
+def confirmation_page_url_of(
+    endpoint: Endpoint[input.types_.Email],
+) -> input.types_.URL:
     args = [
         endpoint.port.subject,
         endpoint.port.notification_method,
@@ -67,10 +67,13 @@ def confirmation_page_url_of(endpoint: Endpoint[Email]) -> URL:
 
     relative_url = reverse("confirmation:confirm", args=args)
 
-    return urljoin(settings.BASE_URL, relative_url)
+    return urljoin(input.base_url, relative_url)
 
 
-def send_confirmation_mail_by(endpoint: Endpoint[Email], url: URL) -> bool:
+def send_confirmation_mail_by(
+    endpoint: Endpoint[input.types_.Email],
+    url: input.types_.URL,
+) -> bool:
     context = dict(
         subject=endpoint.port.subject,
         url=url,
