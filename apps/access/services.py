@@ -26,7 +26,9 @@ class registration:
 
     @fbind_by(... |then>> not_(None))
     @do(optionally)
-    def complete_by(do: Do, email: types_.Email, *, request: HttpRequest) -> User:
+    def complete_by(
+        do: Do, email: types_.Email, *, request: HttpRequest
+    ) -> User:
         return cases.registration.complete_by(
             email,
             memorized_user_of=do(adapters.user_local_repository.get_of),
