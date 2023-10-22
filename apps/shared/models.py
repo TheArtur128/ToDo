@@ -44,7 +44,8 @@ class Zone(_VisualizableMixin, Model):
             f"x={self.x}, "
             f"y={self.y}, "
             f"width={self.width}, "
-            f"height={self.height}")
+            f"height={self.height}"
+        )
 
 
 class Task(_VisualizableMixin, Model):
