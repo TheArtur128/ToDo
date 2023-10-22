@@ -6,10 +6,9 @@ class ConfirmationForm(Form):
     __error_message = "Password must be {} characters long.".format(
         settings.CONFIRMATION_ACTIVATION_CODE_LENGTH,
     )
-
     __error_messages = dict(
-        max_length=__error_message,
         min_length=__error_message,
+        max_length=__error_message,
     )
 
     password = CharField(
