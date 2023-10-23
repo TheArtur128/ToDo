@@ -1,4 +1,5 @@
 from os import getenv
+from secrets import token_urlsafe
 
 from pathlib import Path
 from dotenv import load_dotenv
@@ -11,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 BASE_URL = getenv("BASE_URL")
 
-SECRET_KEY = getenv("SECRET_KEY")
+SECRET_KEY = getenv("SECRET_KEY", default=token_urlsafe(64))
 
 DEBUG = True
 
