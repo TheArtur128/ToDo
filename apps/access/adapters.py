@@ -1,11 +1,13 @@
 from typing import Optional
 
-from act import obj, flipped, io, fun
+from act import obj, flipped, io, fun, do, Do, optionally
 from act.cursors.static import u, e, n, _
 from django.contrib import auth
 from django.http import HttpRequest
+from django_redis import get_redis_connection
+from redis import Redis
 
-from apps.access.input import confirmation, models, types_
+from apps.access.input import confirmation, models, types_, hashing
 
 
 type User = models.User
@@ -51,13 +53,34 @@ def user_to_authorize_from(request: HttpRequest) -> Optional[User]:
     )
 
 
-@obj.of
-class user_local_repository:
-    _config: dict[types_.Email, User] = dict()
+class user_redis_repository:
+    def _connect() -> Redis:
+        return get_redis_connection("registration")
 
-    get_of = _config.get
-    save = fun(_._config[u.email].ioset(u))
-    has = fun(_._config.values_().has(u))
+    def save(user: User) -> None:
+        connection = user_redis_repository._connect()
+
+        password_hash = hashing.hashed(user.password)
+
+        connection.hset(user.email, "name", user.name)
+        connection.hset(user.email, "password_hash", password_hash)
+
+        connection.expire(user.email, confirmation.activity_minutes * 60)
+
+    @do(optionally)
+    def get_of(do: Do, email: types_.Email) -> User:
+        connection = user_redis_repository._connect()
+
+        name = do(connection.hget)(email, "name").decode()
+        password_hash = do(connection.hget)(email, "password_hash").decode()
+
+        password = hashing.unhashed(password_hash)
+
+        return models.User(name=name, email=email, password=password)
+
+    def delete(user: User) -> None:
+        connection = user_redis_repository._connect()
+        connection.hdel(user.email, "name", "password_hash")
 
 
 @obj.of

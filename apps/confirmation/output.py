@@ -12,6 +12,7 @@ __all__ = ("subjects", "via", "register_for", "open_port_of", "OpeningView")
 
 
 subjects = config.subjects
+activity_minutes = input.activity_minutes
 
 
 @via_indexer

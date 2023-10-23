@@ -1,4 +1,6 @@
-from act import obj, do, Do, optionally, fbind_by, then, not_, by, io
+from typing import Literal
+
+from act import obj, do, Do, optionally, fbind_by, then, not_, by
 from django.http import HttpRequest
 
 from apps.access import adapters, cases
@@ -19,7 +21,7 @@ class registration:
             user_of=adapters.user_to_register_from,
             is_already_registered=adapters.user_django_orm_repository.has,
             access_to_confirm_for=access_to_confirm_for,
-            memorization_of=adapters.user_local_repository.save,
+            memorize=adapters.user_redis_repository.save,
         )
 
         return confirmation_page_url.value
@@ -28,14 +30,17 @@ class registration:
     @do(optionally)
     def complete_by(
         do: Do, email: types_.Email, *, request: HttpRequest
-    ) -> User:
-        return cases.registration.complete_by(
+    ) -> Literal[True]:
+        cases.registration.complete_by(
             email,
-            memorized_user_of=do(adapters.user_local_repository.get_of),
+            memorized_user_of=do(adapters.user_redis_repository.get_of),
+            delete_memorization_of=adapters.user_redis_repository.delete,
             is_already_registered=adapters.user_django_orm_repository.has,
             authorized=adapters.authorized |by| request,
-            saving_for=io(adapters.user_django_orm_repository.save),
+            save=adapters.user_django_orm_repository.save,
         )
+
+        return True
 
 
 @obj.of

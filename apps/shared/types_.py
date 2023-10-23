@@ -8,6 +8,7 @@ type Annotation = Any
 
 type URL = str
 type Email = str
+type Hash = str
 
 type ID = str
 type Token = str

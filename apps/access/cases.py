@@ -1,17 +1,22 @@
 from typing import Callable, Optional
 
-from act import obj, contextual, U, A, M, D, I, S
+from act import obj, struct, contextual, U, A, M, D, I, S
 
 
 @obj.of
 class registration:
+    @struct
+    class Completion[S, D]:
+        user_saving: S
+        memorization_deletion: D
+
     def open_using(
         user_data: D,
         *,
         user_of: Callable[D, U],
         is_already_registered: Callable[U, bool],
         access_to_confirm_for: Callable[U, A],
-        memorization_of: Callable[U, M],
+        memorize: Callable[U, M],
     ) -> Optional[contextual[M, A]]:
         user = user_of(user_data)
 
@@ -19,7 +24,7 @@ class registration:
             return None
 
         confirmation_access = access_to_confirm_for(user)
-        memorization = memorization_of(user)
+        memorization = memorize(user)
 
         return contextual(memorization, confirmation_access)
 
@@ -27,16 +32,20 @@ class registration:
         user_id: I,
         *,
         memorized_user_of: Callable[I, U],
+        delete_memorization_of: Callable[U, D],
         is_already_registered: Callable[U, bool],
         authorized: Callable[U, A],
-        saving_for: Callable[A, S],
-    ) -> Optional[S]:
+        save: Callable[A, S],
+    ) -> Optional[Completion[S, D]]:
         user = memorized_user_of(user_id)
+        memorization_deletion = delete_memorization_of(user)
 
         if is_already_registered(user):
             return None
 
-        return saving_for(authorized(user))
+        user_saving = save(authorized(user))
+
+        return registration.Completion(user_saving, memorization_deletion)
 
 
 @obj.of
