@@ -1,15 +1,10 @@
 from typing import Callable, Optional
 
-from act import obj, struct, contextual, U, A, M, D, I, S
+from act import obj, contextual, U, A, M, D, I, S
 
 
 @obj.of
 class registration:
-    @struct
-    class Opening[A, U]:
-        access_to_confirm: A
-        user_memorization: U
-
     def open_using(
         user_data: D,
         *,
