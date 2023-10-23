@@ -15,6 +15,8 @@ SECRET_KEY = getenv("SECRET_KEY")
 
 DEBUG = True
 
+ARE_TESTS_RUNNING = bool(int(getenv("ARE_TESTS_RUNNING", default='0')))
+
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
@@ -123,15 +125,16 @@ STATIC_ROOT = BASE_DIR / "static"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-EMAIL_HOST = getenv("EMAIL_HOST")
-EMAIL_HOST_USER = getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD")
-EMAIL_PORT = int(getenv("EMAIL_PORT"))
-EMAIL_USE_TLS = bool(int(getenv("EMAIL_USE_TLS", default=False)))
-EMAIL_USE_SSL = bool(int(getenv("EMAIL_USE_SSL", default=False)))
+if not ARE_TESTS_RUNNING:
+    EMAIL_HOST = getenv("EMAIL_HOST")
+    EMAIL_HOST_USER = getenv("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD")
+    EMAIL_PORT = int(getenv("EMAIL_PORT"))
+    EMAIL_USE_TLS = bool(int(getenv("EMAIL_USE_TLS", default=False)))
+    EMAIL_USE_SSL = bool(int(getenv("EMAIL_USE_SSL", default=False)))
 
-DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL")
-EMAIL_ADMIN = getenv("EMAIL_ADMIN", default=DEFAULT_FROM_EMAIL)
+    DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL")
+    EMAIL_ADMIN = getenv("EMAIL_ADMIN", default=DEFAULT_FROM_EMAIL)
 
 
 CONFIRMATION_SESSION_CODE_LENGTH = 64
