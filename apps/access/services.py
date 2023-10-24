@@ -1,6 +1,6 @@
 from typing import Literal
 
-from act import obj, do, Do, optionally, fbind_by, then, not_, by
+from act import obj, do, Do, optionally, fbind_by, then, not_, io, by
 from django.http import HttpRequest
 
 from apps.access import adapters, cases
@@ -36,8 +36,8 @@ class registration:
             memorized_user_of=do(adapters.user_redis_repository.get_of),
             forget=adapters.user_redis_repository.delete,
             is_already_registered=adapters.user_django_orm_repository.has,
-            authorized=adapters.authorized |by| request,
-            save=adapters.user_django_orm_repository.save,
+            saved=io(adapters.user_django_orm_repository.save),
+            authorize=adapters.authorize |by| request,
         )
 
         return True

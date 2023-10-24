@@ -1,6 +1,6 @@
 from typing import Optional
 
-from act import obj, flipped, io, fun, do, Do, optionally
+from act import obj, flipped, fun, do, Do, optionally
 from act.cursors.static import u, e, n, _
 from django.contrib import auth
 from django.http import HttpRequest
@@ -92,4 +92,4 @@ class user_django_orm_repository:
     has = fun(u.id.is_not(None))
 
 
-authorized = io(flipped(auth.login))
+authorize = flipped(auth.login)
