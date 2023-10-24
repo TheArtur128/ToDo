@@ -34,7 +34,7 @@ class registration:
         cases.registration.complete_by(
             email,
             memorized_user_of=do(adapters.user_redis_repository.get_of),
-            delete_memorization_of=adapters.user_redis_repository.delete,
+            forget=adapters.user_redis_repository.delete,
             is_already_registered=adapters.user_django_orm_repository.has,
             authorized=adapters.authorized |by| request,
             save=adapters.user_django_orm_repository.save,

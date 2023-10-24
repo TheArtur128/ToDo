@@ -8,7 +8,7 @@ class registration:
     @struct
     class Completion[S, D]:
         user_saving: S
-        memorization_deletion: D
+        user_forgetting: D
 
     def open_using(
         user_data: D,
@@ -32,20 +32,20 @@ class registration:
         user_id: I,
         *,
         memorized_user_of: Callable[I, U],
-        delete_memorization_of: Callable[U, D],
+        forget: Callable[U, D],
         is_already_registered: Callable[U, bool],
         authorized: Callable[U, A],
         save: Callable[A, S],
     ) -> Optional[Completion[S, D]]:
         user = memorized_user_of(user_id)
-        memorization_deletion = delete_memorization_of(user)
+        user_forgetting = forget(user)
 
         if is_already_registered(user):
             return None
 
         user_saving = save(authorized(user))
 
-        return registration.Completion(user_saving, memorization_deletion)
+        return registration.Completion(user_saving, user_forgetting)
 
 
 @obj.of
