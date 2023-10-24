@@ -58,9 +58,9 @@ class user_redis_repository:
         return get_redis_connection("registration")
 
     def save(user: User) -> None:
-        connection = user_redis_repository._connect()
-
         password_hash = hashing.hashed(user.password)
+
+        connection = user_redis_repository._connect()
 
         connection.hset(user.email, "name", user.name)
         connection.hset(user.email, "password_hash", password_hash)
