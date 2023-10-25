@@ -48,7 +48,7 @@ def user_to_register_from(request: HttpRequest) -> User:
 def user_to_authorize_from(request: HttpRequest) -> Optional[User]:
     return auth.authenticate(
         request,
-        username=request.POST["name"],
+        username=request.POST["username"],
         password=request.POST["password"],
     )
 

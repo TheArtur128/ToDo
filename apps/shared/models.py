@@ -96,7 +96,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = CharField(max_length=128, unique=True)
     email = EmailField(max_length=154, unique=True)
     password = CharField(max_length=128)
-    is_active = BooleanField(default=False)
+    is_active = BooleanField(default=True)
     is_staff = BooleanField(default=False)
     is_superuser = BooleanField(default=False)
 
