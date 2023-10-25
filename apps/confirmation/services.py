@@ -47,7 +47,7 @@ class endpoint_activation_of:
                 handling_of=do(adapters.handler_repository.get_of),
                 contextualized=adapters.contextualized |by| request,
                 user_id_of=fun(e.user_id),
-                delete=do(adapters.endpoint_repository.delete),
+                delete=adapters.endpoint_repository.delete,
             )
 
             return result.value
