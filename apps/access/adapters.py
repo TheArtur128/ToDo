@@ -88,8 +88,11 @@ class user_django_orm_repository:
     get_by_email = fun(_.models.User.objects.filter(email=e).first())
     get_by_name = fun(_.models.User.objects.filter(name=n).first())
 
-    save = models.User.save
     has = fun(u.id.is_not(None))
+
+    def save(user: User) -> None:
+        user.set_password(user.password)
+        user.save()
 
 
 authorize = flipped(auth.login)
