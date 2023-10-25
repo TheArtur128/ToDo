@@ -63,7 +63,7 @@ class authorization:
         return cases.authorization.complete_by(
             email,
             user_of=do(adapters.user_django_orm_repository.get_by_email),
-            authorized=adapters.authorized |by| request,
+            authorized=io(adapters.authorize) |by| request,
         )
 
 
