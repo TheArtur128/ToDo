@@ -4,7 +4,8 @@ from urllib.parse import urljoin
 from typing import Callable, Optional
 
 from act import (
-    via_indexer, partial, obj, to, do, optionally, fun, I, Annotation
+    contextual, via_indexer, obj, to, do, optionally, binary, fun, I,
+    Annotation, Do
 )
 from act.cursors.static import e, _
 from django.core.mail import send_mail
@@ -22,6 +23,7 @@ type Subject = config.Subject
 type Method = config.Method
 type SessionCode = input.types_.Token
 type ActivationCode = input.types_.Token
+type ActivationPlace = input.types_.URL
 
 
 @dataclass(frozen=True)
@@ -34,7 +36,9 @@ class Port:
 class Endpoint[I]:
     port: Port
     user_id: I
-    activation_code: ActivationCode
+    activation_code: ActivationCode = field(default_factory=(
+        input.tools.token_generator_with(length=input.activation_code_length)
+    ))
     session_code: SessionCode = field(default_factory=(
         input.tools.token_generator_with(length=input.session_code_length)
     ))
@@ -45,19 +49,20 @@ class EndpointID:
     subject: Subject
     notification_method: Method
     session_code: SessionCode
+    activation_code: ActivationCode
 
 
 def is_subject_correct(port: Port) -> bool:
     return port.subject in config.subjects.all
 
 
-def is_method_correct(port: Port) -> bool:
+def is_activation_method_correct(port: Port) -> bool:
     return port.notification_method in config.methods.all
 
 
-def confirmation_page_url_of(
+def _confirmation_page_url_of(
     endpoint: Endpoint[input.types_.Email],
-) -> input.types_.URL:
+) -> ActivationPlace:
     args = [
         endpoint.port.subject,
         endpoint.port.notification_method,
@@ -71,7 +76,7 @@ def confirmation_page_url_of(
 
 def send_confirmation_mail_by(
     endpoint: Endpoint[input.types_.Email],
-    url: input.types_.URL,
+    url: ActivationPlace,
 ) -> bool:
     context = dict(
         subject=endpoint.port.subject,
@@ -99,8 +104,65 @@ def send_confirmation_mail_by(
     return result_code == 1
 
 
+@do(binary, else_=None)
+def with_activation_method_sent_to_user(
+    do: Do,
+    endpoint: Endpoint[I],
+    send_activation_method_to_user: Callable[
+        [Endpoint[I], ActivationPlace],
+        bool,
+    ],
+) -> contextual[ActivationPlace, Endpoint[I]]:
+    confirmation_page_url = _confirmation_page_url_of(endpoint)
+    do(send_activation_method_to_user)(endpoint, confirmation_page_url)
+
+    return contextual(confirmation_page_url, endpoint)
+
+
+def place_to_activate(
+    io_endpoint: contextual[ActivationPlace, Endpoint[str]]
+) -> ActivationPlace:
+    _endpoint_repository.save(io_endpoint.value)
+
+    return io_endpoint.context
+
+
+def endpoint_to_activate(
+    id: EndpointID
+) -> contextual[EndpointID, Endpoint[str]]:
+    endpoint_ = _endpoint_repository.get_of(id)
+    return contextual(id, endpoint_)
+
+    if not check_password(id.activation_code, endpoint_.activation_code):
+        return None
+
+    return endpoint_
+
+
+def is_activated(
+    io_endpoint: contextual[EndpointID, Endpoint[str]]
+) -> Optional[Endpoint[str]]:
+    id, endpoint_ = io_endpoint
+
+    if not check_password(id.activation_code, endpoint_.activation_code):
+        return None
+
+    return endpoint_
+
+
+@do(optionally)
+def payload_of(
+    do: Do,
+    endpoint: Endpoint[str],
+    request: HttpRequest,
+) -> Optional[HttpResponse]:
+    handle = do(handler_repository.get_of)(endpoint.port)
+
+    return handle(request, endpoint.user_id)
+
+
 @obj.of
-class endpoint_repository:
+class _endpoint_repository:
     _seconds_until_deletion = input.activity_minutes * 60
 
     def _connect() -> Redis:
@@ -108,7 +170,7 @@ class endpoint_repository:
 
     @do(optionally)
     def get_of(do, id: EndpointID) -> Endpoint[str]:
-        connection = endpoint_repository._connect()
+        connection = _endpoint_repository._connect()
 
         user_id_bytes = do(connection.hget)(id.session_code, "user_id")
         activation_code_bytes = do(connection.hget)(
@@ -125,7 +187,7 @@ class endpoint_repository:
         return endpoint
 
     def save(endpoint: Endpoint[str]) -> None:
-        connection = endpoint_repository._connect()
+        connection = _endpoint_repository._connect()
 
         connection.hset(endpoint.session_code, "user_id", endpoint.user_id)
         connection.hset(
@@ -134,11 +196,11 @@ class endpoint_repository:
             make_password(endpoint.activation_code),
         )
 
-        seconds_until_deletion = endpoint_repository._seconds_until_deletion
+        seconds_until_deletion = _endpoint_repository._seconds_until_deletion
         connection.expire(endpoint.session_code, seconds_until_deletion)
 
     def delete(endpoint: Endpoint[str]) -> None:
-        connection = endpoint_repository._connect()
+        connection = _endpoint_repository._connect()
         connection.hdel(endpoint.session_code, "user_id", "activation_code")
 
 
@@ -151,14 +213,4 @@ class handler_repository:
     _config: dict[Port, HandlerOf[I]] = dict()
 
     get_of = fun(_._config.get(e.port))
-    save_for = setitem |to| _config
-
-
-contextualized = partial
-
-are_activation_codes_matched = check_password
-
-generate_activation_code = input.tools.token_generator_with(
-    length=input.activation_code_length,
-)
-
+    save = setitem |to| _config

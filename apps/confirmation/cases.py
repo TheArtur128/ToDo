@@ -1,6 +1,6 @@
 from typing import Callable, Optional
 
-from act import struct, obj, contextual, P, H, E, U, C, I, N, V, A, D, X, L
+from act import struct, obj, P, M, E, U, I, A
 
 
 @obj.of
@@ -14,56 +14,29 @@ class endpoint:
         port: P,
         *,
         is_subject_correct: Callable[P, bool],
-        is_method_correct: Callable[P, bool],
+        is_activation_method_correct: Callable[P, bool],
     ) -> bool:
-        return is_subject_correct(port) and is_method_correct(port)
+        return is_subject_correct(port) and is_activation_method_correct(port)
 
     def open_for(
         port: P,
         user_id: U,
         *,
-        generate_activation_code: Callable[[], C],
-        endpoint_for: Callable[[P, U, C], E],
-        place_to_activate: Callable[E, L],
-        sending_of: Callable[E, Callable[L, N]],
-        save: Callable[E, V],
-    ) -> contextual[Opening[N, V], C]:
-        activation_code = generate_activation_code()
+        endpoint_of: Callable[P, E],
+        with_activation_method_sent_to_user: Callable[E, A],
+        place_to_activate: Callable[A, P],
+    ) -> P:
+        endpoint_ = endpoint_of(port, user_id)
 
-        endpoint_ = endpoint_for(port, user_id, activation_code)
-        activation_place = place_to_activate(endpoint_)
-
-        send_to_user = sending_of(endpoint_)
-
-        sending_result = send_to_user(activation_place)
-        saving_result = save(endpoint_)
-
-        opening = endpoint.Opening(sending_result, saving_result)
-
-        return contextual(opening, activation_place)
+        return place_to_activate(with_activation_method_sent_to_user(endpoint_))
 
     def activate_by(
         endpoint_id: I,
         *,
-        input_activation_code: A,
-        endpoint_of: Callable[I, E],
-        saved_activation_code_of: Callable[E, X],
-        are_matched: Callable[[A, X], bool],
-        handling_of: Callable[E, H],
-        contextualized: Callable[H, Callable[U, P]],
-        user_id_of: Callable[E, U],
-        delete: Callable[E, D],
-    ) -> Optional[contextual[D, P]]:
-        endpoint = endpoint_of(endpoint_id)
+        endpoint_of: Callable[[I, M], E],
+        is_activated: Callable[E, bool],
+        payload_of: Callable[E, P]
+    ) -> Optional[P]:
+        endpoint_ = endpoint_of(endpoint_id)
 
-        saved_activation_code = saved_activation_code_of(endpoint)
-
-        if not are_matched(input_activation_code, saved_activation_code):
-            return None
-
-        handle = contextualized(handling_of(endpoint))
-        payload = handle(user_id_of(endpoint))
-
-        deletion = delete(endpoint)
-
-        return contextual(deletion, payload)
+        return payload_of(endpoint_) if is_activated(endpoint_) else None

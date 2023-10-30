@@ -1,7 +1,6 @@
 from typing import Optional, Callable
 
-from act import obj, will, do, Do, optionally, fun, by
-from act.cursors.static import e
+from act import obj, will, do, Do, optionally
 from django.http import HttpRequest, HttpResponse
 
 from apps.confirmation import adapters, cases
@@ -36,20 +35,15 @@ class endpoint_activation_of:
             password: Password,
             request: HttpRequest,
         ) -> HttpResponse:
-            id = adapters.EndpointID(subject, method, session_token)
+            id = adapters.EndpointID(subject, method, session_token, password)
 
             result = do(cases.endpoint.activate_by)(
                 id,
-                input_activation_code=password,
-                endpoint_of=do(adapters.endpoint_repository.get_of),
-                saved_activation_code_of=fun(e.activation_code),
-                are_matched=adapters.are_activation_codes_matched,
-                handling_of=do(adapters.handler_repository.get_of),
-                contextualized=adapters.contextualized |by| request,
-                user_id_of=fun(e.user_id),
-                delete=adapters.endpoint_repository.delete,
+                endpoint_of=adapters.endpoint_of,
+                is_activated=adapters.is_activated,
+                payload_of=adapters.payload_of,
             )
 
-            return result.value
+            return result
 
         return activate_endpoint_by

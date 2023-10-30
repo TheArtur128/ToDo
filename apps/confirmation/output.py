@@ -1,8 +1,7 @@
-from typing import Callable, Any
+from typing import Callable, Optional
 
 from act import (
-    to, via_indexer, temp, obj, io, will, rollbackable, do, Do, reformer_of, I,
-    Annotation
+    to, contextual, struct, obj, io, will, optionally, do, Do, reformer_of, I,
 )
 
 from apps.confirmation import adapters, cases, config, input, views
@@ -15,54 +14,50 @@ subjects = config.subjects
 activity_minutes = input.activity_minutes
 
 
-@via_indexer
-def _SendingOf(id_annotation: Annotation) -> temp:
-    return temp(
-        method=adapters.Method,
-        by=Callable[
-            adapters.Endpoint[id_annotation],
-            Callable[input.types_.URL, Any],
-        ],
-    )
+@struct
+class _Sending[I]:
+    method: adapters.Method
+    by: Callable[
+        adapters.Endpoint[I],
+        Optional[contextual[adapters.ActivationPlace, adapters.Endpoint[I]]],
+    ]
 
 
 @obj.of
 class via:
-    email: _SendingOf[input.types_.Email] = obj(
+    email: _Sending[input.types_.Email] = obj(
         method=config.methods.email,
-        by=will(rollbackable.binary(adapters.send_confirmation_mail_by)),
+        by=will(adapters.with_activation_method_sent_to_user)(
+            send_activation_method_to_user=adapters.send_confirmation_mail_by,
+        ),
     )
 
 
 def register_for(
     subject: adapters.Subject,
-    send: _SendingOf[I],
+    send: _Sending[I],
 ) -> reformer_of[adapters.HandlerOf[I]]:
     port = adapters.Port(subject, send.method)
-    registrate = adapters.handler_repository.save_for |to| port
+    registrate = adapters.handler_repository.save |to| port
 
     return io(registrate)
 
 
-@do(else_=None)
+@do(optionally)
 def open_port_of(
     do: Do,
     subject: adapters.Subject,
-    send: _SendingOf[I],
+    send: _Sending[I],
     *,
     for_: I,
-) -> input.types_.URL:
-    confirmation_page_url = cases.endpoint.open_for(
+) -> adapters.ActivationPlace:
+    return cases.endpoint.open_for(
         adapters.Port(subject, send.method),
         for_,
-        generate_activation_code=adapters.generate_activation_code,
-        endpoint_for=adapters.Endpoint,
-        place_to_activate=adapters.confirmation_page_url_of,
-        sending_of=do(send.by),
-        save=adapters.endpoint_repository.save,
+        endpoint_of=adapters.Endpoint,
+        with_activation_method_sent_to_user=do(send.by),
+        place_to_activate=adapters.place_to_activate,
     )
-
-    return confirmation_page_url.value
 
 
 OpeningView = views.OpeningView

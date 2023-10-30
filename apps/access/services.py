@@ -14,30 +14,23 @@ type User = adapters.User
 class registration:
     @do(optionally)
     def open_using(do: Do, request: HttpRequest) -> types_.URL:
-        access_to_confirm_for = do(adapters.open_registration_confirmation_for)
-
-        confirmation_page_url = cases.registration.open_using(
+        return cases.registration.open_using(
             request,
             user_of=adapters.user_to_register_from,
-            is_already_registered=adapters.user_django_orm_repository.has,
-            access_to_confirm_for=access_to_confirm_for,
-            memorize=adapters.user_redis_repository.save,
+            is_registered=adapters.user_django_orm_repository.has,
+            access_to_confirm_for=do(adapters.registration_confirmation.add),
         )
 
-        return confirmation_page_url.value
-
-    @fbind_by(... |then>> not_(None))
-    @do(optionally)
+    @do(optionally, else_=False)
     def complete_by(
         do: Do, email: types_.Email, *, request: HttpRequest
     ) -> Literal[True]:
         cases.registration.complete_by(
             email,
-            memorized_user_of=do(adapters.user_redis_repository.get_of),
-            forget=adapters.user_redis_repository.delete,
-            is_already_registered=adapters.user_django_orm_repository.has,
-            saved=io(adapters.user_django_orm_repository.save),
-            authorize=adapters.authorize |by| request,
+            user_of=do(adapters.registration_confirmation.pop_by),
+            is_registered=adapters.user_django_orm_repository.has,
+            registered=io(adapters.user_django_orm_repository.save),
+            authorized=adapters.authorized |by| request,
         )
 
         return True

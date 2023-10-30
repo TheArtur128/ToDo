@@ -1,6 +1,6 @@
 from typing import Optional
 
-from act import obj, flipped, fun, do, Do, optionally
+from act import obj, flipped, fun, do, Do, optionally, io
 from act.cursors.static import u, e, n, _
 from django.contrib import auth
 from django.http import HttpRequest
@@ -13,12 +13,26 @@ from apps.access.input import confirmation, models, types_, hashing
 type User = models.User
 
 
-def open_registration_confirmation_for(user: User) -> types_.URL:
-    return confirmation.open_port_of(
-        confirmation.subjects.registration,
-        confirmation.via.email,
-        for_=user.email,
-    )
+@obj.of
+class registration_confirmation:
+    @do(optionally)
+    def add(do: Do, user: User) -> types_.URL:
+        confirmation_page_url = do(confirmation.open_port_of)(
+            confirmation.subjects.registration,
+            confirmation.via.email,
+            for_=user.email,
+        )
+
+        user_redis_repository.save(user)
+
+        return confirmation_page_url
+
+    @do(optionally)
+    def pop_by(do: Do, email: types_.Email) -> User:
+        user = do(user_redis_repository.get_by_email)(email)
+        user_redis_repository.delete(user)
+
+        return user
 
 
 def open_access_recovery_confirmation_for(user: User) -> types_.URL:
@@ -95,4 +109,4 @@ class user_django_orm_repository:
         user.save()
 
 
-authorize = flipped(auth.login)
+authorized = io(flipped(auth.login))
