@@ -110,6 +110,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     USERNAME_FIELD = "name"
+    EMAIL_FIELD = "email"
     REQUIRED_FIELDS = ("email", "password")
 
     objects = CustomUserManager()
