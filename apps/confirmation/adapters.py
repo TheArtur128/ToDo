@@ -25,6 +25,8 @@ type SessionCode = input.types_.Token
 type ActivationCode = input.types_.Token
 type ActivationPlace = input.types_.URL
 
+methods = config.methods
+
 
 @dataclass(frozen=True)
 class Port:

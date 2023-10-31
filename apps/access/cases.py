@@ -1,20 +1,17 @@
-from typing import Callable, Optional
+from typing import Callable
 
-from act import obj, U, A, D, I, R
+from act import obj, U, A, I, R
 
 
 @obj.of
 class registration:
     def open_using(
-        user_data: D,
+        user_id: I,
         *,
-        user_of: Callable[D, U],
-        is_registered: Callable[U, bool],
+        user_of: Callable[I, U],
         access_to_confirm_for: Callable[U, A],
-    ) -> Optional[A]:
-        user = user_of(user_data)
-
-        return None if is_registered(user) else access_to_confirm_for(user)
+    ) -> A:
+        return access_to_confirm_for(user_of(user_id))
 
     def complete_by(
         user_id: I,
@@ -24,20 +21,18 @@ class registration:
         registered: Callable[U, R],
         authorized: Callable[R | U, A],
     ) -> A:
-        user = user_of(user_id)
-
-        return authorized(user if is_registered(user) else registered(user))
+        return authorized(registered(user_of(user_id)))
 
 
 @obj.of
 class authorization:
     def open_using(
-        user_data: D,
+        user_id: I,
         *,
-        user_of: Callable[D, U],
+        user_of: Callable[I, U],
         access_to_confirm_for: Callable[U, A],
     ) -> A:
-        return access_to_confirm_for(user_of(user_data))
+        return access_to_confirm_for(user_of(user_id))
 
     def complete_by(
         user_id: I,

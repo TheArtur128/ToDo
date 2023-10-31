@@ -52,11 +52,13 @@ def open_authorization_confirmation_for(user: User) -> types_.URL:
 
 
 def user_to_register_from(request: HttpRequest) -> User:
-    return models.User(
+    user = models.User(
         name=request.POST["name"],
         email=request.POST["email"],
         password=request.POST["password1"],
     )
+
+    return None if user_django_orm_repository.has(user) else user
 
 
 def user_to_authorize_from(request: HttpRequest) -> Optional[User]:
