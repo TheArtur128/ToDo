@@ -67,6 +67,7 @@ def user_to_authorize_from(request: HttpRequest) -> Optional[User]:
     )
 
 
+@obj.of
 class user_redis_repository:
     def _connect() -> Redis:
         return get_redis_connection("registration")
