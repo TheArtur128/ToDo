@@ -5,8 +5,7 @@ from act import (
 )
 from django.http import HttpRequest, HttpResponse
 
-from apps.confirmation import adapters, cases
-from apps.shared.types_ import Password, URL
+from apps.confirmation import adapters, cases, input
 
 
 type Subject = adapters.Subject
@@ -37,7 +36,7 @@ class endpoint:
         sending: _Sending[I],
         *,
         for_: I,
-    ) -> URL:
+    ) -> input.types_.URL:
         access_to_activate = (
             do(adapters.opening.access_to_activate) |by| sending.by
         )
@@ -55,7 +54,7 @@ class endpoint:
         subject: Subject,
         method: Method,
         session_token: SessionToken,
-        password: Password,
+        password: input.types_.Password,
         request: HttpRequest,
     ) -> Optional[HttpResponse]:
         id = adapters.activation.EndpointID(

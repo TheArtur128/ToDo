@@ -5,8 +5,7 @@ from django.forms import Form
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render, redirect
 
-from apps.confirmation import services, forms, ui
-from apps.shared import views, types_
+from apps.confirmation import input, services, forms, ui
 
 
 def confirm(
@@ -53,12 +52,12 @@ def confirm(
     return render(request, "confirmation/pages/confirmation.html", context)
 
 
-class OpeningView(views.ViewWithForm):
-    _failure_message: types_.ErrorMessage = (
+class OpeningView(input.views.ViewWithForm):
+    _failure_message: input.types_.ErrorMessage = (
         "Make sure you have entered your information correctly"
     )
 
-    def _open_port(self, request: HttpRequest) -> Optional[types_.URL]:
+    def _open_port(self, request: HttpRequest) -> Optional[input.types_.URL]:
         raise NotImplementedError
 
     def _service(
@@ -67,7 +66,7 @@ class OpeningView(views.ViewWithForm):
         request: HttpRequest,
         form: Form,
         render_with: Callable[Mapping, HttpResponse],
-    ) -> HttpResponse | bad[list[types_.ErrorMessage]]:
+    ) -> HttpResponse | bad[list[input.types_.ErrorMessage]]:
         result = self._open_port(request)
 
         if result is None:
