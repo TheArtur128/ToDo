@@ -1,42 +1,22 @@
-from typing import Callable, Optional
+from typing import Callable
 
-from act import struct, obj, P, M, E, U, I, A
+from act import val, P, E, I, A
 
 
-@obj.of
+@val
 class endpoint:
-    @struct
-    class Opening[N, V]:
-        sending: N
-        saving: V
-
-    def can_be_opened_for(
-        port: P,
+    def open_by(
+        endpoint_id: I,
         *,
-        is_subject_correct: Callable[P, bool],
-        is_activation_method_correct: Callable[P, bool],
-    ) -> bool:
-        return is_subject_correct(port) and is_activation_method_correct(port)
-
-    def open_for(
-        port: P,
-        user_id: U,
-        *,
-        endpoint_of: Callable[P, E],
-        with_activation_method_sent_to_user: Callable[E, A],
-        place_to_activate: Callable[A, P],
-    ) -> P:
-        endpoint_ = endpoint_of(port, user_id)
-
-        return place_to_activate(with_activation_method_sent_to_user(endpoint_))
+        endpoint_of: Callable[I, E],
+        access_to_activate: Callable[E, A],
+    ) -> A:
+        return access_to_activate(endpoint_of(endpoint_id))
 
     def activate_by(
         endpoint_id: I,
         *,
-        endpoint_of: Callable[[I, M], E],
-        is_activated: Callable[E, bool],
+        endpoint_of: Callable[I, E],
         payload_of: Callable[E, P]
-    ) -> Optional[P]:
-        endpoint_ = endpoint_of(endpoint_id)
-
-        return payload_of(endpoint_) if is_activated(endpoint_) else None
+    ) -> P:
+        return payload_of(endpoint_of(endpoint_id))

@@ -1,6 +1,6 @@
 from typing import Literal
 
-from act import obj, do, Do, optionally, fbind_by, then, not_, io, by
+from act import val, do, Do, optionally, fbind_by, then, not_, io, by
 from django.http import HttpRequest
 
 from apps.access import adapters, cases
@@ -10,14 +10,13 @@ from apps.access.input import types_
 type User = adapters.User
 
 
-@obj.of
+@val
 class registration:
     @do(optionally)
     def open_using(do: Do, request: HttpRequest) -> types_.URL:
         return cases.registration.open_using(
             request,
-            user_of=adapters.user_to_register_from,
-            is_registered=adapters.user_django_orm_repository.has,
+            user_of=do(adapters.user_to_register_from),
             access_to_confirm_for=do(adapters.registration_confirmation.add),
         )
 
@@ -28,15 +27,14 @@ class registration:
         cases.registration.complete_by(
             email,
             user_of=do(adapters.registration_confirmation.pop_by),
-            is_registered=adapters.user_django_orm_repository.has,
-            registered=io(adapters.user_django_orm_repository.save),
+            registered=do(adapters.registered),
             authorized=adapters.authorized |by| request,
         )
 
         return True
 
 
-@obj.of
+@val
 class authorization:
     @do(optionally)
     def open_using(do: Do, request: HttpRequest) -> types_.URL:
@@ -60,7 +58,7 @@ class authorization:
         )
 
 
-@obj.of
+@val
 class access_recovery:
     @do(optionally)
     def open_via_email_using(do: Do, email: types_.Email) -> types_.URL:

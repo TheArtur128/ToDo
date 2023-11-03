@@ -5,7 +5,7 @@ from django.forms import Form
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render, redirect
 
-from apps.confirmation import services, forms
+from apps.confirmation import services, forms, ui
 from apps.shared import views, types_
 
 
@@ -15,9 +15,7 @@ def confirm(
     method: services.Method,
     token: services.SessionToken,
 ) -> HttpResponse:
-    activate_endpoint_by = services.endpoint_activation_of(subject, method)
-
-    if activate_endpoint_by is None:
+    if not ui.is_valid(subject, method):
         raise Http404("incorrect subject or method")
 
     errors = tuple()
@@ -28,7 +26,9 @@ def confirm(
         form = forms.ConfirmationForm(data=request.POST)
 
         if form.is_valid():
-            response = activate_endpoint_by(
+            response = services.endpoint.activate_by(
+                subject=subject,
+                method=method,
                 session_token=token,
                 password=request.POST["password"],
                 request=request,

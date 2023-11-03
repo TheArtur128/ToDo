@@ -7,8 +7,8 @@ __all__ = ("subjects", "via", "register_for", "open_port_of", "OpeningView")
 subjects = config.subjects
 activity_minutes = input.activity_minutes
 
-via = services.via
-register_for = services.register_for
-open_port_of = services.open_port_of
+via = services.sendings
+register_for = services.endpoint.register_handler_for
+open_port_of = services.endpoint.open_for
 
 OpeningView = views.OpeningView

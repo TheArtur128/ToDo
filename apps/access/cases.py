@@ -1,9 +1,9 @@
 from typing import Callable
 
-from act import obj, U, A, I, R
+from act import val, U, A, I, R
 
 
-@obj.of
+@val
 class registration:
     def open_using(
         user_id: I,
@@ -17,14 +17,13 @@ class registration:
         user_id: I,
         *,
         user_of: Callable[I, U],
-        is_registered: Callable[U, bool],
         registered: Callable[U, R],
         authorized: Callable[R | U, A],
     ) -> A:
         return authorized(registered(user_of(user_id)))
 
 
-@obj.of
+@val
 class authorization:
     def open_using(
         user_id: I,
@@ -43,7 +42,7 @@ class authorization:
         return authorized(user_of(user_id))
 
 
-@obj.of
+@val
 class access_recovery:
     def open_using(
         user_id: I,

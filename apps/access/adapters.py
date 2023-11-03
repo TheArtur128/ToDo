@@ -1,6 +1,6 @@
 from typing import Optional
 
-from act import obj, flipped, fun, do, Do, optionally, io
+from act import val, obj, flipped, fun, do, Do, optionally, io
 from act.cursors.static import u, e, n, _
 from django.contrib import auth
 from django.http import HttpRequest
@@ -13,7 +13,7 @@ from apps.access.input import confirmation, models, types_, hashing
 type User = models.User
 
 
-@obj.of
+@val
 class registration_confirmation:
     @do(optionally)
     def add(do: Do, user: User) -> types_.URL:
@@ -23,14 +23,14 @@ class registration_confirmation:
             for_=user.email,
         )
 
-        user_redis_repository.save(user)
+        _user_redis_repository.save(user)
 
         return confirmation_page_url
 
     @do(optionally)
     def pop_by(do: Do, email: types_.Email) -> User:
-        user = do(user_redis_repository.get_by_email)(email)
-        user_redis_repository.delete(user)
+        user = do(_user_redis_repository.get_by_email)(email)
+        _user_redis_repository.delete(user)
 
         return user
 
@@ -51,7 +51,7 @@ def open_authorization_confirmation_for(user: User) -> types_.URL:
     )
 
 
-def user_to_register_from(request: HttpRequest) -> User:
+def user_to_register_from(request: HttpRequest) -> Optional[User]:
     user = models.User(
         name=request.POST["name"],
         email=request.POST["email"],
@@ -69,38 +69,19 @@ def user_to_authorize_from(request: HttpRequest) -> Optional[User]:
     )
 
 
-@obj.of
-class user_redis_repository:
-    def _connect() -> Redis:
-        return get_redis_connection("registration")
+def registered(user: User) -> Optional[User]:
+    if user_django_orm_repository.has(user):
+        return None
 
-    def save(user: User) -> None:
-        password_hash = hashing.hashed(user.password)
+    user_django_orm_repository.save()
 
-        connection = user_redis_repository._connect()
-
-        connection.hset(user.email, "name", user.name)
-        connection.hset(user.email, "password_hash", password_hash)
-
-        connection.expire(user.email, confirmation.activity_minutes * 60)
-
-    @do(optionally)
-    def get_of(do: Do, email: types_.Email) -> User:
-        connection = user_redis_repository._connect()
-
-        name = do(connection.hget)(email, "name").decode()
-        password_hash = do(connection.hget)(email, "password_hash").decode()
-
-        password = hashing.unhashed(password_hash)
-
-        return models.User(name=name, email=email, password=password)
-
-    def delete(user: User) -> None:
-        connection = user_redis_repository._connect()
-        connection.hdel(user.email, "name", "password_hash")
+    return user
 
 
-@obj.of
+authorized = io(flipped(auth.login))
+
+
+@val
 class user_django_orm_repository:
     get_by_email = fun(_.models.User.objects.filter(email=e).first())
     get_by_name = fun(_.models.User.objects.filter(name=n).first())
@@ -112,4 +93,29 @@ class user_django_orm_repository:
         user.save()
 
 
-authorized = io(flipped(auth.login))
+@obj
+class _user_redis_repository:
+    connection: Redis = get_redis_connection("registration")
+
+    def save(self, user: User) -> None:
+        password_hash = hashing.hashed(user.password)
+
+        self.connection.hset(user.email, "name", user.name)
+        self.connection.hset(user.email, "password_hash", password_hash)
+
+        self.connection.expire(user.email, confirmation.activity_minutes * 60)
+
+    @do(optionally)
+    def get_of(do: Do, self, email: types_.Email) -> User:
+        name = do(self.connection.hget)(email, "name").decode()
+        password_hash = do(self.connection.hget)(
+            email,
+            "password_hash",
+        ).decode()
+
+        password = hashing.unhashed(password_hash)
+
+        return models.User(name=name, email=email, password=password)
+
+    def delete(self, user: User) -> None:
+        self.connection.hdel(user.email, "name", "password_hash")

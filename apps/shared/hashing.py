@@ -7,15 +7,15 @@ from apps.shared.types_ import Hash
 __all__ = ("hashed", "unhashed")
 
 
-@obj.of
+@obj
 class _cryptography_hashing:
-    __fernet = Fernet(Fernet.generate_key())
+    _fernet = Fernet(Fernet.generate_key())
 
-    def hashed(line: str) -> Hash:
-        return _cryptography_hashing.__fernet.encrypt(line.encode()).decode()
+    def hashed(self, line: str) -> Hash:
+        return self._fernet.encrypt(line.encode()).decode()
 
-    def unhashed(hash: Hash) -> str:
-        return _cryptography_hashing.__fernet.decrypt(hash.encode()).decode()
+    def unhashed(self, hash: Hash) -> str:
+        return self._fernet.decrypt(hash.encode()).decode()
 
 
 hashed = _cryptography_hashing.hashed
