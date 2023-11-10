@@ -42,8 +42,8 @@ class Endpoint[I]:
     ))
 
 
-type Handle = Callable[[HttpRequest, I], Optional[HttpResponse]]
-type Send = Callable[[Endpoint[I], ActivationPlace], bool]
+type Handle[I] = Callable[[HttpRequest, I], Optional[HttpResponse]]
+type Send[I] = Callable[[Endpoint[I], ActivationPlace], bool]
 
 
 @val
