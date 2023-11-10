@@ -52,7 +52,7 @@ def confirm(
     return render(request, "confirmation/pages/confirmation.html", context)
 
 
-class OpeningView(input.views.ViewWithForm):
+class OpeningView(input.ViewWithForm):
     _failure_message: input.types_.ErrorMessage = (
         "Make sure you have entered your information correctly"
     )

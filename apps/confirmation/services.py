@@ -70,7 +70,7 @@ class endpoint:
     def register_handler_for(
         subject: adapters.Subject,
         sending: _Sending[I],
-    ) -> reformer_of[adapters.HandlerOf[I]]:
+    ) -> reformer_of[adapters.Handle[I]]:
         port = adapters.Port(subject, sending.method)
         registrate = adapters.handler_repository.save |to| port
 

@@ -1,17 +1,17 @@
-from act import name_enum_of
+from act import namespace
 
 
 type Subject = str
 type Method = str
 
 
-@name_enum_of
+@namespace
 class subjects:
     authorization: Subject
     registration: Subject
     access_recovery: Subject
 
 
-@name_enum_of
+@namespace
 class methods:
     email: Method

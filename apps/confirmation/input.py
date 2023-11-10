@@ -1,10 +1,13 @@
 from django.conf import settings
 
 from apps.shared import tools, types_
+from apps.shared.views import ViewWithForm
 
 
 tools = tools
 types_ = types_
+
+ViewWithForm = ViewWithForm
 
 base_url = settings.BASE_URL
 
