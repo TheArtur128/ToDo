@@ -38,7 +38,7 @@ class endpoint:
         for_: I,
     ) -> types_.URL:
         access_to_activate = (
-            do(adapters.opening.access_to_activate) |by| sending.by
+            do(adapters.opening.access_to_activate) |by| sending
         )
 
         return cases.endpoint.open_by(
