@@ -7,7 +7,9 @@ from django.http import HttpRequest
 from django_redis import get_redis_connection
 from redis import Redis
 
-from apps.access.input import confirmation, models, types_, hashing
+from apps.access import models
+from apps.access.types_ import URL, Email
+from apps.access.utils import confirmation, hashed, unhashed
 
 
 type User = models.User
@@ -16,7 +18,7 @@ type User = models.User
 @val
 class registration_confirmation:
     @do(optionally)
-    def add(do: Do, user: User) -> types_.URL:
+    def add(do: Do, user: User) -> URL:
         confirmation_page_url = do(confirmation.open_port_of)(
             confirmation.subjects.registration,
             confirmation.via.email,
@@ -28,14 +30,14 @@ class registration_confirmation:
         return confirmation_page_url
 
     @do(optionally)
-    def pop_by(do: Do, email: types_.Email) -> User:
+    def pop_by(do: Do, email: Email) -> User:
         user = do(_user_redis_repository.get_by_email)(email)
         _user_redis_repository.delete(user)
 
         return user
 
 
-def open_access_recovery_confirmation_for(user: User) -> types_.URL:
+def open_access_recovery_confirmation_for(user: User) -> URL:
     return confirmation.open_port_of(
         confirmation.subjects.access_recovery,
         confirmation.via.email,
@@ -43,7 +45,7 @@ def open_access_recovery_confirmation_for(user: User) -> types_.URL:
     )
 
 
-def open_authorization_confirmation_for(user: User) -> types_.URL:
+def open_authorization_confirmation_for(user: User) -> URL:
     return confirmation.open_port_of(
         confirmation.subjects.authorization,
         confirmation.via.email,
@@ -98,7 +100,7 @@ class _user_redis_repository:
     connection: Redis = get_redis_connection("registration")
 
     def save(self, user: User) -> None:
-        password_hash = hashing.hashed(user.password)
+        password_hash = hashed(user.password)
 
         self.connection.hset(user.email, "name", user.name)
         self.connection.hset(user.email, "password_hash", password_hash)
@@ -106,14 +108,14 @@ class _user_redis_repository:
         self.connection.expire(user.email, confirmation.activity_minutes * 60)
 
     @do(optionally)
-    def get_of(do: Do, self, email: types_.Email) -> User:
+    def get_of(do: Do, self, email: Email) -> User:
         name = do(self.connection.hget)(email, "name").decode()
         password_hash = do(self.connection.hget)(
             email,
             "password_hash",
         ).decode()
 
-        password = hashing.unhashed(password_hash)
+        password = unhashed(password_hash)
 
         return models.User(name=name, email=email, password=password)
 

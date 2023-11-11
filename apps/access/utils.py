@@ -5,8 +5,13 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 
+from apps.access import input
 
-__all__ = ("for_anonymous", )
+
+confirmation = input.confirmation
+
+hashed = input.hashed
+unhashed = input.unhashed
 
 
 @partially

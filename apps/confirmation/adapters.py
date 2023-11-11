@@ -12,14 +12,14 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django_redis import get_redis_connection
 
-from apps.confirmation import config, input
+from apps.confirmation import config, types_, ui, utils
 
 
 type Subject = config.Subject
 type Method = config.Method
-type SessionCode = input.types_.Token
-type ActivationCode = input.types_.Token
-type ActivationPlace = input.types_.URL
+type SessionCode = types_.Token
+type ActivationCode = types_.Token
+type ActivationPlace = types_.URL
 
 methods = config.methods
 
@@ -35,10 +35,10 @@ class Endpoint[I]:
     port: Port
     user_id: I
     activation_code: ActivationCode = field(default_factory=(
-        input.tools.token_generator_with(length=input.activation_code_length)
+        utils.token_generator_with(length=config.activation_code_length)
     ))
     session_code: SessionCode = field(default_factory=(
-        input.tools.token_generator_with(length=input.session_code_length)
+        utils.token_generator_with(length=config.session_code_length)
     ))
 
 
@@ -79,7 +79,7 @@ class opening:
         return confirmation_page_url
 
     def _confirmation_page_url_of(
-        endpoint: Endpoint[input.types_.Email],
+        endpoint: Endpoint[types_.Email],
     ) -> ActivationPlace:
         args = [
             endpoint.port.subject,
@@ -89,12 +89,12 @@ class opening:
 
         relative_url = reverse("confirmation:confirm", args=args)
 
-        return urljoin(input.base_url, relative_url)
+        return urljoin(config.base_url, relative_url)
 
     @val
     class send_activation_code_by:
         def email(
-            endpoint: Endpoint[input.types_.Email],
+            endpoint: Endpoint[types_.Email],
             url: ActivationPlace,
         ) -> bool:
             context = dict(
@@ -110,7 +110,7 @@ class opening:
 
             html_message = render_to_string(
                 "confirmation/mails/to-confirm.html",
-                context,
+                context | dict(activity_minutes=ui.activity_minutes),
             )
 
             result_code = send_mail(
@@ -165,7 +165,7 @@ class handler_repository:
 @obj
 class _endpoint_repository:
     _connection = get_redis_connection("confirmation")
-    _seconds_until_deletion = input.activity_minutes * 60
+    _seconds_until_deletion = config.activity_minutes * 60
 
     @do(optionally)
     def get_by(do, self, id: activation.EndpointID) -> Endpoint[str]:

@@ -58,9 +58,6 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
-            "libraries": {
-                "common_tags": "apps.shared.templatetags.common_tags"
-            }
         }
     }
 ]

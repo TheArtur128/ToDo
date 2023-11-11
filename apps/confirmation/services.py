@@ -5,7 +5,7 @@ from act import (
 )
 from django.http import HttpRequest, HttpResponse
 
-from apps.confirmation import adapters, cases, input
+from apps.confirmation import adapters, cases, types_
 
 
 type Subject = adapters.Subject
@@ -21,7 +21,7 @@ class _Sending[I]:
 
 @val
 class sendings:
-    email: _Sending[input.types_.Email] = val(
+    email: _Sending[types_.Email] = val(
         method=adapters.methods.email,
         __call__=adapters.opening.send_activation_code_by.email,
     )
@@ -36,7 +36,7 @@ class endpoint:
         sending: _Sending[I],
         *,
         for_: I,
-    ) -> input.types_.URL:
+    ) -> types_.URL:
         access_to_activate = (
             do(adapters.opening.access_to_activate) |by| sending.by
         )
@@ -47,14 +47,14 @@ class endpoint:
             access_to_activate=access_to_activate,
         )
 
-    do(optionally)
+    @do(optionally)
     def activate_by(
         do: Do,
         *,
         subject: Subject,
         method: Method,
         session_token: SessionToken,
-        password: input.types_.Password,
+        password: types_.Password,
         request: HttpRequest,
     ) -> Optional[HttpResponse]:
         id = adapters.activation.EndpointID(
@@ -63,8 +63,8 @@ class endpoint:
 
         return cases.endpoint.payload_by(
             id,
-            do(adapters.activation.endpoint_of),
-            do(adapters.activation.payload_of) |by| request,
+            endpoint_of=do(adapters.activation.endpoint_of),
+            payload_of=do(adapters.activation.payload_of) |by| request,
         )
 
     def register_handler_for(

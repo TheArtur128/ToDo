@@ -12,8 +12,8 @@ from apps.access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm
 )
-from apps.access.input import confirmation, types_
-from apps.access.utils import for_anonymous
+from apps.access.utils import confirmation, for_anonymous
+from apps.access.types_ import Email, URL
 
 
 @confirmation.register_for(
@@ -22,7 +22,7 @@ from apps.access.utils import for_anonymous
 )
 def authorization_confirmation(
     request: HttpRequest,
-    email: types_.Email,
+    email: Email,
 ) -> Optional[HttpResponse]:
     ok = services.authorization.complete_by(email, request=request)
 
@@ -35,7 +35,7 @@ def authorization_confirmation(
 )
 def registration_confirmation(
     request: HttpRequest,
-    email: types_.Email,
+    email: Email,
 ) -> Optional[HttpResponse]:
     ok = services.registration.complete_by(email, request=request)
 
@@ -55,7 +55,7 @@ class LoginView(confirmation.OpeningView):
     _template_name = "access/login.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> Optional[types_.URL]:
+    def _open_port(request: HttpRequest) -> Optional[URL]:
         confirmation_page_url = services.authorization.open_using(request)
 
         return confirmation_page_url
@@ -66,7 +66,7 @@ class _RegistrationView(confirmation.OpeningView):
     _template_name = "access/registration.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> Optional[types_.URL]:
+    def _open_port(request: HttpRequest) -> Optional[URL]:
         confirmation_page_url = services.registration.open_using(request)
 
         return confirmation_page_url
@@ -77,7 +77,7 @@ class _AccessRecoveryByNameView(confirmation.OpeningView):
     _template_name = "access/recovery-by-name.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> Optional[types_.URL]:
+    def _open_port(request: HttpRequest) -> Optional[URL]:
         confirmation_page_url = services.access_recovery.open_via_name_using(
             request.POST["name"],
         )
@@ -90,7 +90,7 @@ class _AccessRecoveryByEmailView(confirmation.OpeningView):
     _template_name = "access/recovery-by-email.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> Optional[types_.URL]:
+    def _open_port(request: HttpRequest) -> Optional[URL]:
         confirmation_page_url = services.access_recovery.open_via_email_using(
             request.POST["email"],
         )

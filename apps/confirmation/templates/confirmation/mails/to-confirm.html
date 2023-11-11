@@ -1,5 +1,4 @@
-{% load common_tags %}
-{% get_settings as settings %}
+{% load confirmation %}
 
 <!DOCTYPE html>
 <html>
@@ -11,6 +10,6 @@
         <h2><b>{{ password }}</b></h2>
         <p>Enter this password on the page to which you were redirected to confirm {{ subject }}</p>
         <p>If you are not redirected, then follow this link to go to this confirmation page: <a href="{{ url }}">{{ url }}</a></p>
-        <p><b>Warning</b>: this password is active for only {{ settings.CONFIRMATION_ACTIVITY_MINUTES }} minutes<p>
+        <p><b>Warning</b>: this password is active for only {{ activity_minutes }} minutes<p>
     </body>
 </html>
