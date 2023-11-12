@@ -26,7 +26,7 @@ class registration:
         cases.registration.complete_by(
             email,
             user_of=do(adapters.registration_confirmation.pop_by),
-            registered=do(adapters.registered),
+            registered=adapters.registered,
             authorized=adapters.authorized |by| request,
         )
 

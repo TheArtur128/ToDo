@@ -70,11 +70,11 @@ def user_to_authorize_from(request: HttpRequest) -> Optional[User]:
     )
 
 
-def registered(user: User) -> Optional[User]:
+def registered(user: User) -> User:
     if user_django_orm_repository.has(user):
-        return None
+        return user
 
-    user_django_orm_repository.save()
+    user_django_orm_repository.save(user)
 
     return user
 
