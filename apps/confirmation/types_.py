@@ -1,8 +1,5 @@
-from apps.confirmation import input
-
-
-type URL = input.URL
-type Token = input.Token
-type Email = input.Email
-type Password = input.Password
-type ErrorMessage = input.ErrorMessage
+type URL = str
+type Token = str
+type Email = str
+type Password = str
+type ErrorMessage = str
