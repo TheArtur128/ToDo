@@ -11,6 +11,7 @@ from apps.confirmation import adapters, cases, types_
 type Subject = adapters.Subject
 type Method = adapters.Method
 type SessionToken = adapters.SessionCode
+type ActivationToken = adapters.ActivationToken
 
 
 @struct
@@ -54,14 +55,14 @@ class endpoint:
         subject: Subject,
         method: Method,
         session_token: SessionToken,
-        password: types_.Password,
+        activation_token: ActivationToken,
         request: HttpRequest,
     ) -> Optional[HttpResponse]:
         id = adapters.activation.EndpointID(
-            subject, method, session_token, password
+            subject, method, session_token, activation_token
         )
 
-        return cases.endpoint.payload_by(
+        return cases.endpoint.activate_by(
             id,
             endpoint_of=do(adapters.activation.endpoint_of),
             payload_of=do(adapters.activation.payload_of) |by| request,

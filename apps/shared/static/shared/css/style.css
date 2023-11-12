@@ -158,19 +158,15 @@ div {
 }
 
 .form-errors *, .form-notification * {
+  color: #f7f0f1;
   padding-left: 0px;
   margin: 5px;
 }
 
 .form-errors {
-  color: #f7f0f1;
   border: solid 2px #f74358;
 }
 
 .form-notification {
-  border: solid 2px #45FF76;
-}
-
-.form-notification * {
-  margin-left: 10px;
+  border: solid 2px #24f55c;
 }

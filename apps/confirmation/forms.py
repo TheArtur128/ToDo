@@ -11,7 +11,7 @@ class ConfirmationForm(Form):
         max_length=__error_message,
     )
 
-    password = CharField(
+    token = CharField(
         min_length=settings.CONFIRMATION_ACTIVATION_CODE_LENGTH,
         max_length=settings.CONFIRMATION_ACTIVATION_CODE_LENGTH,
         error_messages=__error_messages,

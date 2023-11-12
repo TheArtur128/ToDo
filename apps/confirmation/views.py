@@ -12,15 +12,21 @@ def confirm(
     request: HttpRequest,
     subject: services.Subject,
     method: services.Method,
-    token: services.SessionToken,
+    session_token: services.SessionToken,
 ) -> HttpResponse:
     if not ui.is_valid(subject, method):
         raise Http404("incorrect subject or method")
 
     errors = tuple()
+    notifications = tuple()
 
     if request.method == 'GET':
         form = forms.ConfirmationForm()
+
+        hint_message = ui.hint_message_for(method)
+
+        if hint_message is not None:
+            notifications = [hint_message]
     else:
         form = forms.ConfirmationForm(data=request.POST)
 
@@ -28,8 +34,8 @@ def confirm(
             response = services.endpoint.activate_by(
                 subject=subject,
                 method=method,
-                session_token=token,
-                password=request.POST["password"],
+                session_token=session_token,
+                activation_token=request.POST["token"],
                 request=request,
             )
 
@@ -37,16 +43,17 @@ def confirm(
                 return response
 
             errors = [
-                "You entered the wrong password"
+                "You entered the wrong token"
                 f" or the {subject} time has expired"
             ]
 
     context = dict(
         subject=subject,
         method=method,
-        token=token,
+        session_token=session_token,
         form=form,
         errors=(*form.errors.values(), *errors),
+        notifications=notifications,
     )
 
     return render(request, "confirmation/pages/confirmation.html", context)

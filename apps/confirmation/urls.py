@@ -7,7 +7,7 @@ app_name = "confirmation"
 
 urlpatterns = [
     path(
-        "confirm/<str:subject>/<str:method>/<str:token>",
+        "confirm/<str:subject>/<str:method>/<str:session_token>",
         confirm,
         name="confirm"
     ),
