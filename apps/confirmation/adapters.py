@@ -100,11 +100,11 @@ class opening:
             context = dict(
                 subject=endpoint.port.subject,
                 url=url,
-                password=endpoint.activation_code,
+                token=endpoint.activation_code,
             )
 
             text_message_template = (
-                "Password to confirm {subject} in {url}: {password}"
+                "Token to confirm {subject} in {url}: {token}"
             )
             text_message = text_message_template.format(**context)
 
