@@ -30,7 +30,7 @@ class registration_confirmation:
 
     @do(optionally)
     def pop_by(do: Do, email: Email) -> User:
-        user = do(_user_redis_repository.get_by_email)(email)
+        user = do(_user_redis_repository.get_by)(email)
         _user_redis_repository.delete(user)
 
         return user
@@ -114,7 +114,7 @@ class _user_redis_repository:
         self.connection.expire(user.email, confirmation.activity_minutes * 60)
 
     @do(optionally)
-    def get_of(do: Do, self, email: Email) -> User:
+    def get_by(do: Do, self, email: Email) -> User:
         name = do(self.connection.hget)(email, "name").decode()
         password_hash = do(self.connection.hget)(
             email,
