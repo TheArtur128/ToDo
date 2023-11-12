@@ -1,7 +1,6 @@
 from typing import Optional
 
-from act import val, obj, flipped, fun, do, Do, optionally, io
-from act.cursors.static import u, e, n, _
+from act import val, obj, do, Do, optionally
 from django.contrib import auth
 from django.http import HttpRequest
 from django_redis import get_redis_connection
@@ -80,19 +79,26 @@ def registered(user: User) -> Optional[User]:
     return user
 
 
-authorized = io(flipped(auth.login))
+def authorized(user: User, request: HttpRequest) -> User:
+    auth.login(request, user)
+
+    return user
 
 
 @val
 class user_django_orm_repository:
-    get_by_email = fun(_.models.User.objects.filter(email=e).first())
-    get_by_name = fun(_.models.User.objects.filter(name=n).first())
-
-    has = fun(u.id.is_not(None))
-
     def save(user: User) -> None:
         user.set_password(user.password)
         user.save()
+
+    def has(user: User) -> bool:
+        return user.id is not None
+
+    def get_by_email(email: Email) -> User:
+        return models.User.objects.filter(email=email).first()
+
+    def get_by_name(name: str) -> User:
+        return models.User.objects.filter(name=name).first()
 
 
 @obj
