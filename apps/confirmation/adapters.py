@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 from typing import Callable, Optional
 
 from act import val, obj, to, do, optionally, binary, fun, I, Do
-from act.cursors.static import e, _
+from act.cursors.static import p, _
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password, check_password
 from django.http import HttpRequest, HttpResponse
@@ -158,7 +158,7 @@ class activation:
 class handler_repository:
     _config: dict[Port, Handle[I]] = dict()
 
-    get_by = fun(_._config.get(e.port))
+    get_by = fun(_._config.get(p))
     save = setitem |to| _config
 
 

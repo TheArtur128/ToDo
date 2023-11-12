@@ -1,6 +1,6 @@
 from typing import Literal
 
-from act import val, do, Do, optionally, fbind_by, then, not_, io, by
+from act import val, do, Do, optionally, fbind_by, then, not_, by
 from django.http import HttpRequest
 
 from apps.access import adapters, cases, types_
@@ -53,7 +53,7 @@ class authorization:
         return cases.authorization.complete_by(
             email,
             user_of=do(adapters.user_django_orm_repository.get_by_email),
-            authorized=io(adapters.authorize) |by| request,
+            authorized=adapters.authorized |by| request,
         )
 
 
