@@ -3,16 +3,18 @@
 
 {% block attrs %}
     {{ block.super }}
-    {% url 'access:recover-by-email' %}
+    {% url 'access:restore-by-email' %}
 {% endblock %}
 
-{% block form-fields %}
+{% block fields %}
     <p>
         <label for="{{ form.email.id_for_label }}">Email</label>
         {{ form.email }}
     </p>
+    {{ block.super }}
 {% endblock %}
 
 {% block extension %}
-    <a class="to-change-form" href="{% url 'access:recover-by-name' %}">Via name</a>
+    {{ block.super }}
+    <a class="right-route" href="{% url 'access:restore-by-name' %}">Via name</a>
 {% endblock %}

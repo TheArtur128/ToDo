@@ -17,7 +17,7 @@
 {% block title %}Sign up{% endblock %}
 {% block form_title %}<h1>Sign up</h1>{% endblock %}
 
-{% block fileds %}
+{% block fields %}
     <p>
         <label for="{{ form.name.id_for_label }}">Name</label>
         {{ form.name }}
@@ -37,5 +37,5 @@
 {% endblock %}
 
 {% block extension %}
-    <a class="to-change-form" href="{% url 'access:sign-in' %}">Sign in</a>
+    <a class="right-route" href="{% url 'access:sign-in' %}">Sign in</a>
 {% endblock %}

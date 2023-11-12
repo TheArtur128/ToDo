@@ -102,6 +102,6 @@ registrate = for_anonymous(_RegistrationView.as_view())
 
 login = for_anonymous(LoginView.as_view())
 
-access_recovery_by_name = for_anonymous(_AccessRecoveryByNameView.as_view())
+restore_access_by_name = for_anonymous(_AccessRecoveryByNameView.as_view())
 
-access_recovery_by_email = for_anonymous(_AccessRecoveryByEmailView.as_view())
+restore_access_by_email = for_anonymous(_AccessRecoveryByEmailView.as_view())

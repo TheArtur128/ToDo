@@ -1,7 +1,7 @@
 from django.urls import path
 
 from apps.access.views import (
-    login, registrate, logout, access_recovery_by_name, access_recovery_by_email
+    login, registrate, logout, restore_access_by_name, restore_access_by_email
 )
 
 
@@ -12,13 +12,13 @@ urlpatterns = [
     path("sign-up", registrate, name="sign-up"),
     path("logout", logout, name="logout"),
     path(
-        "recover-access-by-name",
-        access_recovery_by_name,
-        name="recover-by-name"
+        "restore-access-by-name",
+        restore_access_by_name,
+        name="restore-by-name"
     ),
     path(
-        "recover-access-by-email",
-        access_recovery_by_email,
-        name="recover-by-email"
+        "restore-access-by-email",
+        restore_access_by_email,
+        name="restore-by-email"
     ),
 ]

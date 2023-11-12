@@ -101,17 +101,18 @@ div {
   overflow-wrap: break-word;
 }
 
-#confirmation-form .form-fileds {
+#confirmation-form .form-fields {
     margin-top: 5px;
     margin-bottom: 27px;
 }
 
 #recovery-form {
-  height: 330px;
+  height: 379px;
 }
 
 #recovery-form-title {
   margin-bottom: 35px;
+  font-size: 30px;
 }
 
 #recovery-form-push-button {
@@ -126,7 +127,7 @@ div {
   font-size: 17px;
 }
 
-.form-fileds {
+.form-fields {
   display: inline-block;
   text-align: left;
   width: 250px;
@@ -134,13 +135,13 @@ div {
   margin-left: 15px;
 }
 
-.to-change-form {
+.right-route {
   position: absolute;
   right: 12px;
   bottom: 8px;
 }
 
-.to-regain-access {
+.left-route {
   position: absolute;
   left: 12px;
   bottom: 8px;

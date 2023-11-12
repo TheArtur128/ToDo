@@ -3,10 +3,10 @@
 
 {% block attrs %}id="recovery-form"{% endblock %}
 
-{% block title %}Access recovery{% endblock %}
-{% block form_title %}<h2 id="recovery-form-title">Access recovery</h2>{% endblock %}
+{% block title %}Restore access{% endblock %}
+{% block form_title %}<h2 id="recovery-form-title">Restore access</h2>{% endblock %}
 
-{% block fileds %}
+{% block fields %}
     <p>
         <label for="{{ form.password1.id_for_label }}">New password</label>
         {{ form.password1 }}
@@ -15,4 +15,8 @@
         <label for="{{ form.password2.id_for_label }}">Repeat password</label>
         {{ form.password2 }}
     </p>
+{% endblock %}
+
+{% block extension %}
+    <a class="left-route" href="{% url 'access:sign-in' %}">Already</a>
 {% endblock %}
