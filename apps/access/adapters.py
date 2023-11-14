@@ -1,4 +1,4 @@
-from typing import Optional, Callable
+from typing import Optional
 
 from act import val, obj, do, Do, optionally, contextual, saving_context
 from django.contrib import auth
