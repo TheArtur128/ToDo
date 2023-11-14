@@ -18,7 +18,7 @@ class registration:
         *,
         user_of: Callable[I, U],
         registered: Callable[U, R],
-        authorized: Callable[R | U, A],
+        authorized: Callable[R, A],
     ) -> A:
         return authorized(registered(user_of(user_id)))
 
