@@ -1,6 +1,6 @@
 from typing import Literal
 
-from act import val, do, Do, optionally, fbind_by, then, not_, by
+from act import val, obj, do, Do, optionally, fbind_by, then, not_, by
 from django.http import HttpRequest
 
 from apps.access import adapters, cases, types_
@@ -15,8 +15,8 @@ class registration:
     def open_using(do: Do, request: HttpRequest) -> types_.URL:
         return cases.registration.open_using(
             request,
-            user_of=do(adapters.user_to_register_from),
-            access_to_confirm_for=do(adapters.registration_confirmation.add),
+            user_of=do(adapters.registration.user_of),
+            access_to_confirm_for=do(adapters.registration.confirmation.add),
         )
 
     @do(optionally, else_=False)
@@ -25,9 +25,9 @@ class registration:
     ) -> Literal[True]:
         cases.registration.complete_by(
             email,
-            user_of=do(adapters.registration_confirmation.pop_by),
-            registered=adapters.registered,
-            authorized=adapters.authorized |by| request,
+            user_of=do(adapters.registration.confirmation.pop_by),
+            registered=adapters.registration.registered,
+            authorized=adapters.registration.authorized |by| request,
         )
 
         return True
@@ -37,11 +37,11 @@ class registration:
 class authorization:
     @do(optionally)
     def open_using(do: Do, request: HttpRequest) -> types_.URL:
-        access_to_confirm_for = do(adapters.open_authorization_confirmation_for)
+        access_to_confirm_for = do(adapters.authorization.open_confirmation_for)
 
         return cases.authorization.open_using(
             request,
-            user_of=do(adapters.user_to_authorize_from),
+            user_of=do(adapters.authorization.user_to_open_by),
             access_to_confirm_for=access_to_confirm_for,
         )
 
@@ -52,33 +52,27 @@ class authorization:
     ) -> User:
         return cases.authorization.complete_by(
             email,
-            user_of=do(adapters.user_django_orm_repository.get_by_email),
-            authorized=adapters.authorized |by| request,
+            user_of=do(adapters.authorization.user_to_complate_by),
+            authorized=adapters.authorization.authorized |by| request,
         )
 
 
-@val
+@obj
 class access_recovery:
-    @do(optionally)
-    def open_via_email_using(do: Do, email: types_.Email) -> types_.URL:
-        access_to_confirm_for = do(
-            adapters.open_access_recovery_confirmation_for
-        )
+    _open_confirmation_for = adapters.access_recovery.open_confirmation_for
 
+    @do(optionally)
+    def open_via_email_using(do, self, email: types_.Email) -> types_.URL:
         return cases.access_recovery.open_using(
             email,
-            user_of=do(adapters.user_django_orm_repository.get_by_email),
-            access_to_confirm_for=access_to_confirm_for,
+            user_of=do(adapters.access_recovery.get_user_by_email),
+            access_to_confirm_for=do(self._open_confirmation_for),
         )
 
     @do(optionally)
-    def open_via_name_using(do: Do, name: str) -> types_.URL:
-        access_to_confirm_for = do(
-            adapters.open_access_recovery_confirmation_for
-        )
-
+    def open_via_name_using(do, self, name: str) -> types_.URL:
         return cases.access_recovery_by(
             name,
-            user_of=do(adapters.user_django_orm_repository.get_by_name),
-            access_to_confirm_for=access_to_confirm_for,
+            user_of=do(adapters.access_recovery.get_user_by_name),
+            access_to_confirm_for=do(self._open_confirmation_for),
         )

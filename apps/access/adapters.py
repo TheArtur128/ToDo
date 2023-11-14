@@ -15,78 +15,23 @@ type User = models.User
 
 
 @val
-class registration_confirmation:
-    @do(optionally)
-    def add(do: Do, user: User) -> URL:
-        confirmation_page_url = do(confirmation.open_port_of)(
-            confirmation.subjects.registration,
-            confirmation.via.email,
-            for_=user.email,
-        )
+class _access:
+    def registered(user: User) -> User:
+        if _user_django_orm_repository.has(user):
+            return user
 
-        _user_redis_repository.save(user)
-
-        return confirmation_page_url
-
-    @do(optionally)
-    def pop_by(do: Do, email: Email) -> User:
-        user = do(_user_redis_repository.get_by)(email)
-        _user_redis_repository.delete(user)
+        _user_django_orm_repository.save(user)
 
         return user
 
+    def authorized(user: User, request: HttpRequest) -> User:
+        auth.login(request, user)
 
-def open_access_recovery_confirmation_for(user: User) -> URL:
-    return confirmation.open_port_of(
-        confirmation.subjects.access_recovery,
-        confirmation.via.email,
-        for_=user.email,
-    )
-
-
-def open_authorization_confirmation_for(user: User) -> URL:
-    return confirmation.open_port_of(
-        confirmation.subjects.authorization,
-        confirmation.via.email,
-        for_=user.email,
-    )
-
-
-def user_to_register_from(request: HttpRequest) -> Optional[User]:
-    user = models.User(
-        name=request.POST["name"],
-        email=request.POST["email"],
-        password=request.POST["password1"],
-    )
-
-    return None if user_django_orm_repository.has(user) else user
-
-
-def user_to_authorize_from(request: HttpRequest) -> Optional[User]:
-    return auth.authenticate(
-        request,
-        username=request.POST["username"],
-        password=request.POST["password"],
-    )
-
-
-def registered(user: User) -> User:
-    if user_django_orm_repository.has(user):
         return user
-
-    user_django_orm_repository.save(user)
-
-    return user
-
-
-def authorized(user: User, request: HttpRequest) -> User:
-    auth.login(request, user)
-
-    return user
 
 
 @val
-class user_django_orm_repository:
+class _user_django_orm_repository:
     def save(user: User) -> None:
         user.set_password(user.password)
         user.save()
@@ -127,3 +72,73 @@ class _user_redis_repository:
 
     def delete(self, user: User) -> None:
         self.connection.hdel(user.email, "name", "password_hash")
+
+
+@val
+class registration:
+    def user_of(request: HttpRequest) -> Optional[User]:
+        user = models.User(
+            name=request.POST["name"],
+            email=request.POST["email"],
+            password=request.POST["password1"],
+        )
+
+        return None if _user_django_orm_repository.has(user) else user
+
+    @val
+    class confirmation:
+        @do(optionally)
+        def add(do: Do, user: User) -> URL:
+            confirmation_page_url = do(confirmation.open_port_of)(
+                confirmation.subjects.registration,
+                confirmation.via.email,
+                for_=user.email,
+            )
+
+            _user_redis_repository.save(user)
+
+            return confirmation_page_url
+
+        @do(optionally)
+        def pop_by(do: Do, email: Email) -> User:
+            user = do(_user_redis_repository.get_by)(email)
+            _user_redis_repository.delete(user)
+
+            return user
+
+    registered = _access.registered
+    authorized = _access.authorized
+
+
+@val
+class authorization:
+    def user_to_open_by(request: HttpRequest) -> Optional[User]:
+        return auth.authenticate(
+            request,
+            username=request.POST["username"],
+            password=request.POST["password"],
+        )
+
+    user_to_complate_by = _user_django_orm_repository.get_by_email
+
+    def open_confirmation_for(user: User) -> URL:
+        return confirmation.open_port_of(
+            confirmation.subjects.authorization,
+            confirmation.via.email,
+            for_=user.email,
+        )
+
+    authorized = _access.authorized
+
+
+@val
+class access_recovery:
+    get_user_by_email = _user_django_orm_repository.get_by_email
+    get_user_by_name = _user_django_orm_repository.get_by_name
+
+    def open_confirmation_for(user: User) -> URL:
+        return confirmation.open_port_of(
+            confirmation.subjects.access_recovery,
+            confirmation.via.email,
+            for_=user.email,
+        )
