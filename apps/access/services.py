@@ -21,7 +21,7 @@ class registration:
 
     @do(optionally, else_=False)
     def complete_by(
-        do: Do, email: types_.Email, *, request: HttpRequest
+        do: Do, email: types_.Email, request: HttpRequest
     ) -> Literal[True]:
         cases.registration.complete_by(
             email,
@@ -47,9 +47,7 @@ class authorization:
 
     @fbind_by(... |then>> not_(None))
     @do(optionally)
-    def complete_by(
-        do: Do, email: types_.Email, *, request: HttpRequest
-    ) -> User:
+    def complete_by(do: Do, email: types_.Email, request: HttpRequest) -> User:
         return cases.authorization.complete_by(
             email,
             user_of=do(adapters.authorization.user_to_complate_by),

@@ -24,7 +24,7 @@ def authorization_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    ok = services.authorization.complete_by(email, request=request)
+    ok = services.authorization.complete_by(email, request)
 
     return redirect(reverse("tasks:index")) if ok else None
 
@@ -37,7 +37,7 @@ def registration_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    ok = services.registration.complete_by(email, request=request)
+    ok = services.registration.complete_by(email, request)
 
     return redirect(reverse("tasks:index")) if ok else None
 
