@@ -1,6 +1,8 @@
-from typing import Literal
+from typing import Literal, Optional
 
-from act import val, obj, do, Do, optionally, fbind_by, then, not_, by
+from act import (
+    val, obj, do, Do, optionally, fbind_by, then, not_, by, contextual
+)
 from django.http import HttpRequest
 
 from apps.access import adapters, cases, types_
@@ -57,20 +59,39 @@ class authorization:
 
 @obj
 class access_recovery:
-    _open_confirmation_for = adapters.access_recovery.open_confirmation_for
+    _open_confirmation_for = adapters.access_recovery.opening.confirmation_for
 
-    @do(optionally)
-    def open_via_email_using(do, self, email: types_.Email) -> types_.URL:
+    def open_via_email_using(
+        self,
+        email: types_.Email,
+        new_password: types_.Password,
+    ) -> Optional[types_.URL]:
         return cases.access_recovery.open_using(
-            email,
-            user_of=do(adapters.access_recovery.get_user_by_email),
+            contextual(new_password, email),
+            user_of=do(adapters.access_recovery.opening.get_user_by_email),
+            access_to_confirm_for=do(self._open_confirmation_for),
+        )
+
+    def open_via_name_using(
+        self,
+        name: types_.Username,
+        new_password: types_.Password,
+    ) -> Optional[types_.URL]:
+        return cases.access_recovery.open_using(
+            contextual(new_password, name),
+            user_of=do(adapters.access_recovery.opening.get_user_by_name),
             access_to_confirm_for=do(self._open_confirmation_for),
         )
 
     @do(optionally)
-    def open_via_name_using(do, self, name: str) -> types_.URL:
-        return cases.access_recovery.open_using(
-            name,
-            user_of=do(adapters.access_recovery.get_user_by_name),
-            access_to_confirm_for=do(self._open_confirmation_for),
+    def complete_by(do: Do, email: types_.Email, request: HttpRequest) -> User:
+        return cases.access_recovery.complete_by(
+            email,
+            user_of=do(adapters.access_recovery.completion.user_of),
+            with_restored_access=do(
+                adapters.access_recovery.completion.with_restored_access
+            ),
+            authorized=(
+                adapters.access_recovery.completion.authorized |by| request
+            ),
         )

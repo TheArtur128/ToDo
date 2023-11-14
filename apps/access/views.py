@@ -42,6 +42,19 @@ def registration_confirmation(
     return redirect(reverse("tasks:index")) if ok else None
 
 
+@confirmation.register_for(
+    confirmation.subjects.access_recovery,
+    confirmation.via.email,
+)
+def access_recovery_confirmation(
+    request: HttpRequest,
+    email: Email,
+) -> Optional[HttpResponse]:
+    ok = services.access_recovery.complete_by(email, request)
+
+    return redirect(reverse("tasks:index")) if ok else None
+
+
 @login_required
 @require_GET
 def logout(request: HttpRequest) -> HttpResponse:
@@ -80,6 +93,7 @@ class _AccessRecoveryByNameView(confirmation.OpeningView):
     def _open_port(request: HttpRequest) -> Optional[URL]:
         confirmation_page_url = services.access_recovery.open_via_name_using(
             request.POST["name"],
+            request.POST["password1"],
         )
 
         return confirmation_page_url
@@ -93,6 +107,7 @@ class _AccessRecoveryByEmailView(confirmation.OpeningView):
     def _open_port(request: HttpRequest) -> Optional[URL]:
         confirmation_page_url = services.access_recovery.open_via_email_using(
             request.POST["email"],
+            request.POST["password1"],
         )
 
         return confirmation_page_url

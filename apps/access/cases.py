@@ -51,3 +51,12 @@ class access_recovery:
         access_to_confirm_for: Callable[U, A],
     ) -> A:
         return access_to_confirm_for(user_of(user_id))
+
+    def complete_by(
+        user_id: I,
+        *,
+        user_of: Callable[I, U],
+        with_restored_access: Callable[U, R],
+        authorized: Callable[R, A],
+    ) -> A:
+        return authorized(with_restored_access(user_of(user_id)))

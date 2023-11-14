@@ -1,13 +1,14 @@
-from typing import Optional
+from typing import Optional, Callable
 
-from act import val, obj, do, Do, optionally
+from act import val, obj, do, Do, optionally, contextual, saving_context
 from django.contrib import auth
+from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 from django_redis import get_redis_connection
 from redis import Redis
 
 from apps.access import models
-from apps.access.types_ import URL, Email
+from apps.access.types_ import URL, Email, Password, PasswordHash, Username
 from apps.access.utils import confirmation, hashed, unhashed
 
 
@@ -42,7 +43,7 @@ class _user_django_orm_repository:
     def get_by_email(email: Email) -> User:
         return models.User.objects.filter(email=email).first()
 
-    def get_by_name(name: str) -> User:
+    def get_by_name(name: Username) -> User:
         return models.User.objects.filter(name=name).first()
 
 
@@ -133,12 +134,66 @@ class authorization:
 
 @val
 class access_recovery:
-    get_user_by_email = _user_django_orm_repository.get_by_email
-    get_user_by_name = _user_django_orm_repository.get_by_name
+    @val
+    class opening:
+        type _UserID[ID] = contextual[Password, ID]
+        type _User = contextual[Password, User]
 
-    def open_confirmation_for(user: User) -> URL:
-        return confirmation.open_port_of(
-            confirmation.subjects.access_recovery,
-            confirmation.via.email,
-            for_=user.email,
-        )
+        @do(optionally)
+        def get_user_by_email(do: Do, id: _UserID[Email]) -> _User:
+            return saving_context(do(_user_django_orm_repository.get_by_email))(
+                id,
+            )
+
+        @do(optionally)
+        def get_user_by_name(do: Do, id: _UserID[Username]) -> _User:
+            return saving_context(do(_user_django_orm_repository.get_by_name))(
+                id,
+            )
+
+        @do(optionally)
+        def confirmation_for(do: Do, user_to_open: _User) -> URL:
+            new_password, user = user_to_open
+
+            confirmation_page_url = do(confirmation.open_port_of)(
+                confirmation.subjects.access_recovery,
+                confirmation.via.email,
+                for_=user.email,
+            )
+
+            access_recovery._password_repository.save_under(
+                user.email,
+                new_password,
+            )
+
+            return confirmation_page_url
+
+    @val
+    class completion:
+        user_of = _user_django_orm_repository.get_by_email
+        authorized = _access.authorized
+
+        @do(optionally)
+        def with_restored_access(do, user: User) -> User:
+            password_hash_of = do(access_recovery._password_repository.pop_by)
+            password_hash = password_hash_of(user.email)
+
+            user.password = password_hash
+            user.save()
+
+            return user
+
+    @obj
+    class _password_repository:
+        connection: Redis = get_redis_connection("access_recovery")
+
+        def save_under(self, email: Email, password: Password) -> None:
+            self.connection.set(email, make_password(password))
+            self.connection.expire(email, confirmation.activity_minutes * 60)
+
+        @do(optionally)
+        def pop_by(do, self, email: Email) -> PasswordHash:
+            password_hash = do(self.connection.get)(email)
+            self.connection.del_(email)
+
+            return password_hash
