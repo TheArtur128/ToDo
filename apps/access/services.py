@@ -69,7 +69,7 @@ class access_recovery:
 
     @do(optionally)
     def open_via_name_using(do, self, name: str) -> types_.URL:
-        return cases.access_recovery_by(
+        return cases.access_recovery.open_using(
             name,
             user_of=do(adapters.access_recovery.get_user_by_name),
             access_to_confirm_for=do(self._open_confirmation_for),
