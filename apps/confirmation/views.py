@@ -14,56 +14,42 @@ def confirm(
     method: services.Method,
     session_token: services.SessionToken,
 ) -> HttpResponse:
-    if not ui.is_valid(subject, method):
+    if not ui.activation.is_valid_for(subject, method):
         raise Http404("incorrect subject or method")
 
-    errors = tuple()
-    notifications = tuple()
+    is_activation_failed = False
 
     if request.method == 'GET':
         form = forms.ConfirmationForm()
-
-        hint_message = ui.hint_message_for(method)
-
-        if hint_message is not None:
-            notifications = [hint_message]
     else:
         form = forms.ConfirmationForm(data=request.POST)
 
-        if form.is_valid():
-            response = services.endpoint.activate_by(
-                subject=subject,
-                method=method,
-                session_token=session_token,
-                activation_token=request.POST["token"],
-                request=request,
-            )
+    if request.method == "POST" and form.is_valid():
+        response = services.endpoint.activate_by(
+            subject=subject,
+            method=method,
+            session_token=session_token,
+            activation_token=request.POST["token"],
+            request=request,
+        )
 
-            if response is not None:
-                return response
+        if response is not None:
+            return response
 
-            errors = [
-                "You entered the wrong token"
-                f" or the {subject} time has expired"
-            ]
+        is_activation_failed = True
 
-    context = dict(
-        subject=subject,
-        method=method,
-        session_token=session_token,
-        form=form,
-        errors=(*form.errors.values(), *errors),
-        notifications=notifications,
+    page = ui.activation.page_of(
+        form,
+        subject,
+        method,
+        session_token,
+        is_activation_failed=is_activation_failed,
     )
 
-    return render(request, "confirmation/pages/confirmation.html", context)
+    return render(request, page.template, page.context)
 
 
 class OpeningView(utils.ViewWithForm):
-    _failure_message: types_.ErrorMessage = (
-        "Make sure you have entered your information correctly"
-    )
-
     def _open_port(self, request: HttpRequest) -> Optional[types_.URL]:
         raise NotImplementedError
 
@@ -77,6 +63,6 @@ class OpeningView(utils.ViewWithForm):
         result = self._open_port(request)
 
         if result is None:
-            return bad([self._failure_message])
+            return bad([ui.opening.failure_message])
 
         return redirect(result)

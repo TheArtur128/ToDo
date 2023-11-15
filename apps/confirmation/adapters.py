@@ -8,7 +8,6 @@ from act.cursors.static import p, _
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password, check_password
 from django.http import HttpRequest, HttpResponse
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django_redis import get_redis_connection
 
@@ -97,27 +96,17 @@ class opening:
             endpoint: Endpoint[types_.Email],
             url: ActivationPlace,
         ) -> bool:
-            context = dict(
-                subject=endpoint.port.subject,
-                url=url,
-                token=endpoint.activation_code,
-            )
-
-            text_message_template = (
-                "Token to confirm {subject} in {url}: {token}"
-            )
-            text_message = text_message_template.format(**context)
-
-            html_message = render_to_string(
-                "confirmation/mails/to-confirm.html",
-                context | dict(activity_minutes=ui.activity_minutes),
+            email = ui.activation.mail_of(
+                endpoint.port.subject,
+                url,
+                endpoint.activation_code
             )
 
             result_code = send_mail(
                 from_email=None,
-                subject=f"Confirm {endpoint.port.subject}",
-                message=text_message,
-                html_message=html_message,
+                subject=email.title,
+                message=email.message,
+                html_message=email.page,
                 recipient_list=[endpoint.user_id],
                 fail_silently=True,
             )

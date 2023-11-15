@@ -3,7 +3,7 @@
 
 {% block attrs %}id="confirmation-form" action="{% url 'confirmation:confirm' subject=subject method=method session_token=session_token %}"{% endblock %}
 
-{% block form_title %}<h1>Confirm {{ subject }}</h1>{% endblock %}
+{% block form_title %}<h1>Confirm {{ readable_subject }}</h1>{% endblock %}
 
 {% block fields %}
     <p>
