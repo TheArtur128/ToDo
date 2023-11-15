@@ -1,7 +1,7 @@
 # ToDo
 <details>
   <summary><h2>Desing</h2></summary>
-  <img src="https://github.com/TheArtur128/ToDo/blob/main/images/design.webp"/>
+  <img src="https://github.com/TheArtur128/ToDo/blob/main/decor/design.webp"/>
 
 ## Legend
 ### Dependency types
