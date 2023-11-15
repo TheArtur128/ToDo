@@ -193,7 +193,7 @@ class access_recovery:
 
         @do(optionally)
         def pop_by(do, self, email: Email) -> PasswordHash:
-            password_hash = do(self.connection.get)(email)
-            self.connection.del_(email)
+            password_hash_bytes = do(self.connection.get)(email)
+            self.connection.delete(email)
 
-            return password_hash
+            return password_hash_bytes.decode()
