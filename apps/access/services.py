@@ -1,7 +1,7 @@
 from typing import Literal, Optional
 
 from act import (
-    val, obj, do, Do, optionally, fbind_by, then, not_, by, contextual
+    val, do, Do, optionally, fbind_by, then, not_, by, contextual, as_method
 )
 from django.http import HttpRequest
 
@@ -57,11 +57,14 @@ class authorization:
         )
 
 
-@obj
+@val
 class access_recovery:
     _open_confirmation_for = adapters.access_recovery.opening.confirmation_for
 
+    @as_method
+    @do(optionally)
     def open_via_email_using(
+        do,
         self,
         email: types_.Email,
         new_password: types_.Password,
@@ -72,7 +75,10 @@ class access_recovery:
             access_to_confirm_for=do(self._open_confirmation_for),
         )
 
+    @as_method
+    @do(optionally)
     def open_via_name_using(
+        do,
         self,
         name: types_.Username,
         new_password: types_.Password,
