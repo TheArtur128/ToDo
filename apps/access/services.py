@@ -14,9 +14,16 @@ type User = adapters.User
 @val
 class registration:
     @do(optionally)
-    def open_using(do: Do, request: HttpRequest) -> types_.URL:
+    def open_using(
+        do: Do,
+        name=types_.Username,
+        email=types_.Email,
+        password=types_.Password,
+    ) -> types_.URL:
+        user_id = adapters.registration.UserID(name, email, password)
+
         return cases.registration.open_using(
-            request,
+            user_id,
             user_of=do(adapters.registration.user_of),
             access_to_confirm_for=do(adapters.registration.confirmation.add),
         )
@@ -38,12 +45,19 @@ class registration:
 @val
 class authorization:
     @do(optionally)
-    def open_using(do: Do, request: HttpRequest) -> types_.URL:
+    def open_using(
+        do: Do,
+        name: types_.Username,
+        password: types_.Password,
+        request: HttpRequest,
+    ) -> types_.URL:
+        user_id = adapters.authorization.UserID(name, password)
+
         access_to_confirm_for = do(adapters.authorization.open_confirmation_for)
 
         return cases.authorization.open_using(
-            request,
-            user_of=do(adapters.authorization.user_to_open_by),
+            user_id,
+            user_of=do(adapters.authorization.user_to_open_by) |by| request,
             access_to_confirm_for=access_to_confirm_for,
         )
 

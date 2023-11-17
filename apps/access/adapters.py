@@ -1,6 +1,6 @@
 from typing import Optional
 
-from act import val, obj, do, Do, optionally, contextual, saving_context
+from act import type, val, obj, do, Do, optionally, contextual, saving_context
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
@@ -77,11 +77,13 @@ class _user_redis_repository:
 
 @val
 class registration:
-    def user_of(request: HttpRequest) -> Optional[User]:
+    UserID = type(name=Username, email=Email, password=Password)
+
+    def user_of(user_id: UserID) -> Optional[User]:
         user = models.User(
-            name=request.POST["name"],
-            email=request.POST["email"],
-            password=request.POST["password1"],
+            name=user_id.name,
+            email=user_id.email,
+            password=user_id.password,
         )
 
         return None if _user_django_orm_repository.has(user) else user
@@ -113,11 +115,16 @@ class registration:
 
 @val
 class authorization:
-    def user_to_open_by(request: HttpRequest) -> Optional[User]:
+    UserID = type(name=Username, password=Password)
+
+    def user_to_open_by(
+        user_id: UserID,
+        request: HttpRequest,
+    ) -> Optional[User]:
         return auth.authenticate(
             request,
-            username=request.POST["username"],
-            password=request.POST["password"],
+            username=user_id.name,
+            password=user_id.password,
         )
 
     user_to_complate_by = _user_django_orm_repository.get_by_email

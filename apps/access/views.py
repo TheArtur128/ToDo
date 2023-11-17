@@ -69,7 +69,11 @@ class LoginView(confirmation.OpeningView):
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:
-        confirmation_page_url = services.authorization.open_using(request)
+        confirmation_page_url = services.authorization.open_using(
+            request.POST["username"],
+            request.POST["password"],
+            request,
+        )
 
         return confirmation_page_url
 
@@ -80,7 +84,11 @@ class _RegistrationView(confirmation.OpeningView):
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:
-        confirmation_page_url = services.registration.open_using(request)
+        confirmation_page_url = services.registration.open_using(
+            name=request.POST["name"],
+            email=request.POST["email"],
+            password=request.POST["password1"],
+        )
 
         return confirmation_page_url
 
