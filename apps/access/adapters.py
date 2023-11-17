@@ -174,7 +174,7 @@ class access_recovery:
         authorized = _access.authorized
 
         @do(optionally)
-        def with_restored_access(do, user: User) -> User:
+        def with_new_password(do, user: User) -> User:
             password_hash_of = do(access_recovery._password_repository.pop_by)
             password_hash = password_hash_of(user.email)
 

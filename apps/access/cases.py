@@ -1,6 +1,6 @@
 from typing import Callable
 
-from act import val, U, A, I, R
+from act import val, U, A, I, R, N
 
 
 @val
@@ -56,7 +56,7 @@ class access_recovery:
         user_id: I,
         *,
         user_of: Callable[I, U],
-        with_restored_access: Callable[U, R],
-        authorized: Callable[R, A],
+        with_new_password: Callable[U, N],
+        authorized: Callable[N, A],
     ) -> A:
-        return authorized(with_restored_access(user_of(user_id)))
+        return authorized(with_new_password(user_of(user_id)))

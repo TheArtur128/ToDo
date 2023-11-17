@@ -94,8 +94,8 @@ class access_recovery:
         return cases.access_recovery.complete_by(
             email,
             user_of=do(adapters.access_recovery.completion.user_of),
-            with_restored_access=do(
-                adapters.access_recovery.completion.with_restored_access
+            with_new_password=do(
+                adapters.access_recovery.completion.with_new_password
             ),
             authorized=(
                 adapters.access_recovery.completion.authorized |by| request
