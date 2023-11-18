@@ -1,10 +1,23 @@
 name: Lint
 
-on: [ push, pull_request ]
+on: [push, pull_request]
 
 jobs:
   ruff:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: chartboost/ruff-action@v1
+      - name: install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: install dependences
+        run: curl -sSL https://install.python-poetry.org | python3 -
+        with:
+          cache: "poetry"
+          cache-dependency-path: poetry.lock
+        run: poetry install --with dev
+
+      - name: ruff
+        run: poetry run ruff .
