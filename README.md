@@ -24,7 +24,6 @@ The exception is the `shared` application, which itself cannot import from other
 </details>
 
 
-
 <details>
   <summary><h2>Naming</h2></summary>
 
@@ -100,7 +99,12 @@ class send:
     to_phone = ...  # send.to_phone
 ```
 
-### Priorities
+</details>
+
+
+<details>
+  <summary><h2>Priorities</h2></summary>
+
 Use `type` and `struct` from the [`act`](https://github.com/TheArtur128/Act) library instead of `dataclass` if possible:
 ```py
 # Bad
