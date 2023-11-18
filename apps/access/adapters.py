@@ -47,34 +47,6 @@ class _user_django_orm_repository:
         return models.User.objects.filter(name=name).first()
 
 
-@obj
-class _user_redis_repository:
-    connection: Redis = get_redis_connection("registration")
-
-    def save(self, user: User) -> None:
-        password_hash = hashed(user.password)
-
-        self.connection.hset(user.email, "name", user.name)
-        self.connection.hset(user.email, "password_hash", password_hash)
-
-        self.connection.expire(user.email, confirmation.activity_minutes * 60)
-
-    @do(optionally)
-    def get_by(do: Do, self, email: Email) -> User:
-        name = do(self.connection.hget)(email, "name").decode()
-        password_hash = do(self.connection.hget)(
-            email,
-            "password_hash",
-        ).decode()
-
-        password = unhashed(password_hash)
-
-        return models.User(name=name, email=email, password=password)
-
-    def delete(self, user: User) -> None:
-        self.connection.hdel(user.email, "name", "password_hash")
-
-
 @val
 class registration:
     UserID = type(name=Username, email=Email, password=Password)
@@ -88,26 +60,56 @@ class registration:
 
         return None if _user_django_orm_repository.has(user) else user
 
-    @val
+    @obj
     class confirmation:
         @do(optionally)
-        def add(do: Do, user: User) -> URL:
+        def add(do: Do, self, user: User) -> URL:
             confirmation_page_url = do(confirmation.open_port_of)(
                 confirmation.subjects.registration,
                 confirmation.via.email,
                 for_=user.email,
             )
 
-            _user_redis_repository.save(user)
+            self._user_repository.save(user)
 
             return confirmation_page_url
 
         @do(optionally)
-        def pop_by(do: Do, email: Email) -> User:
-            user = do(_user_redis_repository.get_by)(email)
-            _user_redis_repository.delete(user)
+        def pop_by(do: Do, self, email: Email) -> User:
+            user = do(self._user_repository.get_by)(email)
+            self._user_repository.delete(user)
 
             return user
+
+        @obj
+        class _user_repository:
+            _connection: Redis = get_redis_connection("registration")
+            _activity_seconds: int = confirmation.activity_minutes * 60
+
+            def save(self, user: User) -> None:
+                password_hash = hashed(user.password)
+
+                self._connection.hset(user.email, "name", user.name)
+                self._connection.hset(
+                    user.email, "password_hash", password_hash
+                )
+
+                self._connection.expire(user.email, self._activity_seconds)
+
+            @do(optionally)
+            def get_by(do: Do, self, email: Email) -> User:
+                name = do(self._connection.hget)(email, "name").decode()
+                password_hash = do(self._connection.hget)(
+                    email,
+                    "password_hash",
+                ).decode()
+
+                password = unhashed(password_hash)
+
+                return models.User(name=name, email=email, password=password)
+
+            def delete(self, user: User) -> None:
+                self._connection.hdel(user.email, "name", "password_hash")
 
     registered = _access.registered
     authorized = _access.authorized
@@ -192,15 +194,15 @@ class access_recovery:
 
     @obj
     class _password_repository:
-        connection: Redis = get_redis_connection("access_recovery")
+        _connection: Redis = get_redis_connection("access_recovery")
 
         def save_under(self, email: Email, password: Password) -> None:
-            self.connection.set(email, make_password(password))
-            self.connection.expire(email, confirmation.activity_minutes * 60)
+            self._connection.set(email, make_password(password))
+            self._connection.expire(email, confirmation.activity_minutes * 60)
 
         @do(optionally)
         def pop_by(do, self, email: Email) -> PasswordHash:
-            password_hash_bytes = do(self.connection.get)(email)
-            self.connection.delete(email)
+            password_hash_bytes = do(self._connection.get)(email)
+            self._connection.delete(email)
 
             return password_hash_bytes.decode()
