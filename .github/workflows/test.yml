@@ -12,11 +12,10 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: install dependences
+      - name: install poetry
         run: curl -sSL https://install.python-poetry.org | python3 -
-        with:
-          cache: "poetry"
-          cache-dependency-path: poetry.lock
+
+      - name: install dependences
         run: poetry install --with dev
 
       - name: pytest
