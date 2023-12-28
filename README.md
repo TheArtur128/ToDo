@@ -1,7 +1,5 @@
-# ToDo
-<details>
-  <summary><h2>Desing</h2></summary>
-  <img src="https://github.com/TheArtur128/ToDo/blob/main/decor/design.webp"/>
+# Desing
+<img src="https://github.com/TheArtur128/ToDo/blob/main/decor/design.webp"/>
 
 ## Legend
 ### Dependency types
@@ -21,11 +19,7 @@ From within applications, all dependencies between applications are captured by 
 
 The exception is the `shared` application, which itself cannot import from other applications and whose files can be directly imported by other applications' `input` files.
 
-</details>
-
-
-<details>
-  <summary><h2>Naming</h2></summary>
+# Naming
 
 Application verticals are identified by the same name, or a logically converted name for a specific element type in the corresponding layer files (`rules`, `cases`, `adapters`, `services`, `ui`):
 ```py
@@ -99,11 +93,7 @@ class send:
     to_phone = ...  # send.to_phone
 ```
 
-</details>
-
-
-<details>
-  <summary><h2>Priorities</h2></summary>
+# Priorities
 
 Use `type` and `struct` from the [`act`](https://github.com/TheArtur128/Act) library instead of `dataclass` if possible:
 ```py
@@ -117,4 +107,3 @@ class Box:
 # Good
 Box = type(width=int, height=int)
 ```
-</details>
