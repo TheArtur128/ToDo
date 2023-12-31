@@ -1,8 +1,11 @@
 from django.conf import settings
 
-from apps.shared.views import ViewWithForm
+from apps.shared import ui, renders
 from apps.shared.tools import token_generator_with
+from apps.shared.views import ViewWithForm
 
+
+ui = ui
 
 ViewWithForm = ViewWithForm
 token_generator_with = token_generator_with

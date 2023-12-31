@@ -1,22 +1,16 @@
 from typing import Optional
 
-from act import type, val, as_method, optionally
+from act import val, as_method, optionally
 from django.template.loader import render_to_string
 
-from apps.confirmation import config, forms, types_
+from apps.confirmation import config, forms, types_, utils
 
 
 type Subject = config.Subject
 type Method = config.Method
 
-type _Page = str
-type _Message = str
 
-_LazyPage = type(template=str, context=dict)
-_Mail = type(title=_Message, message=_Message, page=_Page)
-
-
-def _readable(subject: Subject) -> _Message:
+def _readable(subject: Subject) -> utils.ui.Message:
     return subject.replace('_', ' ')
 
 
@@ -29,7 +23,7 @@ class activation:
         raw_subject: Subject,
         url: types_.URL,
         token: types_.Token,
-    ) -> _Mail:
+    ) -> utils.ui.Mail:
         subject = _readable(raw_subject)
 
         title = f"Confirm {subject}"
@@ -44,7 +38,7 @@ class activation:
             ),
         )
 
-        return _Mail(
+        return utils.ui.Mail(
             title=title,
             message=message,
             page=page,
@@ -59,7 +53,7 @@ class activation:
         session_token: types_.Token,
         *,
         is_activation_failed: bool = False,
-    ) -> _LazyPage: 
+    ) -> utils.ui.LazyPage: 
         notifications = list()
         errors = list()
 
@@ -78,15 +72,15 @@ class activation:
             notifications=notifications,
         )
 
-        return _LazyPage("confirmation/pages/confirmation.html", context)
+        return utils.ui.LazyPage("confirmation/pages/confirmation.html", context)
 
-    def _error_message_of(subject: Subject) -> _Message:
+    def _error_message_of(subject: Subject) -> utils.ui.Message:
         return (
             "You entered the wrong token"
             f" or the {_readable(subject)} time has expired"
         )
 
-    def _hint_message_of(method: _Message) -> Optional[_Message]:
+    def _hint_message_of(method: utils.ui.Message) -> Optional[utils.ui.Message]:
         if method == "email":
             return "The token is in the email you just received"
 
@@ -95,6 +89,6 @@ class activation:
 
 @val
 class opening:
-    failure_message: _Message = (
+    failure_message: utils.ui.Message = (
         "Make sure you have entered your information correctly"
     )
