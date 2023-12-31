@@ -5,7 +5,7 @@ from act import (
 )
 from django.http import HttpRequest
 
-from apps.access import adapters, cases, types_
+from apps.access import adapters, cases, types_, utils
 
 
 type User = adapters.User
@@ -114,4 +114,14 @@ class access_recovery:
             authorized=(
                 adapters.access_recovery.completion.authorized |by| request
             ),
+        )
+
+
+@val
+class profile:
+    def of(user: User) -> utils.ui.LazyPage:
+        return cases.profile.of(
+            user,
+            user_of=adapters.profile.user_of,
+            profile_of=adapters.profile.profile_of,
         )

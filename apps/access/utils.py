@@ -9,9 +9,13 @@ from apps.access import input
 
 
 confirmation = input.confirmation
+renders = input.renders
+ui = input.ui
 
 hashed = input.hashed
 unhashed = input.unhashed
+
+half_hidden = input.half_hidden
 
 
 @partially

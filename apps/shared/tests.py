@@ -15,3 +15,9 @@ def test_token_generator_with(token_length: int) -> None:
     assert len(generate()) == token_length
     assert len(generate()) == token_length
     assert len(generate()) == token_length
+
+
+def test_half_hidden() -> None:
+    assert tools.half_hidden("12345", 3) == "#####"
+    assert tools.half_hidden("1234567890", 3) == "123####890"
+    assert tools.half_hidden("1234567890abcdef", 3) == "123##########def"

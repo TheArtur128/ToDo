@@ -12,7 +12,7 @@ from apps.access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm
 )
-from apps.access.utils import confirmation, for_anonymous
+from apps.access.utils import confirmation, for_anonymous, renders
 from apps.access.types_ import Email, URL
 
 
@@ -119,6 +119,12 @@ class _AccessRecoveryByEmailView(confirmation.OpeningView):
         )
 
         return confirmation_page_url
+
+
+@login_required
+@require_GET
+def profile(request: HttpRequest) -> HttpResponse:
+    return renders.rendered(services.profile.of(request.user), request)
 
 
 registrate = for_anonymous(_RegistrationView.as_view())

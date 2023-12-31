@@ -7,9 +7,9 @@ from django.http import HttpRequest
 from django_redis import get_redis_connection
 from redis import Redis
 
-from apps.access import models
+from apps.access import models, ui
 from apps.access.types_ import URL, Email, Password, PasswordHash, Username
-from apps.access.utils import confirmation, hashed, unhashed
+from apps.access.utils import confirmation, hashed, unhashed, ui as uilib
 
 
 type User = models.User
@@ -206,3 +206,12 @@ class access_recovery:
             self._connection.delete(email)
 
             return password_hash_bytes.decode()
+
+
+@val
+class profile:
+    def user_of(user: User) -> User:
+        return user
+
+    def profile_of(user: User) -> uilib.LazyPage:
+        return ui.profile.page_of(user)
