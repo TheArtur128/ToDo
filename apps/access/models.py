@@ -1,4 +1,4 @@
-from apps.access import input
+from apps.access import lib
 
 
-User = input.User
+User = lib.User

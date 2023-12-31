@@ -12,6 +12,8 @@ confirmation = input.confirmation
 renders = input.renders
 ui = input.ui
 
+User = input.User
+
 hashed = input.hashed
 unhashed = input.unhashed
 

@@ -11,7 +11,7 @@ from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
 from django_redis import get_redis_connection
 
-from apps.confirmation import config, types_, ui, utils
+from apps.confirmation import config, types_, ui, lib
 
 
 type Subject = config.Subject
@@ -34,10 +34,10 @@ class Endpoint[I]:
     port: Port
     user_id: I
     activation_code: ActivationCode = field(default_factory=(
-        utils.token_generator_with(length=config.activation_code_length)
+        lib.token_generator_with(length=config.activation_code_length)
     ))
     session_code: SessionCode = field(default_factory=(
-        utils.token_generator_with(length=config.session_code_length)
+        lib.token_generator_with(length=config.session_code_length)
     ))
 
 

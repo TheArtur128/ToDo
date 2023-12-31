@@ -5,7 +5,7 @@ from django.forms import Form
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import redirect
 
-from apps.confirmation import forms, services, types_, ui, utils
+from apps.confirmation import forms, services, types_, ui, lib
 
 
 def confirm(
@@ -46,10 +46,10 @@ def confirm(
         is_activation_failed=is_activation_failed,
     )
 
-    return utils.renders.rendered(page, request)
+    return lib.renders.rendered(page, request)
 
 
-class OpeningView(utils.ViewWithForm):
+class OpeningView(lib.ViewWithForm):
     def _open_port(self, request: HttpRequest) -> Optional[types_.URL]:
         raise NotImplementedError
 

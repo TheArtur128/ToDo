@@ -5,7 +5,7 @@ from act import (
 )
 from django.http import HttpRequest
 
-from apps.access import adapters, cases, types_, utils
+from apps.access import adapters, cases, types_, lib
 
 
 type User = adapters.User
@@ -119,7 +119,7 @@ class access_recovery:
 
 @val
 class profile:
-    def of(user: User) -> utils.ui.LazyPage:
+    def of(user: User) -> lib.ui.LazyPage:
         return cases.profile.of(
             user,
             user_of=adapters.profile.user_of,

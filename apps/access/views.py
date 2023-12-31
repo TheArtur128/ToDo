@@ -12,7 +12,7 @@ from apps.access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm
 )
-from apps.access.utils import confirmation, for_anonymous, renders
+from apps.access.lib import confirmation, for_anonymous, renders
 from apps.access.types_ import Email, URL
 
 

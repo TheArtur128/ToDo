@@ -1,5 +1,5 @@
 from apps.confirmation import output as confirmation
-from apps.shared import hashing, models, renders, tools, ui
+from apps.shared import hashing, models, renders, lib, ui
 
 
 confirmation = confirmation
@@ -11,4 +11,4 @@ User = models.User
 hashed = hashing.hashed
 unhashed = hashing.unhashed
 
-half_hidden = tools.half_hidden
+half_hidden = lib.half_hidden

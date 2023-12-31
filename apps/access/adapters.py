@@ -9,7 +9,7 @@ from redis import Redis
 
 from apps.access import models, ui
 from apps.access.types_ import URL, Email, Password, PasswordHash, Username
-from apps.access.utils import confirmation, hashed, unhashed, ui as uilib
+from apps.access.lib import confirmation, hashed, unhashed, ui as uilib
 
 
 type User = models.User

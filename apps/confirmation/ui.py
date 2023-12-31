@@ -3,14 +3,14 @@ from typing import Optional
 from act import val, as_method, optionally
 from django.template.loader import render_to_string
 
-from apps.confirmation import config, forms, types_, utils
+from apps.confirmation import config, forms, types_, lib
 
 
 type Subject = config.Subject
 type Method = config.Method
 
 
-def _readable(subject: Subject) -> utils.ui.Message:
+def _readable(subject: Subject) -> lib.ui.Message:
     return subject.replace('_', ' ')
 
 
@@ -23,7 +23,7 @@ class activation:
         raw_subject: Subject,
         url: types_.URL,
         token: types_.Token,
-    ) -> utils.ui.Mail:
+    ) -> lib.ui.Mail:
         subject = _readable(raw_subject)
 
         title = f"Confirm {subject}"
@@ -38,7 +38,7 @@ class activation:
             ),
         )
 
-        return utils.ui.Mail(
+        return lib.ui.Mail(
             title=title,
             message=message,
             page=page,
@@ -53,7 +53,7 @@ class activation:
         session_token: types_.Token,
         *,
         is_activation_failed: bool = False,
-    ) -> utils.ui.LazyPage: 
+    ) -> lib.ui.LazyPage: 
         notifications = list()
         errors = list()
 
@@ -72,15 +72,15 @@ class activation:
             notifications=notifications,
         )
 
-        return utils.ui.LazyPage("confirmation/pages/confirmation.html", context)
+        return lib.ui.LazyPage("confirmation/pages/confirmation.html", context)
 
-    def _error_message_of(subject: Subject) -> utils.ui.Message:
+    def _error_message_of(subject: Subject) -> lib.ui.Message:
         return (
             "You entered the wrong token"
             f" or the {_readable(subject)} time has expired"
         )
 
-    def _hint_message_of(method: utils.ui.Message) -> Optional[utils.ui.Message]:
+    def _hint_message_of(method: lib.ui.Message) -> Optional[lib.ui.Message]:
         if method == "email":
             return "The token is in the email you just received"
 
@@ -89,6 +89,6 @@ class activation:
 
 @val
 class opening:
-    failure_message: utils.ui.Message = (
+    failure_message: lib.ui.Message = (
         "Make sure you have entered your information correctly"
     )
