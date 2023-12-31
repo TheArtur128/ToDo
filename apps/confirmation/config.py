@@ -1,6 +1,5 @@
 from act import namespace
-
-from apps.confirmation import input
+from django.conf import settings
 
 
 type Subject = str
@@ -19,9 +18,9 @@ class methods:
     email: Method
 
 
-base_url = input.base_url
+base_url = settings.BASE_URL
 
-session_code_length = input.session_code_length
-activation_code_length = input.activation_code_length
+session_code_length = settings.CONFIRMATION_SESSION_CODE_LENGTH
+activation_code_length = settings.CONFIRMATION_ACTIVATION_CODE_LENGTH
 
-activity_minutes = input.activity_minutes
+activity_minutes = settings.CONFIRMATION_ACTIVITY_MINUTES

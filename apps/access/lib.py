@@ -5,19 +5,20 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 
-from apps.access import input
+from apps.confirmation import output as confirmation
+from apps.shared import hashing, models, renders, lib, ui
 
 
-confirmation = input.confirmation
-renders = input.renders
-ui = input.ui
+confirmation = confirmation
+renders = renders
+ui = ui
 
-User = input.User
+User = models.User
 
-hashed = input.hashed
-unhashed = input.unhashed
+hashed = hashing.hashed
+unhashed = hashing.unhashed
 
-half_hidden = input.half_hidden
+half_hidden = lib.half_hidden
 
 
 @partially

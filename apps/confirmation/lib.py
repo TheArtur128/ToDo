@@ -1,8 +1,10 @@
-from apps.confirmation import input
+from apps.shared import ui, renders
+from apps.shared.lib import token_generator_with
+from apps.shared.views import ViewWithForm
 
 
-ui = input.ui
-renders = input.renders
+ui = ui
+renders = renders
 
-ViewWithForm = input.ViewWithForm
-token_generator_with = input.token_generator_with
+ViewWithForm = ViewWithForm
+token_generator_with = token_generator_with
