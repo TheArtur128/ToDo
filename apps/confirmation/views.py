@@ -3,7 +3,7 @@ from typing import Optional, Callable, Mapping
 from act import bad
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse, Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 
 from apps.confirmation import forms, services, types_, ui, utils
 
@@ -46,7 +46,7 @@ def confirm(
         is_activation_failed=is_activation_failed,
     )
 
-    return render(request, page.template, page.context)
+    return utils.renders.rendered(page, request)
 
 
 class OpeningView(utils.ViewWithForm):
