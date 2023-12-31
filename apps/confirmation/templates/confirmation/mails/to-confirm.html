@@ -6,7 +6,7 @@
     </head>
     <body>
         <h2><b>{{ token }}</b></h2>
-        <p>Enter this token on the page to which you were redirected to confirm subject</p>
+        <p>Enter this token on the page to which you were redirected to confirm {{ subject }}</p>
         <p>If you are not redirected, then follow this link to go to this confirmation page: <a href="{{ url }}">{{ url }}</a></p>
         <p><b>Warning</b>: this token is active for only {{ activity_minutes }} minutes<p>
     </body>
