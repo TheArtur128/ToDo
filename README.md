@@ -1,4 +1,25 @@
 # Desing
+## Why
+This application is educational and created in the following imaginary setting:
+- Relatively large starting team
+- Great need for speed in adding features
+- Relatively heavy workload in the near future
+- Relatively low availability requirement
+
+Therefore the following decisions were taken:
+- Dividing all features into areas as units of operation
+- Isolating areas by allocating separate django applications for them (On average, one application per area or a maximum of 3)
+- Isolating applications by fixing all dependencies between each other with special input (`lib` & `config`) and output (`output`) modules only through which application dependencies can pass
+- Minimizing the use of client-server relationships by introducing generating front on the backed part
+- Separation of general application and domain logic from the main part of the application by introducing cheap contracts (`cases` & `rules`)
+- Separation of the periphery of representation formation from others (`ui`)
+- Formation of stabilizing units of logic use (`services`)
+
+In case of increasing complexity, it is necessary to divide applications into microservices, optionally combining them, forming an RPC API based on their output modules and separate libraries from common functionality.
+
+After 30 applications, the transition is critical.
+
+## Map
 <img src="https://github.com/TheArtur128/ToDo/blob/main/decor/design.webp"/>
 
 ## Legend
@@ -11,13 +32,6 @@
 - Elements in which files are nested are applications
 
 `A` and `A contract` are the same file, but with the emphasis that changes occurring in files that `A` depends on will be suspended by introducing adaptation code to preserve the external behavior of `A`.</br>
-
-## Dependencies between applications
-From the outside of applications, all dependencies between applications are captured through `input` and `output` files, by committing all exported content of one application to others in that application's `output` file and importing this content from this file occurring in the `input` files of other applications.</br>
-
-From within applications, all dependencies between applications are captured by splitting the imported content from `input` files into thematic files (`config`, `models`, `types`, `utils`).</br>
-
-The exception is the `shared` application, which itself cannot import from other applications and whose files can be directly imported by other applications' `input` files.
 
 # Naming
 
