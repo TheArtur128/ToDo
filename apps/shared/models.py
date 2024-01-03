@@ -110,6 +110,14 @@ class TaskEvent(_VisualizableMixin, Model):
     x_vector = IntegerField(default=0, blank=True)
     y_vector = IntegerField(default=0, blank=True)
 
+    task_to_add = OneToOneField(
+        Task,
+        on_delete=SET_NULL,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
 
 class Zone(_VisualizableMixin, _Positionable):
     width = PositiveIntegerField()
