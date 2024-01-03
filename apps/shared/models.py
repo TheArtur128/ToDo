@@ -3,7 +3,8 @@ from django.contrib.auth.models import (
 )
 from django.db.models import (
     Model, CASCADE, PositiveIntegerField, DateTimeField, BooleanField,
-    CharField, EmailField, ManyToManyField, ForeignKey, PROTECT
+    CharField, EmailField, ManyToManyField, ForeignKey, PROTECT,
+    OneToOneField, IntegerChoices, IntegerField, DurationField, SET_NULL
 )
 
 
@@ -15,62 +16,115 @@ class _VisualizableMixin:
         return f"{type(self).__name__}({self})"
 
 
-class TaskSettings(_VisualizableMixin, Model):
-    is_removable_on_completion = BooleanField(default=True)
-    failure_time = DateTimeField(default=None, null=True, blank=True)
+class Space(_VisualizableMixin, Model):
+    name = CharField(max_length=64, default=None, null=True, blank=True)
+    user = ForeignKey("User", on_delete=CASCADE, related_name="spaces")
+    x_section = PositiveIntegerField()
+    y_section = PositiveIntegerField()
 
-    def __str__(self) -> str:
-        return (
-            f"id={self.id}, "
-            f"is_removable_on_completion={self.is_removable_on_completion}")
-
-
-class Zone(_VisualizableMixin, Model):
-    x = PositiveIntegerField()
-    y = PositiveIntegerField()
-    width = PositiveIntegerField()
-    height = PositiveIntegerField()
-    tasks = ManyToManyField("Task", related_name="students")
-    settings = ForeignKey(
-        TaskSettings,
-        on_delete=PROTECT,
-        blank=True,
-        null=True,
-    )
-
-    def __str__(self) -> str:
-        return (
-            f"id={self.id}, "
-            f"x={self.x}, "
-            f"y={self.y}, "
-            f"width={self.width}, "
-            f"height={self.height}"
-        )
-
-
-class Task(_VisualizableMixin, Model):
-    description = CharField(max_length=128)
-    is_forced = BooleanField(default=False)
-    rgb_color = CharField(max_length=6)
-    x = PositiveIntegerField()
-    y = PositiveIntegerField()
-    root = ForeignKey(
+    next = OneToOneField(
         "self",
         on_delete=CASCADE,
-        related_name="subtasks",
-        blank=True,
+        default=None,
         null=True,
-        default=None
-    )
-    settings = ForeignKey(
-        TaskSettings,
-        on_delete=PROTECT,
         blank=True,
+    )
+
+    def __str__(self) -> str:
+        return f"{self.id}: {self.name}"
+
+
+class _Positionable(Model):
+    class Meta:
+        abstract = True
+
+    space = ForeignKey(Space, on_delete=CASCADE)
+    x = PositiveIntegerField()
+    y = PositiveIntegerField()
+
+
+class Task(_VisualizableMixin, _Positionable):
+    class Status(IntegerChoices):
+        active = (1, "active")
+        done = (2, "done")
+        failed = (3, "failed")
+
+    class Color(IntegerChoices):
+        first = (1, "first")
+        second = (2, "second")
+        third = (3, "third")
+        fourth = (4, "fourth")
+        fifth = (5, "fifth")
+        sixth = (6, "sixth")
+
+    description = CharField(max_length=128)
+    status = IntegerField(choices=Status.choices, default=Status.active)
+    settings = OneToOneField(
+        "TaskSettings",
+        on_delete=SET_NULL,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+    color = IntegerField(choices=Color.choices)
+    is_hidden = BooleanField(default=False)
+
+    subspace = OneToOneField(
+        Space,
+        on_delete=SET_NULL,
+        related_name="root",
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self) -> str:
+        return f"{self.id}: {self.description}"
+
+
+class TaskSettings(_VisualizableMixin, Model):
+    remove_on = IntegerField(
+        choices=Task.Status.choices,
+        default=Task.Status.done,
         null=True,
     )
 
     def __str__(self) -> str:
-        return f"id={self.id}"
+        return str(self.id)
+
+
+class TaskEvent(_VisualizableMixin, Model):
+    settings = ForeignKey(
+        TaskSettings, on_delete=CASCADE, related_name="events"
+    )
+
+    activation_time = DateTimeField(default=None, null=True, blank=True)
+    repetition_time = DurationField(default=None, null=True, blank=True)
+
+    new_status = IntegerField(choices=Task.Status.choices, default=None, null=True)
+    new_is_hidden = BooleanField(default=None, null=True, blank=True)
+
+    is_deleter = BooleanField(default=False, blank=True)
+
+    x_vector = IntegerField(default=0, blank=True)
+    y_vector = IntegerField(default=0, blank=True)
+
+
+class Zone(_VisualizableMixin, _Positionable):
+    width = PositiveIntegerField()
+    height = PositiveIntegerField()
+    tasks = ManyToManyField("Task", related_name="zones")
+    settings = OneToOneField(
+        TaskSettings,
+        on_delete=SET_NULL,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self) -> str:
+        return str(self.id)
 
 
 class CustomUserManager(BaseUserManager):
@@ -101,13 +155,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_superuser = BooleanField(default=False)
 
     tasks = ManyToManyField(Task, blank=True)
-    zones = ManyToManyField(Zone, blank=True)
-    default_settings = ForeignKey(
-        TaskSettings,
-        on_delete=PROTECT,
-        blank=True,
-        null=True,
-    )
+    default_settings = OneToOneField(TaskSettings, on_delete=PROTECT)
 
     USERNAME_FIELD = "name"
     EMAIL_FIELD = "email"
