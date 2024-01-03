@@ -37,20 +37,15 @@ After 30 applications, the transition is critical.
 
 Application verticals are identified by the same name, or a logically converted name for a specific element type in the corresponding layer files (`rules`, `cases`, `adapters`, `services`, `ui`):
 ```py
-# rules
-authorization = val(...)
+authorization = val(...)  # rules
 
-# cases
-def authorize(...): ...
+def authorize(...): ...  # cases
 
-# adapters
-authorization = val(...)
+authorization = val(...)  # adapters
 
-# services
-def authorized(...): ...
+def authorized(...): ...  # services
 
-# ui
-authorization = val(...)
+authorization = val(...)  # ui
 ```
 
 For functions that create or receive a value, the name of that value should be an unfinished sentence in the name of the function so that it is still not confused with ordinary values:
