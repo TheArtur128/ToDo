@@ -11,7 +11,7 @@ Therefore the following decisions were taken:
 - Isolating areas by allocating separate django applications for them (On average, one application per area or a maximum of 3)
 - Isolating applications by fixing all dependencies between each other with special input (`lib` & `config`) and output (`output`) modules only through which application dependencies can pass
 - Minimizing the use of client-server relationships by introducing generating front on the backed part
-- Separation of general application and domain logic from the main part of the application by introducing cheap contracts (`cases` & `rules`)
+- Separation of **general** application and domain logic from the main part of the application by introducing cheap contracts (`cases` & `rules`)
 - Separation of the periphery of representation formation from others (`ui`)
 - Formation of stabilizing units of logic use (`services`)
 
