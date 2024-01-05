@@ -19,8 +19,8 @@ class _VisualizableMixin:
 class Space(_VisualizableMixin, Model):
     name = CharField(max_length=64, default=None, null=True, blank=True)
     user = ForeignKey("User", on_delete=CASCADE, related_name="spaces")
-    x_section = PositiveIntegerField()
-    y_section = PositiveIntegerField()
+    user_x = PositiveIntegerField()
+    user_y = PositiveIntegerField()
 
     next = OneToOneField(
         "self",
