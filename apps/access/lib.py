@@ -6,6 +6,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 
 from apps.confirmation import output as confirmation
+from apps.tasks import output as tasks
 from apps.shared import hashing, models, renders, lib, ui
 
 
@@ -14,6 +15,7 @@ renders = renders
 ui = ui
 
 User = models.User
+create_user = tasks.create_user
 
 hashed = hashing.hashed
 unhashed = hashing.unhashed
