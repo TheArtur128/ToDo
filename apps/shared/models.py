@@ -154,7 +154,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(_VisualizableMixin, AbstractBaseUser, PermissionsMixin):
     name = CharField(max_length=128, unique=True)
     email = EmailField(max_length=154, unique=True)
     password = CharField(max_length=128)
@@ -173,3 +173,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def has_module_perms(self, label) -> bool:
         return self.is_superuser and self.is_staff and self.is_active
+
+    def __str__(self) -> str:
+        return self.name
