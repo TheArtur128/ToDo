@@ -1,12 +1,15 @@
-# Desing
-## Why
-This application is educational and created in the following imaginary setting:
+## Desing
+
+> This application is educational and created in the imaginary setting.
+
+### Why
 - Relatively large starting team
 - Great need for speed in adding features
-- Relatively heavy workload in the near future
+- Inconsistent workload in the near future
+- Relatively low fault tolerance requirement
 - Relatively low availability requirement
 
-Therefore the following decisions were taken:
+### So
 - Dividing all features into areas as units of operation
 - Isolating areas by allocating separate django applications for them (On average, one application per area or a maximum of 3)
 - Isolating applications by fixing all dependencies between each other with special input (`lib` & `config`) and output (`output`) modules only through which application dependencies can pass
@@ -19,21 +22,20 @@ In case of increasing complexity, it is necessary to divide applications into mi
 
 After 30 applications, the transition is critical.
 
-## Map
+### Map
 <img src="https://github.com/TheArtur128/ToDo/blob/main/decor/design.webp"/>
 
-## Legend
-### Dependency types
+#### Dependency types
 - `A —> B` is a dependency of `A` on `B` when `A` knows about `B`
 - `A --> B` is a dependency of `A` on `B` when `A` does not know about `B`
 
-### Element types
+#### Element types
 - Elements from which dependency arrows come out and into are files</br>
 - Elements in which files are nested are applications
 
 `A` and `A contract` are the same file, but with the emphasis that changes occurring in files that `A` depends on will be suspended by introducing adaptation code to preserve the external behavior of `A`.</br>
 
-# Naming
+## Naming
 
 Application verticals are identified by the same name, or a logically converted name for a specific element type in the corresponding layer files (`rules`, `cases`, `adapters`, `services`, `ui`):
 ```py
@@ -102,7 +104,7 @@ class send:
     to_phone = ...  # send.to_phone
 ```
 
-# Priorities
+## Priorities
 
 Use `type` and `struct` from the [`act`](https://github.com/TheArtur128/Act) library instead of `dataclass` if possible:
 ```py
