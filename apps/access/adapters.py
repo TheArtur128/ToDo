@@ -9,7 +9,9 @@ from redis import Redis
 
 from apps.access import models, ui
 from apps.access.types_ import URL, Email, Password, PasswordHash, Username
-from apps.access.lib import confirmation, hashed, unhashed, ui as uilib
+from apps.access.lib import (
+    confirmation, created_user_of, hashed, unhashed, ui as uilib
+)
 
 
 type User = models.User
@@ -35,10 +37,12 @@ class _access:
 class _user_django_orm_repository:
     def save(user: User) -> None:
         user.set_password(user.password)
+
+        user.default_settings.save()
         user.save()
 
     def has(user: User) -> bool:
-        return user.id is not None
+        return models.User.objects.filter(name=user.name).exists()
 
     def get_by_email(email: Email) -> User:
         return models.User.objects.filter(email=email).first()
@@ -52,11 +56,7 @@ class registration:
     UserID = type(name=Username, email=Email, password=Password)
 
     def user_of(user_id: UserID) -> Optional[User]:
-        user = models.User(
-            name=user_id.name,
-            email=user_id.email,
-            password=user_id.password,
-        )
+        user = created_user_of(user_id.name, user_id.email, user_id.password)
 
         return None if _user_django_orm_repository.has(user) else user
 
@@ -106,7 +106,7 @@ class registration:
 
                 password = unhashed(password_hash)
 
-                return models.User(name=name, email=email, password=password)
+                return created_user_of(name, email, password)
 
             def delete(self, user: User) -> None:
                 self._connection.hdel(user.email, "name", "password_hash")

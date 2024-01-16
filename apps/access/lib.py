@@ -15,7 +15,7 @@ renders = renders
 ui = ui
 
 User = models.User
-create_user = tasks.create_user
+created_user_of = tasks.created_user_of
 
 hashed = hashing.hashed
 unhashed = hashing.unhashed

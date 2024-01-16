@@ -1,4 +1,4 @@
 from apps.tasks import services
 
 
-create_user = services.users.create
+created_user_of = services.users.create
