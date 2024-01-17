@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "todo"
 version = "0.1.0"
-description = "Django notes app"
+description = "Django todo-list app"
 authors = ["TheArtur128 <88573504+TheArtur128@users.noreply.github.com>"]
 license = "Apache-2.0 license"
 readme = "README.md"
