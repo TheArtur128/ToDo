@@ -59,20 +59,38 @@ class registration:
 @val
 class authorization:
     def open_using(
-        user_id: I,
+        name: Username,
+        password: Password,
         *,
-        user_of: Callable[I, U],
-        access_to_confirm_for: Callable[U, A],
-    ) -> A:
-        return access_to_confirm_for(user_of(user_id))
+        user_of: Callable[[Username, Password], Email],
+        confirmation_page_url_of: Callable[Email, URL],
+    ) -> URL:
+        user = user_of(name, password)
 
-    def complete_by(
-        user_id: I,
+        if user is None:
+            raise errors.NoUser()
+
+        confirmation_page_url = confirmation_page_url_of(user)
+
+        if confirmation_page_url is None:
+            raise errors.Confirmation()
+
+        return confirmation_page_url
+
+    def complete_by[UserT: User](
+        email: Email,
         *,
-        user_of: Callable[I, U],
-        authorized: Callable[U, A],
-    ) -> A:
-        return authorized(user_of(user_id))
+        user_of: Callable[Email, Optional[UserT]],
+        authorize: Callable[UserT, Any],
+    ) -> UserT:
+        user = user_of(email)
+
+        if user is None:
+            raise errors.NoUser()
+
+        authorize(user)
+
+        return user
 
 
 @val

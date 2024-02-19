@@ -1,8 +1,6 @@
 from typing import Optional
 
-from act import (
-    val, do, Do, optionally, fbind_by, then, not_, by, contextual, as_method
-)
+from act import val, do, Do, optionally, by, contextual, as_method
 from django.http import HttpRequest
 
 from apps.access import adapters, cases, types_, lib
@@ -42,30 +40,27 @@ class registration:
 
 @val
 class authorization:
-    @do(optionally)
     def open_using(
-        do: Do,
         name: types_.Username,
         password: types_.Password,
         request: HttpRequest,
     ) -> types_.URL:
-        user_id = adapters.authorization.UserID(name, password)
-
-        access_to_confirm_for = do(adapters.authorization.open_confirmation_for)
-
-        return cases.authorization.open_using(
-            user_id,
-            user_of=do(adapters.authorization.user_to_open_by) |by| request,
-            access_to_confirm_for=access_to_confirm_for,
+        confirmation_page_url_of = (
+            adapters.authorization.opening.confirmation_page_url_of
         )
 
-    @fbind_by(... |then>> not_(None))
-    @do(optionally)
-    def complete_by(do: Do, email: types_.Email, request: HttpRequest) -> User:
+        return cases.authorization.open_using(
+            name,
+            password,
+            user_of=adapters.authorization.opening.user_of |by| request,
+            confirmation_page_url_of=confirmation_page_url_of,
+        )
+
+    def complete_by(email: types_.Email, request: HttpRequest) -> User:
         return cases.authorization.complete_by(
             email,
-            user_of=do(adapters.authorization.user_to_complate_by),
-            authorized=adapters.authorization.authorized |by| request,
+            user_of=adapters.authorization.completing.user_of,
+            authorize=adapters.authorization.completing.authorize |by| request,
         )
 
 

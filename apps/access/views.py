@@ -25,9 +25,13 @@ def authorization_confirmation(
     request: HttpRequest,
     email: Email,
 ) -> Optional[HttpResponse]:
-    ok = services.authorization.complete_by(email, request)
+    try:
+        services.authorization.complete_by(email, request)
+    except errors.Access as error:
+        message = ui.authorization.completion.error_message_of(error)
+        return bad([same_else(error, message)])
 
-    return redirect(reverse("tasks:index")) if ok else None
+    return redirect(reverse("tasks:index"))
 
 
 @confirmation.register_for(
@@ -73,12 +77,16 @@ class LoginView(confirmation.OpeningView):
     _template_name = "access/login.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> Optional[URL]:
-        confirmation_page_url = services.authorization.open_using(
-            request.POST["username"],
-            request.POST["password"],
-            request,
-        )
+    def _open_port(request: HttpRequest) -> URL | bad[list[str]]:
+        try:
+            confirmation_page_url = services.authorization.open_using(
+                request.POST["username"],
+                request.POST["password"],
+                request,
+            )
+        except errors.Access as error:
+            message = ui.authorization.completion.error_message_of(error)
+            return bad([same_else(error, message)])
 
         return confirmation_page_url
 

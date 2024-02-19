@@ -45,3 +45,23 @@ class registration:
                 )
 
             return completion_error_message_of(error)
+
+@val
+class authorization:
+    @val
+    class opening:
+        def error_message_of(error: Any) -> Optional[str]:
+            if isinstance(error, errors.NoUser):
+                return "Make sure you entered your data correctly"
+
+            if isinstance(error, errors.Confirmation):
+                return (
+                    "Unable to confirm. "
+                    "Try again after a while or contact tech. "
+                    "support if all attempts are unsuccessful"
+                )
+
+    @val
+    class completion:
+        def error_message_of(error: Any) -> Optional[str]:
+            return completion_error_message_of(error)

@@ -1,7 +1,7 @@
 from typing import Optional
 
 from act import (
-    type, val, obj, do, Do, optionally, contextual, saving_context, io
+    val, obj, do, Do, optionally, contextual, saving_context, io
 )
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password
@@ -30,10 +30,10 @@ class _user_django_orm_repository:
     def is_there_user_named(name: Username) -> bool:
         return models.User.objects.filter(name=name).exists()
 
-    def get_by_email(email: Email) -> models.User:
+    def get_by_email(email: Email) -> Optional[models.User]:
         return models.User.objects.filter(email=email).first()
 
-    def get_by_name(name: Username) -> models.User:
+    def get_by_name(name: Username) -> Optional[models.User]:
         return models.User.objects.filter(name=name).first()
 
 
@@ -103,29 +103,26 @@ class registration:
 
 @val
 class authorization:
-    UserID = type(name=Username, password=Password)
+    @val
+    class opening:
+        def user_of(
+            name: Username,
+            password: Password,
+            request: HttpRequest,
+        ) -> Optional[models.User]:
+            return auth.authenticate(request, username=name, password=password)
 
-    def user_to_open_by(
-        user_id: UserID,
-        request: HttpRequest,
-    ) -> Optional[models.User]:
-        return auth.authenticate(
-            request,
-            username=user_id.name,
-            password=user_id.password,
-        )
+        def confirmation_page_url_of(user: cases.User) -> Optional[URL]:
+            return confirmation.open_port_of(
+                confirmation.subjects.authorization,
+                confirmation.via.email,
+                for_=user.email,
+            )
 
-    user_to_complate_by = _user_django_orm_repository.get_by_email
-
-    def open_confirmation_for(user: models.User) -> URL:
-        return confirmation.open_port_of(
-            confirmation.subjects.authorization,
-            confirmation.via.email,
-            for_=user.email,
-        )
-
-    def authorize(user: models.User, request: HttpRequest) -> None:
-        auth.login(request, user)
+    @val
+    class completing:
+        user_of = _user_django_orm_repository.get_by_email
+        authorize = _authorize
 
 
 @val
