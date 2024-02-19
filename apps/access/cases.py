@@ -1,9 +1,10 @@
 from typing import Callable, Any, Optional
 
-from act import type, val, I, U, A, N, P
+from act import type, val
 
 from apps.access import errors
-from apps.access.types_ import Username, Email, Password, URL
+from apps.access.sugar import same
+from apps.access.types_ import Username, Email, Password, PasswordHash, URL
 
 
 User = type(name=Username, email=Email, password=Password)
@@ -23,10 +24,9 @@ class registration:
         if is_there_user_named(name):
             raise errors.UserExists()
 
-        confirmation_page_url = confirmation_page_url_of(email)
-
-        if confirmation_page_url is None:
-            raise errors.EmailConfirmation()
+        confirmation_page_url = same(
+            confirmation_page_url_of(email), else_=errors.EmailConfirmation()
+        )
 
         remember(User(name, email, password))
 
@@ -41,11 +41,7 @@ class registration:
         save: Callable[UserT, Any],
         authorize: Callable[UserT, Any],
     ) -> UserT:
-        user = remembered_user_of(email)
-
-        if user is None:
-            raise errors.NoUser()
-
+        user = same(remembered_user_of(email), else_=errors.NoUser())
         forget(user)
 
         if is_there_user_named(user.name):
@@ -56,26 +52,18 @@ class registration:
 
         return user
 
+
 @val
 class authorization:
-    def open_using(
+    def open_using[UserT: User](
         name: Username,
         password: Password,
         *,
-        user_of: Callable[[Username, Password], Email],
-        confirmation_page_url_of: Callable[Email, URL],
+        user_of: Callable[[Username, Password], Optional[UserT]],
+        confirmation_page_url_of: Callable[UserT, Optional[URL]],
     ) -> URL:
-        user = user_of(name, password)
-
-        if user is None:
-            raise errors.NoUser()
-
-        confirmation_page_url = confirmation_page_url_of(user)
-
-        if confirmation_page_url is None:
-            raise errors.Confirmation()
-
-        return confirmation_page_url
+        user = same(user_of(name, password), else_=errors.NoUser())
+        return same(confirmation_page_url_of(user), else_=errors.Confirmation())
 
     def complete_by[UserT: User](
         email: Email,
@@ -83,11 +71,7 @@ class authorization:
         user_of: Callable[Email, Optional[UserT]],
         authorize: Callable[UserT, Any],
     ) -> UserT:
-        user = user_of(email)
-
-        if user is None:
-            raise errors.NoUser()
-
+        user = same(user_of(email), else_=errors.NoUser())
         authorize(user)
 
         return user
