@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Callable
 
-from act import val, do, Do, optionally, by, contextual, as_method
+from act import obj, val, by
 from django.http import HttpRequest
 
 from apps.access import adapters, cases, types_, lib
@@ -9,58 +9,60 @@ from apps.access import adapters, cases, types_, lib
 type User = adapters.User
 
 
-@val
+@obj
 class registration:
+    _cases = cases.registration
+    _adapters = adapters.registration
+
     def open_using(
+        self,
         name=types_.Username,
         email=types_.Email,
         password=types_.Password,
     ) -> types_.URL:
-        confirmation_page_url_of = (
-            adapters.registration.confirmation_page_url_of
-        )
-
-        return cases.registration.open_using(
+        return self._cases.open_using(
             name, email, password,
-            is_there_user_named=adapters.registration.is_there_user_named,
-            confirmation_page_url_of=confirmation_page_url_of,
-            remember=adapters.registration.remember,
+            is_there_user_named=self._adapters.is_there_user_named,
+            confirmation_page_url_of=self._adapters.confirmation_page_url_of,
+            remember=self._adapters.remember,
         )
 
-    def complete_by(email: types_.Email, request: HttpRequest) -> User:
-        return cases.registration.complete_by(
+    def complete_by(self, email: types_.Email, request: HttpRequest) -> User:
+        return self._cases.complete_by(
             email,
-            remembered_user_of=adapters.registration.remembered_user_of,
-            is_there_user_named=adapters.registration.is_there_user_named,
-            forget=adapters.registration.forget,
-            save=adapters.registration.save,
-            authorize=adapters.registration.authorize |by| request,
+            remembered_user_of=self._adapters.remembered_user_of,
+            is_there_user_named=self._adapters.is_there_user_named,
+            forget=self._adapters.forget,
+            save=self._adapters.save,
+            authorize=self._adapters.authorize |by| request,
         )
 
 
-@val
+@obj
 class authorization:
+    _cases = cases.authorization
+
+    _opening = adapters.authorization.opening
+    _completing = adapters.authorization.completing
+
     def open_using(
+        self,
         name: types_.Username,
         password: types_.Password,
         request: HttpRequest,
     ) -> types_.URL:
-        confirmation_page_url_of = (
-            adapters.authorization.opening.confirmation_page_url_of
-        )
-
-        return cases.authorization.open_using(
+        return self._cases.open_using(
             name,
             password,
-            user_of=adapters.authorization.opening.user_of |by| request,
-            confirmation_page_url_of=confirmation_page_url_of,
+            user_of=self._opening.user_of |by| request,
+            confirmation_page_url_of=self._opening.confirmation_page_url_of,
         )
 
-    def complete_by(email: types_.Email, request: HttpRequest) -> User:
-        return cases.authorization.complete_by(
+    def complete_by(self, email: types_.Email, request: HttpRequest) -> User:
+        return self._cases.complete_by(
             email,
-            user_of=adapters.authorization.completing.user_of,
-            authorize=adapters.authorization.completing.authorize |by| request,
+            user_of=self._completing.user_of,
+            authorize=self._completing.authorize |by| request,
         )
 
 
