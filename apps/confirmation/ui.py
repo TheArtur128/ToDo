@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Iterable
 
 from act import val, as_method, optionally
 from django.template.loader import render_to_string
@@ -51,13 +51,14 @@ class activation:
         subject: Subject,
         method: Method,
         session_token: types_.Token,
+        errors: Iterable[str],
         *,
         is_activation_failed: bool = False,
     ) -> lib.ui.LazyPage: 
         notifications = list()
-        errors = list()
+        errors = list(errors)
 
-        if is_activation_failed:
+        if is_activation_failed and len(errors) == 0:
             errors.append(self._error_message_of(subject))
         else:
             optionally(notifications.append)(self._hint_message_of(method))

@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import Optional, Iterable
 
 from act import (
-    val, to, by, struct, io, do, Do, optionally, reformer_of, I
+    val, to, by, struct, io, do, Do, optionally, reformer_of, I, bad
 )
 from django.http import HttpRequest, HttpResponse
 
@@ -57,7 +57,7 @@ class endpoint:
         session_token: SessionToken,
         activation_token: ActivationToken,
         request: HttpRequest,
-    ) -> Optional[HttpResponse]:
+    ) -> Optional[HttpResponse | bad[Iterable[str]]]:
         id = adapters.activation.EndpointID(
             subject, method, session_token, activation_token
         )

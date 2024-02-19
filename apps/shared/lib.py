@@ -1,5 +1,5 @@
 from secrets import token_urlsafe
-from typing import Callable
+from typing import Callable, Optional
 
 from act import fun, then, to
 from act.cursors.static import t
@@ -33,3 +33,10 @@ def half_hidden(
     end = line[-number_of_not_hidden:]
 
     return start + middle + end
+
+
+def same_else[V](error: Exception, value: Optional[V]) -> V:
+    if value is None:
+        raise error
+
+    return value

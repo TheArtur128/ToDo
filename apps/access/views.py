@@ -1,5 +1,6 @@
 from typing import Optional
 
+from act import bad
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -7,12 +8,12 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
-from apps.access import services
+from apps.access import errors, services, ui
 from apps.access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm
 )
-from apps.access.lib import confirmation, for_anonymous, renders
+from apps.access.lib import confirmation, for_anonymous, renders, same_else
 from apps.access.types_ import Email, URL
 
 
@@ -36,10 +37,14 @@ def authorization_confirmation(
 def registration_confirmation(
     request: HttpRequest,
     email: Email,
-) -> Optional[HttpResponse]:
-    ok = services.registration.complete_by(email, request)
+) -> HttpResponse | bad[list[str]]:
+    try:
+        services.registration.complete_by(email, request)
+    except errors.Registration as error:
+        message = ui.registration.completion.error_message_of(error, email)
+        return bad([same_else(error, message)])
 
-    return redirect(reverse("tasks:index")) if ok else None
+    return redirect(reverse("tasks:index"))
 
 
 @confirmation.register_for(
@@ -84,11 +89,17 @@ class _RegistrationView(confirmation.OpeningView):
 
     @staticmethod
     def _open_port(request: HttpRequest) -> Optional[URL]:
-        confirmation_page_url = services.registration.open_using(
-            name=request.POST["name"],
-            email=request.POST["email"],
-            password=request.POST["password1"],
-        )
+        try:
+            confirmation_page_url = services.registration.open_using(
+                name=request.POST["name"],
+                email=request.POST["email"],
+                password=request.POST["password1"],
+            )
+        except errors.Registration as error:
+            user = ui.User(request.POST["name"], request.POST["email"])
+
+            message = ui.registration.opening.error_message_of(error, user)
+            return bad([same_else(error, message)])
 
         return confirmation_page_url
 

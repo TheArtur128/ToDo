@@ -1,6 +1,6 @@
 from typing import Optional, Callable, Mapping
 
-from act import bad
+from act import bad, of
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import redirect
@@ -18,6 +18,7 @@ def confirm(
         raise Http404("incorrect subject or method")
 
     is_activation_failed = False
+    errors = tuple()
 
     if request.method == 'GET':
         form = forms.ConfirmationForm()
@@ -25,7 +26,7 @@ def confirm(
         form = forms.ConfirmationForm(data=request.POST)
 
     if request.method == "POST" and form.is_valid():
-        response = services.endpoint.activate_by(
+        result = services.endpoint.activate_by(
             subject=subject,
             method=method,
             session_token=session_token,
@@ -33,8 +34,10 @@ def confirm(
             request=request,
         )
 
-        if response is not None:
-            return response
+        if result is not None:
+            return result
+        if of(bad, result):
+            errors = result.value
 
         is_activation_failed = True
 
@@ -43,6 +46,7 @@ def confirm(
         subject,
         method,
         session_token,
+        errors,
         is_activation_failed=is_activation_failed,
     )
 
@@ -50,7 +54,9 @@ def confirm(
 
 
 class OpeningView(lib.ViewWithForm):
-    def _open_port(self, request: HttpRequest) -> Optional[types_.URL]:
+    type __OpenedPort = Optional[types_.URL | bad[list[types_.ErrorMessage]]]
+
+    def _open_port(self, request: HttpRequest) -> __OpenedPort:
         raise NotImplementedError
 
     def _service(
@@ -64,5 +70,7 @@ class OpeningView(lib.ViewWithForm):
 
         if result is None:
             return bad([ui.opening.failure_message])
+        elif of(bad, result):
+            return result
 
         return redirect(result)

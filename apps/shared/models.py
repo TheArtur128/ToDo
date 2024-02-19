@@ -102,7 +102,11 @@ class TaskEvent(_VisualizableMixin, Model):
     activation_time = DateTimeField(default=None, null=True, blank=True)
     repetition_time = DurationField(default=None, null=True, blank=True)
 
-    new_status = IntegerField(choices=Task.Status.choices, default=None, null=True)
+    new_status = IntegerField(
+        choices=Task.Status.choices,
+        default=None,
+        null=True,
+    )
     new_is_hidden = BooleanField(default=None, null=True, blank=True)
 
     is_deleter = BooleanField(default=False, blank=True)

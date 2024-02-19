@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Optional
 
 from act import (
     val, do, Do, optionally, fbind_by, then, not_, by, contextual, as_method
@@ -13,33 +13,31 @@ type User = adapters.User
 
 @val
 class registration:
-    @do(optionally)
     def open_using(
-        do: Do,
         name=types_.Username,
         email=types_.Email,
         password=types_.Password,
     ) -> types_.URL:
-        user_id = adapters.registration.UserID(name, email, password)
+        confirmation_page_url_of = (
+            adapters.registration.confirmation_page_url_of
+        )
 
         return cases.registration.open_using(
-            user_id,
-            user_of=do(adapters.registration.user_of),
-            access_to_confirm_for=do(adapters.registration.confirmation.add),
+            name, email, password,
+            is_there_user_named=adapters.registration.is_there_user_named,
+            confirmation_page_url_of=confirmation_page_url_of,
+            remember=adapters.registration.remember,
         )
 
-    @do(optionally, else_=False)
-    def complete_by(
-        do: Do, email: types_.Email, request: HttpRequest
-    ) -> Literal[True]:
-        cases.registration.complete_by(
+    def complete_by(email: types_.Email, request: HttpRequest) -> User:
+        return cases.registration.complete_by(
             email,
-            user_of=do(adapters.registration.confirmation.pop_by),
-            registered=adapters.registration.registered,
-            authorized=adapters.registration.authorized |by| request,
+            remembered_user_of=adapters.registration.remembered_user_of,
+            is_there_user_named=adapters.registration.is_there_user_named,
+            forget=adapters.registration.forget,
+            save=adapters.registration.save,
+            authorize=adapters.registration.authorize |by| request,
         )
-
-        return True
 
 
 @val

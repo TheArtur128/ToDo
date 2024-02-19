@@ -22,6 +22,8 @@ unhashed = hashing.unhashed
 
 half_hidden = lib.half_hidden
 
+same_else = lib.same_else
+
 
 @partially
 def for_anonymous(

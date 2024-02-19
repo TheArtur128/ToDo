@@ -1,118 +1,106 @@
 from typing import Optional
 
-from act import type, val, obj, do, Do, optionally, contextual, saving_context
+from act import (
+    type, val, obj, do, Do, optionally, contextual, saving_context, io
+)
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 from django_redis import get_redis_connection
 from redis import Redis
 
-from apps.access import models, ui
-from apps.access.types_ import URL, Email, Password, PasswordHash, Username
+from apps.access import cases, models, ui
+from apps.access.types_ import (
+    URL, Email, Password, PasswordHash, Username, Minutes
+)
 from apps.access.lib import (
     confirmation, created_user_of, hashed, unhashed, ui as uilib
 )
 
 
-type User = models.User
-
-
-@val
-class _access:
-    def registered(user: User) -> User:
-        if _user_django_orm_repository.has(user):
-            return user
-
-        _user_django_orm_repository.save(user)
-
-        return user
-
-    def authorized(user: User, request: HttpRequest) -> User:
-        auth.login(request, user)
-
-        return user
-
-
 @val
 class _user_django_orm_repository:
-    def save(user: User) -> None:
+    def save(user: models.User) -> None:
         user.set_password(user.password)
 
         user.default_settings.save()
         user.save()
 
-    def has(user: User) -> bool:
+    def has(user: cases.User) -> bool:
         return models.User.objects.filter(name=user.name).exists()
 
-    def get_by_email(email: Email) -> User:
+    def is_there_user_named(name: Username) -> bool:
+        return models.User.objects.filter(name=name).exists()
+
+    def get_by_email(email: Email) -> models.User:
         return models.User.objects.filter(email=email).first()
 
-    def get_by_name(name: Username) -> User:
+    def get_by_name(name: Username) -> models.User:
         return models.User.objects.filter(name=name).first()
+
+
+@obj
+class _user_redis_repository:
+    _connection: Redis = get_redis_connection("accounts")
+    _activity_seconds: int = confirmation.activity_minutes * 60
+
+    def save(self, user: cases.User) -> None:
+        password_hash = hashed(user.password)
+
+        self._connection.hset(user.email, "name", user.name)
+        self._connection.hset(
+            user.email, "password_hash", password_hash
+        )
+
+        self._connection.expire(user.email, self._activity_seconds)
+
+    @do(optionally)
+    def get_by(do: Do, self, email: Email) -> Optional[cases.User]:
+        name = do(self._connection.hget)(email, "name").decode()
+        password_hash = do(self._connection.hget)(
+            email,
+            "password_hash",
+        ).decode()
+
+        password = unhashed(password_hash)
+
+        return cases.User(name, email, password)
+
+    def delete(self, user: cases.User) -> None:
+        self._connection.hdel(user.email, "name", "password_hash")
+
+
+def _authorize(user: models.User, request: HttpRequest) -> None:
+    auth.login(request, user)
 
 
 @val
 class registration:
-    UserID = type(name=Username, email=Email, password=Password)
+    def is_there_user_named(name: Username) -> bool:
+        return _user_django_orm_repository.is_there_user_named(name)
 
-    def user_of(user_id: UserID) -> Optional[User]:
-        user = created_user_of(user_id.name, user_id.email, user_id.password)
+    def confirmation_page_url_of(email: Email, _: Minutes) -> Optional[URL]:
+        return confirmation.open_port_of(
+            confirmation.subjects.registration,
+            confirmation.via.email,
+            for_=email,
+        )
 
-        return None if _user_django_orm_repository.has(user) else user
+    def remember(user: cases.User) -> None:
+        _user_redis_repository.save(user)
 
-    @obj
-    class confirmation:
-        @do(optionally)
-        def add(do: Do, self, user: User) -> URL:
-            confirmation_page_url = do(confirmation.open_port_of)(
-                confirmation.subjects.registration,
-                confirmation.via.email,
-                for_=user.email,
-            )
+    def remembered_user_of(email: Email) -> Optional[models.User]:
+        user = _user_redis_repository.get_by(email)
 
-            self._user_repository.save(user)
+        return created_user_of(user.name, user.email, user.password)
 
-            return confirmation_page_url
+    def forget(user: models.User) -> None:
+        _user_redis_repository.delete(user)
 
-        @do(optionally)
-        def pop_by(do: Do, self, email: Email) -> User:
-            user = do(self._user_repository.get_by)(email)
-            self._user_repository.delete(user)
+    def save(user: models.User) -> None:
+        _user_django_orm_repository.save(user)
 
-            return user
-
-        @obj
-        class _user_repository:
-            _connection: Redis = get_redis_connection("registration")
-            _activity_seconds: int = confirmation.activity_minutes * 60
-
-            def save(self, user: User) -> None:
-                password_hash = hashed(user.password)
-
-                self._connection.hset(user.email, "name", user.name)
-                self._connection.hset(
-                    user.email, "password_hash", password_hash
-                )
-
-                self._connection.expire(user.email, self._activity_seconds)
-
-            @do(optionally)
-            def get_by(do: Do, self, email: Email) -> User:
-                name = do(self._connection.hget)(email, "name").decode()
-                password_hash = do(self._connection.hget)(
-                    email,
-                    "password_hash",
-                ).decode()
-
-                password = unhashed(password_hash)
-
-                return created_user_of(name, email, password)
-
-            def delete(self, user: User) -> None:
-                self._connection.hdel(user.email, "name", "password_hash")
-
-    registered = _access.registered
-    authorized = _access.authorized
+    authorize = _authorize
 
 
 @val
@@ -122,7 +110,7 @@ class authorization:
     def user_to_open_by(
         user_id: UserID,
         request: HttpRequest,
-    ) -> Optional[User]:
+    ) -> Optional[models.User]:
         return auth.authenticate(
             request,
             username=user_id.name,
@@ -131,14 +119,15 @@ class authorization:
 
     user_to_complate_by = _user_django_orm_repository.get_by_email
 
-    def open_confirmation_for(user: User) -> URL:
+    def open_confirmation_for(user: models.User) -> URL:
         return confirmation.open_port_of(
             confirmation.subjects.authorization,
             confirmation.via.email,
             for_=user.email,
         )
 
-    authorized = _access.authorized
+    def authorize(user: models.User, request: HttpRequest) -> None:
+        auth.login(request, user)
 
 
 @val
@@ -146,7 +135,7 @@ class access_recovery:
     @val
     class opening:
         type _UserID[ID] = contextual[Password, ID]
-        type _User = contextual[Password, User]
+        type _User = contextual[Password, models.User]
 
         @do(optionally)
         def get_user_by_email(do: Do, id: _UserID[Email]) -> _User:
@@ -180,10 +169,10 @@ class access_recovery:
     @val
     class completion:
         user_of = _user_django_orm_repository.get_by_email
-        authorized = _access.authorized
+        authorized = io(_authorize)
 
         @do(optionally)
-        def with_new_password(do, user: User) -> User:
+        def with_new_password(do, user: models.User) -> models.User:
             password_hash_of = do(access_recovery._password_repository.pop_by)
             password_hash = password_hash_of(user.email)
 
@@ -210,8 +199,8 @@ class access_recovery:
 
 @val
 class profile:
-    def user_of(user: User) -> User:
+    def user_of(user: models.User) -> models.User:
         return user
 
-    def profile_of(user: User) -> uilib.LazyPage:
+    def profile_of(user: models.User) -> uilib.LazyPage:
         return ui.profile.page_of(user)

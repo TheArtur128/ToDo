@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from operator import setitem
 from urllib.parse import urljoin
-from typing import Callable, Optional
+from typing import Callable, Optional, Iterable
 
-from act import val, obj, to, do, optionally, binary, fun, I, Do
+from act import val, obj, to, do, optionally, binary, fun, I, Do, bad
 from act.cursors.static import p, _
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password, check_password
@@ -41,7 +41,10 @@ class Endpoint[I]:
     ))
 
 
-type Handle[I] = Callable[[HttpRequest, I], Optional[HttpResponse]]
+type Handle[I] = Callable[
+    [HttpRequest, I],
+    Optional[HttpResponse | bad[Iterable[str]]],
+]
 type Send[I] = Callable[[Endpoint[I], ActivationPlace], bool]
 
 

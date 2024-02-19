@@ -1,27 +1,59 @@
-from typing import Callable
+from typing import Callable, Any, Optional
 
-from act import val, U, A, I, R, N, P
+from act import type, val, I, U, A, N, P
+
+from apps.access import errors
+from apps.access.types_ import Username, Email, Password, URL, Minutes
+
+
+User = type(name=Username, email=Email, password=Password)
 
 
 @val
 class registration:
     def open_using(
-        user_id: I,
+        name=Username,
+        email=Email,
+        password=Password,
         *,
-        user_of: Callable[I, U],
-        access_to_confirm_for: Callable[U, A],
-    ) -> A:
-        return access_to_confirm_for(user_of(user_id))
+        is_there_user_named: Callable[Username, bool],
+        confirmation_page_url_of: Callable[[Email, Minutes], Optional[URL]],
+        remember: Callable[User, Any],
+    ) -> URL:
+        if is_there_user_named(name):
+            raise errors.UserExists()
 
-    def complete_by(
-        user_id: I,
+        confirmation_page_url = confirmation_page_url_of(email, 8)
+
+        if confirmation_page_url is None:
+            raise errors.Confirmation()
+
+        remember(User(name, email, password))
+
+        return confirmation_page_url
+
+    def complete_by[UserT: User](
+        email: Email,
         *,
-        user_of: Callable[I, U],
-        registered: Callable[U, R],
-        authorized: Callable[R, A],
-    ) -> A:
-        return authorized(registered(user_of(user_id)))
+        remembered_user_of: Callable[Email, Optional[UserT]],
+        is_there_user_named: Callable[Username, bool],
+        forget: Callable[UserT, Any],
+        save: Callable[UserT, Any],
+        authorize: Callable[UserT, Any],
+    ) -> UserT:
+        user = remembered_user_of(email)
+        forget(user)
 
+        if user is None:
+            raise errors.NoUser()
+
+        if is_there_user_named(user.name):
+            raise errors.UserExists()
+
+        save(user)
+        authorize(user)
+
+        return user
 
 @val
 class authorization:
