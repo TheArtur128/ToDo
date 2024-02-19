@@ -79,30 +79,40 @@ class authorization:
 
 @val
 class access_recovery:
-    def open_using(
-        user_id: I,
+    def open_using[ID: Email | Username, UserT: User](
+        id: ID,
+        new_password: Password,
         *,
-        user_of: Callable[I, U],
-        access_to_confirm_for: Callable[U, A],
-    ) -> A:
-        return access_to_confirm_for(user_of(user_id))
+        user_of: Callable[ID, Optional[UserT]],
+        confirmation_page_url_of: Callable[UserT, Optional[URL]],
+        hash_of: Callable[Password, PasswordHash],
+        remember_under: Callable[[Email, PasswordHash], Any],
+    ) -> URL:
+        user = same(user_of(id), else_=errors.NoUser())
+        confirmation_page_url = (
+            same(confirmation_page_url_of(user), else_=errors.Confirmation())
+        )
 
-    def complete_by(
-        user_id: I,
+        remember_under(user.email, hash_of(new_password))
+
+        return confirmation_page_url
+
+    def complete_by[UserT: User](
+        email: Email,
         *,
-        user_of: Callable[I, U],
-        with_new_password: Callable[U, N],
-        authorized: Callable[N, A],
-    ) -> A:
-        return authorized(with_new_password(user_of(user_id)))
+        user_of: Callable[Email, UserT],
+        remebered_password_hash_of: Callable[Email, Optional[PasswordHash]],
+        forget_password_hash_under: Callable[Email, Any],
+        authorize: Callable[UserT, Any],
+    ) -> UserT:
+        user = same(user_of(email), else_=errors.NoUser())
 
+        password_hash = same(
+            remebered_password_hash_of(user.email), else_=errors.NoPassword()
+        )
+        forget_password_hash_under(user.email)
 
-@val
-class profile:
-    def of(
-        user_id: I,
-        *,
-        user_of: Callable[I, U],
-        profile_of: Callable[U, P],
-    ) -> P:
-        return profile_of(user_of(user_id))
+        user.password = password_hash
+        authorize(user)
+
+        return user

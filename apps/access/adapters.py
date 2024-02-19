@@ -1,19 +1,16 @@
+from operator import attrgetter
 from typing import Optional
 
-from act import (
-    val, obj, do, Do, optionally, contextual, saving_context, io
-)
+from act import val, obj, do, Do, optionally, out, sculpture_of
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 from django_redis import get_redis_connection
 from redis import Redis
 
-from apps.access import cases, models, ui
+from apps.access import cases, models
 from apps.access.types_ import URL, Email, Password, PasswordHash, Username
-from apps.access.lib import (
-    confirmation, created_user_of, hashed, unhashed, ui as uilib
-)
+from apps.access.lib import confirmation, created_user_of, hashed, unhashed
 
 
 @val
@@ -66,6 +63,21 @@ class _user_redis_repository:
 
     def delete(self, user: cases.User) -> None:
         self._connection.hdel(user.email, "name", "password_hash")
+
+
+@obj
+class _password_hash_redis_repository:
+    _connection: Redis = get_redis_connection("passwords")
+
+    def save_under(self, email: Email, password_hash: PasswordHash) -> None:
+        self._connection.set(email, password_hash)
+        self._connection.expire(email, confirmation.activity_minutes * 60)
+
+    def get_by(self, email: Email) -> Optional[PasswordHash]:
+        return out(out(self._connection.get(email)).decode)()
+
+    def delete(self, email: Email) -> None:
+        self._connection.delete(email)
 
 
 def _authorize(user: models.User, request: HttpRequest) -> None:
@@ -129,73 +141,46 @@ class authorization:
 class access_recovery:
     @val
     class opening:
-        type _UserID[ID] = contextual[Password, ID]
-        type _User = contextual[Password, models.User]
+        def get_user_by_email(email: Email) -> models.User:
+            return _user_django_orm_repository.get_by_email(email)
 
-        @do(optionally)
-        def get_user_by_email(do: Do, id: _UserID[Email]) -> _User:
-            return saving_context(do(_user_django_orm_repository.get_by_email))(
-                id,
-            )
+        def get_user_by_name(name: Username) -> models.User:
+            return _user_django_orm_repository.get_by_name(name)
 
-        @do(optionally)
-        def get_user_by_name(do: Do, id: _UserID[Username]) -> _User:
-            return saving_context(do(_user_django_orm_repository.get_by_name))(
-                id,
-            )
-
-        @do(optionally)
-        def confirmation_for(do: Do, user_to_open: _User) -> URL:
-            new_password, user = user_to_open
-
-            confirmation_page_url = do(confirmation.open_port_of)(
+        def confirmation_page_url_of(user: cases.User) -> Optional[URL]:
+            return confirmation.open_port_of(
                 confirmation.subjects.access_recovery,
                 confirmation.via.email,
                 for_=user.email,
             )
 
-            access_recovery._password_repository.save_under(
-                user.email,
-                new_password,
-            )
+        def hash_of(password: Password) -> PasswordHash:
+            return make_password(password)
 
-            return confirmation_page_url
+        def remember_under(email: Email, password_hash: PasswordHash) -> None:
+            _password_hash_redis_repository.save_under(email, password_hash)
 
     @val
     class completion:
-        user_of = _user_django_orm_repository.get_by_email
-        authorized = io(_authorize)
-
-        @do(optionally)
-        def with_new_password(do, user: models.User) -> models.User:
-            password_hash_of = do(access_recovery._password_repository.pop_by)
-            password_hash = password_hash_of(user.email)
-
+        def _set_password_hash(
+            user: models.User,
+            password_hash: PasswordHash,
+        ) -> None:
             user.password = password_hash
             user.save()
 
-            return user
+        _user_sculpture_of = sculpture_of(password=property(
+            attrgetter("password"), _set_password_hash
+        ))
 
-    @obj
-    class _password_repository:
-        _connection: Redis = get_redis_connection("access_recovery")
+        def user_of(email: Email) -> cases.User:
+            user = _user_django_orm_repository.get_by_email(email)
+            return access_recovery.completion._user_sculpture_of(user)
 
-        def save_under(self, email: Email, password: Password) -> None:
-            self._connection.set(email, make_password(password))
-            self._connection.expire(email, confirmation.activity_minutes * 60)
+        def remebered_password_hash_of(email: Email) -> Optional[PasswordHash]:
+            return _password_hash_redis_repository.get_by(email)
 
-        @do(optionally)
-        def pop_by(do, self, email: Email) -> PasswordHash:
-            password_hash_bytes = do(self._connection.get)(email)
-            self._connection.delete(email)
+        def forget_password_hash_under(email: Email) -> None:
+            _password_hash_redis_repository.delete(email)
 
-            return password_hash_bytes.decode()
-
-
-@val
-class profile:
-    def user_of(user: models.User) -> models.User:
-        return user
-
-    def profile_of(user: models.User) -> uilib.LazyPage:
-        return ui.profile.page_of(user)
+        authorize = _authorize

@@ -171,7 +171,7 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
-    "access_recovery": {
+    "passwords": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://localhost:6379/4",
         "TIMEOUT": 60 * CONFIRMATION_ACTIVITY_MINUTES,

@@ -66,49 +66,44 @@ class authorization:
         )
 
 
-@val
+@obj
 class access_recovery:
-    _open_confirmation_for = adapters.access_recovery.opening.confirmation_for
+    _cases = cases.access_recovery
 
-    @as_method
-    @do(optionally)
-    def open_via_email_using(
-        do,
+    _opening = adapters.access_recovery.opening
+
+    def _open_using[ID: types_.Email | types_.Username](
         self,
-        email: types_.Email,
+        id: ID,
         new_password: types_.Password,
-    ) -> Optional[types_.URL]:
-        return cases.access_recovery.open_using(
-            contextual(new_password, email),
-            user_of=do(adapters.access_recovery.opening.get_user_by_email),
-            access_to_confirm_for=do(self._open_confirmation_for),
+        user_of: Callable[ID, User],
+    ) -> types_.URL:
+        return self._cases.open_using(
+            id,
+            new_password,
+            user_of=user_of,
+            confirmation_page_url_of=self._opening.confirmation_page_url_of,
+            hash_of=self._opening.hash_of,
+            remember_under=self._opening.remember_under,
         )
 
-    @as_method
-    @do(optionally)
-    def open_via_name_using(
-        do,
-        self,
-        name: types_.Username,
-        new_password: types_.Password,
-    ) -> Optional[types_.URL]:
-        return cases.access_recovery.open_using(
-            contextual(new_password, name),
-            user_of=do(adapters.access_recovery.opening.get_user_by_name),
-            access_to_confirm_for=do(self._open_confirmation_for),
-        )
+    open_via_email_using = (
+        staticmethod(_open_using |by| _opening.get_user_by_email)
+    )
+    open_via_name_using = (
+        staticmethod(_open_using |by| _opening.get_user_by_name)
+    )
 
-    @do(optionally)
-    def complete_by(do: Do, email: types_.Email, request: HttpRequest) -> User:
-        return cases.access_recovery.complete_by(
+    def complete_by(self, email: types_.Email, request: HttpRequest) -> User:
+        remebered_password_hash_of = self._completing.remebered_password_hash_of
+        forget_password_hash_under = self._completing.forget_password_hash_under
+
+        return self._cases.complete_by(
             email,
-            user_of=do(adapters.access_recovery.completion.user_of),
-            with_new_password=do(
-                adapters.access_recovery.completion.with_new_password
-            ),
-            authorized=(
-                adapters.access_recovery.completion.authorized |by| request
-            ),
+            user_of=self._completing.user_of,
+            remebered_password_hash_of=remebered_password_hash_of,
+            forget_password_hash_under=forget_password_hash_under,
+            authorize=self._completing.authorize |by| request,
         )
 
 
