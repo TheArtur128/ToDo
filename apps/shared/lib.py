@@ -1,7 +1,8 @@
+from functools import reduce
 from secrets import token_urlsafe
 from typing import Callable, Optional
 
-from act import fun, then, to
+from act import fun, then, to, merged
 from act.cursors.static import t
 
 from apps.shared.types_ import Token
@@ -40,3 +41,15 @@ def same_else[V](error: Exception, value: Optional[V]) -> V:
         raise error
 
     return value
+
+
+def search[R](error: Exception, *funcs: Callable[Exception, Optional[R]]) -> R:
+    assert len(funcs) > 0
+
+    if len(funcs) == 1:
+        result = funcs[0](error)
+    else:
+        raw_results = merged(*funcs)(error)
+        result = reduce(lambda a, b: b if a is None else a, raw_results)
+
+    return same_else(error, result)
