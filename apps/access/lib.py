@@ -7,8 +7,10 @@ from django.shortcuts import redirect
 
 from apps.confirmation import output as confirmation
 from apps.tasks import output as tasks
-from apps.shared import hashing, models, renders, lib, ui
+from apps.shared import errors, hashing, models, renders, lib, ui
 
+
+Application = errors.Application
 
 confirmation = confirmation
 renders = renders

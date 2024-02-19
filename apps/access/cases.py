@@ -26,7 +26,7 @@ class registration:
         confirmation_page_url = confirmation_page_url_of(email)
 
         if confirmation_page_url is None:
-            raise errors.Confirmation()
+            raise errors.EmailConfirmation()
 
         remember(User(name, email, password))
 

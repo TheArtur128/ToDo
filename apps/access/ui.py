@@ -17,21 +17,31 @@ class profile:
         return lib.ui.LazyPage("access/profile.html", context)
 
 
+def completion_error_message_of(error: Any) -> Optional[str]:
+    if isinstance(error, errors.NoUser):
+        return "Go back and enter your data again"
+
+
 @val
 class registration:
     @val
     class opening:
-        def error_message_of(error: Any, user: User) -> Optional[str]:
+        def error_message_of(
+            error: Any,
+            name: types_.Username,
+        ) -> Optional[str]:
             if isinstance(error, errors.UserExists):
-                return f"User \"{user.name}\" already exists"
+                return f"User \"{name}\" already exists"
             elif isinstance(error, errors.EmailConfirmation):
                 return "Make sure you entered your email correctly"
 
     @val
     class completion:
-        def error_message_of(error: Any, email: types_.Email) -> Optional[str]:
+        def error_message_of(error: Any) -> Optional[str]:
             if isinstance(error, errors.UserExists):
                 return (
                     f"User registration has already been completed. "
                     f"Login <a href=\"{reverse("access:sign-in")}\">here<a/>"
                 )
+
+            return completion_error_message_of(error)

@@ -40,8 +40,8 @@ def registration_confirmation(
 ) -> HttpResponse | bad[list[str]]:
     try:
         services.registration.complete_by(email, request)
-    except errors.Registration as error:
-        message = ui.registration.completion.error_message_of(error, email)
+    except errors.Access as error:
+        message = ui.registration.completion.error_message_of(error)
         return bad([same_else(error, message)])
 
     return redirect(reverse("tasks:index"))
@@ -88,17 +88,18 @@ class _RegistrationView(confirmation.OpeningView):
     _template_name = "access/registration.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> Optional[URL]:
+    def _open_port(request: HttpRequest) -> URL | bad[list[str]]:
         try:
             confirmation_page_url = services.registration.open_using(
                 name=request.POST["name"],
                 email=request.POST["email"],
                 password=request.POST["password1"],
             )
-        except errors.Registration as error:
-            user = ui.User(request.POST["name"], request.POST["email"])
-
-            message = ui.registration.opening.error_message_of(error, user)
+        except errors.Access as error:
+            message = ui.registration.opening.error_message_of(
+                error,
+                request.POST["name"],
+            )
             return bad([same_else(error, message)])
 
         return confirmation_page_url
