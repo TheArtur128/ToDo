@@ -42,10 +42,11 @@ class registration:
         authorize: Callable[UserT, Any],
     ) -> UserT:
         user = remembered_user_of(email)
-        forget(user)
 
         if user is None:
             raise errors.NoUser()
+
+        forget(user)
 
         if is_there_user_named(user.name):
             raise errors.UserExists()
