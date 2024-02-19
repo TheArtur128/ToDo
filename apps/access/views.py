@@ -13,7 +13,7 @@ from apps.access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm
 )
-from apps.access.lib import confirmation, for_anonymous, renders, same_else
+from apps.access.lib import confirmation, for_anonymous, renders, same
 from apps.access.types_ import Email, URL
 
 
@@ -29,7 +29,7 @@ def authorization_confirmation(
         services.authorization.complete_by(email, request)
     except errors.Access as error:
         message = ui.authorization.completion.error_message_of(error)
-        return bad([same_else(error, message)])
+        return bad([same(message, else_=error)])
 
     return redirect(reverse("tasks:index"))
 
@@ -46,7 +46,7 @@ def registration_confirmation(
         services.registration.complete_by(email, request)
     except errors.Access as error:
         message = ui.registration.completion.error_message_of(error)
-        return bad([same_else(error, message)])
+        return bad([same(message, else_=error)])
 
     return redirect(reverse("tasks:index"))
 
@@ -86,7 +86,7 @@ class LoginView(confirmation.OpeningView):
             )
         except errors.Access as error:
             message = ui.authorization.completion.error_message_of(error)
-            return bad([same_else(error, message)])
+            return bad([same(message, else_=error)])
 
         return confirmation_page_url
 
@@ -108,7 +108,7 @@ class _RegistrationView(confirmation.OpeningView):
                 error,
                 request.POST["name"],
             )
-            return bad([same_else(error, message)])
+            return bad([same(message, else_=error)])
 
         return confirmation_page_url
 
@@ -144,7 +144,7 @@ class _AccessRecoveryByEmailView(confirmation.OpeningView):
 @login_required
 @require_GET
 def profile(request: HttpRequest) -> HttpResponse:
-    return renders.rendered(services.profile.of(request.user), request)
+    return renders.rendered(ui.profile.page_of(request.user), request)
 
 
 registrate = for_anonymous(_RegistrationView.as_view())

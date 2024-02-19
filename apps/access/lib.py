@@ -24,7 +24,7 @@ unhashed = hashing.unhashed
 
 half_hidden = lib.half_hidden
 
-same_else = lib.same_else
+same = lib.same
 
 
 @partially

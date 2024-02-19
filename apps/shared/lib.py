@@ -36,9 +36,9 @@ def half_hidden(
     return start + middle + end
 
 
-def same_else[V](error: Exception, value: Optional[V]) -> V:
+def same[V](value: Optional[V], *, else_: Exception) -> V:
     if value is None:
-        raise error
+        raise else_
 
     return value
 
@@ -52,4 +52,4 @@ def search[R](error: Exception, *funcs: Callable[Exception, Optional[R]]) -> R:
         raw_results = merged(*funcs)(error)
         result = reduce(lambda a, b: b if a is None else a, raw_results)
 
-    return same_else(error, result)
+    return same(result, else_=error)
