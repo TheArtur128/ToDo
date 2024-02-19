@@ -3,7 +3,7 @@ from typing import Callable, Any, Optional
 from act import type, val, I, U, A, N, P
 
 from apps.access import errors
-from apps.access.types_ import Username, Email, Password, URL, Minutes
+from apps.access.types_ import Username, Email, Password, URL
 
 
 User = type(name=Username, email=Email, password=Password)
@@ -17,13 +17,13 @@ class registration:
         password=Password,
         *,
         is_there_user_named: Callable[Username, bool],
-        confirmation_page_url_of: Callable[[Email, Minutes], Optional[URL]],
+        confirmation_page_url_of: Callable[Email, Optional[URL]],
         remember: Callable[User, Any],
     ) -> URL:
         if is_there_user_named(name):
             raise errors.UserExists()
 
-        confirmation_page_url = confirmation_page_url_of(email, 8)
+        confirmation_page_url = confirmation_page_url_of(email)
 
         if confirmation_page_url is None:
             raise errors.Confirmation()

@@ -10,9 +10,7 @@ from django_redis import get_redis_connection
 from redis import Redis
 
 from apps.access import cases, models, ui
-from apps.access.types_ import (
-    URL, Email, Password, PasswordHash, Username, Minutes
-)
+from apps.access.types_ import URL, Email, Password, PasswordHash, Username
 from apps.access.lib import (
     confirmation, created_user_of, hashed, unhashed, ui as uilib
 )
@@ -79,7 +77,7 @@ class registration:
     def is_there_user_named(name: Username) -> bool:
         return _user_django_orm_repository.is_there_user_named(name)
 
-    def confirmation_page_url_of(email: Email, _: Minutes) -> Optional[URL]:
+    def confirmation_page_url_of(email: Email) -> Optional[URL]:
         return confirmation.open_port_of(
             confirmation.subjects.registration,
             confirmation.via.email,
