@@ -16,9 +16,9 @@ class user_creation:
         default_task_settings: rules.users.default_task_settings,
     ) -> User:
         remove_on = default_task_settings.remove_on.value
-        settings = lib.TaskSettings(remove_on=remove_on)
+        settings = lib.TaskSettings.objects.create(remove_on=remove_on)
 
-        return lib.User(
+        return lib.User.objects.create(
             name=account.name,
             email=account.email,
             password=account.password,

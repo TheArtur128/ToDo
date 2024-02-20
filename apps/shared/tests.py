@@ -1,5 +1,4 @@
-from act import to
-from pytest import mark, raises
+from pytest import mark
 
 from apps.shared import hashing, lib
 
@@ -23,16 +22,3 @@ def test_half_hidden() -> None:
     assert lib.half_hidden("1234567890", 3) == "123####890"
     assert lib.half_hidden("1234567890abcdef", 3) == "123##########def"
 
-
-def test_search() -> None:
-    value = lib.search(ZeroDivisionError, to(1), to(None), to(None))
-    assert value == 1
-
-    value = lib.search(ZeroDivisionError, to(None), to(""), to(None))
-    assert value == ""
-
-    value = lib.search(ZeroDivisionError, to(0))
-    assert value == 0
-
-    with raises(ZeroDivisionError):
-        lib.search(ZeroDivisionError, to(None), to(None))

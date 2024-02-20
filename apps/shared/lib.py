@@ -1,11 +1,15 @@
-from functools import reduce
 from secrets import token_urlsafe
-from typing import Callable, Optional
+from typing import Callable, Optional, Iterable
 
-from act import fun, then, to, merged
+from act import fun, then, to, Unia, flat
 from act.cursors.static import t
 
 from apps.shared.types_ import Token
+
+
+type Sculpture[FormT, OriginalT] = (
+    Unia[FormT, type(_sculpture_original=OriginalT)]
+)
 
 
 def token_generator_with(*, length: int) -> Callable[[], Token]:
@@ -38,18 +42,31 @@ def half_hidden(
 
 def same[V](value: Optional[V], *, else_: Exception) -> V:
     if value is None:
-        raise else_
+        raise else_ from else_
 
     return value
 
 
-def search[R](error: Exception, *funcs: Callable[Exception, Optional[R]]) -> R:
-    assert len(funcs) > 0
+def valid[V](value: V, validate: Callable[V, Iterable[Exception]]) -> V:
+    checks = tuple(validate(value))
 
-    if len(funcs) == 1:
-        result = funcs[0](error)
-    else:
-        raw_results = merged(*funcs)(error)
-        result = reduce(lambda a, b: b if a is None else a, raw_results)
+    if len(checks) != 0:
+        raise ExceptionGroup(str(), checks)
 
-    return same(result, else_=error)
+    return value
+
+
+def messages_of[GroupT: ExceptionGroup, ErrorT: Exception, R](
+    group: GroupT,
+    *searchers: Callable[ErrorT, Iterable[R]],
+) -> tuple[R]:
+    messages = flat(
+        search_using(error)
+        for search_using in searchers
+        for error in group.exceptions
+    )
+
+    if len(messages) == 0:
+        raise group from group
+
+    return messages

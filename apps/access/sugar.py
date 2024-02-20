@@ -1,4 +1,5 @@
-from lib import same
+from apps.access.lib import same, valid
 
 
 same = same
+valid = valid

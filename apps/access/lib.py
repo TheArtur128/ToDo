@@ -10,6 +10,7 @@ from apps.tasks import output as tasks
 from apps.shared import errors, hashing, models, renders, lib, ui
 
 
+Sculpture = lib.Sculpture
 Application = errors.Application
 
 confirmation = confirmation
@@ -25,6 +26,8 @@ unhashed = hashing.unhashed
 half_hidden = lib.half_hidden
 
 same = lib.same
+messages_of = lib.messages_of
+valid = lib.valid
 
 
 @partially

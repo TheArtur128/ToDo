@@ -1,6 +1,4 @@
-from typing import Optional
-
-from act import bad
+from act import bad, by
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -13,8 +11,11 @@ from apps.access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm
 )
-from apps.access.lib import confirmation, for_anonymous, renders, same
+from apps.access.lib import confirmation, for_anonymous, renders, messages_of
 from apps.access.types_ import Email, URL
+
+
+type _ErrorMesages = bad[tuple[str]]
 
 
 @confirmation.register_for(
@@ -24,12 +25,12 @@ from apps.access.types_ import Email, URL
 def authorization_confirmation(
     request: HttpRequest,
     email: Email,
-) -> Optional[HttpResponse]:
+) -> HttpResponse | _ErrorMesages:
     try:
         services.authorization.complete_by(email, request)
-    except errors.Access as error:
-        message = ui.authorization.completion.error_message_of(error)
-        return bad([same(message, else_=error)])
+    except* errors.Access as group:
+        message_of = ui.authorization.completion.error_message_of
+        return bad(messages_of(group, message_of))
 
     return redirect(reverse("tasks:index"))
 
@@ -41,12 +42,12 @@ def authorization_confirmation(
 def registration_confirmation(
     request: HttpRequest,
     email: Email,
-) -> HttpResponse | bad[list[str]]:
+) -> HttpResponse | _ErrorMesages:
     try:
         services.registration.complete_by(email, request)
-    except errors.Access as error:
-        message = ui.registration.completion.error_message_of(error)
-        return bad([same(message, else_=error)])
+    except* errors.Access as group:
+        message_of = ui.registration.completion.error_message_of
+        return bad(messages_of(group, message_of))
 
     return redirect(reverse("tasks:index"))
 
@@ -58,10 +59,14 @@ def registration_confirmation(
 def access_recovery_confirmation(
     request: HttpRequest,
     email: Email,
-) -> Optional[HttpResponse]:
-    ok = services.access_recovery.complete_by(email, request)
+) -> HttpResponse | _ErrorMesages:
+    try:
+        services.access_recovery.complete_by(email, request)
+    except* errors.Access as group:
+        message_of = ui.access_recovery.completion.error_message_of
+        return bad(messages_of(group, message_of))
 
-    return redirect(reverse("tasks:index")) if ok else None
+    return redirect(reverse("tasks:index"))
 
 
 @login_required
@@ -79,16 +84,14 @@ class LoginView(confirmation.OpeningView):
     @staticmethod
     def _open_port(request: HttpRequest) -> URL | bad[list[str]]:
         try:
-            confirmation_page_url = services.authorization.open_using(
+            return services.authorization.open_using(
                 request.POST["username"],
                 request.POST["password"],
                 request,
             )
-        except errors.Access as error:
-            message = ui.authorization.completion.error_message_of(error)
-            return bad([same(message, else_=error)])
-
-        return confirmation_page_url
+        except* errors.Access as group:
+            message_of = ui.authorization.opening.error_message_of
+            return bad(messages_of(group, message_of))
 
 
 class _RegistrationView(confirmation.OpeningView):
@@ -96,49 +99,52 @@ class _RegistrationView(confirmation.OpeningView):
     _template_name = "access/registration.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> URL | bad[list[str]]:
+    def _open_port(request: HttpRequest) -> URL | _ErrorMesages:
         try:
-            confirmation_page_url = services.registration.open_using(
+            return services.registration.open_using(
                 name=request.POST["name"],
                 email=request.POST["email"],
                 password=request.POST["password1"],
             )
-        except errors.Access as error:
-            message = ui.registration.opening.error_message_of(
-                error,
-                request.POST["name"],
-            )
-            return bad([same(message, else_=error)])
-
-        return confirmation_page_url
+        except* errors.Access as group:
+            message_of = ui.registration.opening.error_message_of
+            return bad(messages_of(group, message_of |by| request.POST["name"]))
 
 
-class _AccessRecoveryByNameView(confirmation.OpeningView):
+class _AccessRecoveryView(confirmation.OpeningView):
+    def _access_recovery(request: HttpRequest) -> URL:
+        raise NotImplementedError
+
+    def _open_port(self, request: HttpRequest) -> URL | _ErrorMesages:
+        try:
+            return self._access_recovery(request)
+        except* errors.Access as group:
+            message_of = ui.access_recovery.opening.error_message_of
+            return bad(messages_of(group, message_of))
+
+
+class _AccessRecoveryByNameView(_AccessRecoveryView):
     _form_type = RestoringAccessByNameForm
     _template_name = "access/recovery-by-name.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> Optional[URL]:
-        confirmation_page_url = services.access_recovery.open_via_name_using(
+    def _access_recovery(request: HttpRequest) -> URL:
+        return services.access_recovery.open_via_name_using(
             request.POST["name"],
             request.POST["password1"],
         )
 
-        return confirmation_page_url
 
-
-class _AccessRecoveryByEmailView(confirmation.OpeningView):
+class _AccessRecoveryByEmailView(_AccessRecoveryView):
     _form_type = RestoringAccessByEmailForm
     _template_name = "access/recovery-by-email.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> Optional[URL]:
-        confirmation_page_url = services.access_recovery.open_via_email_using(
+    def _access_recovery(request: HttpRequest) -> URL:
+        return services.access_recovery.open_via_email_using(
             request.POST["email"],
             request.POST["password1"],
         )
-
-        return confirmation_page_url
 
 
 @login_required
