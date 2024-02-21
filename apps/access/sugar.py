@@ -1,5 +1,7 @@
-from apps.access.lib import same, valid
+from apps.access.lib import exists, to_raise_multiple_errors, latest
 
 
-same = same
-valid = valid
+exists = exists
+
+to_raise_multiple_errors = to_raise_multiple_errors
+latest = latest

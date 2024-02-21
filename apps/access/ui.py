@@ -19,21 +19,21 @@ class profile:
 
 def username_error_messages_of(error: Any) -> Iterable[str]:
     if isinstance(error, errors.UsernameTooShort):
-        yield "Your name must be more than 2 characters"
+        yield "Your name must be more than 2 characters."
 
-    if isinstance(error, errors.UsernameTooLong):
-        yield "Your name must be 128 characters maximum"
+    elif isinstance(error, errors.UsernameTooLong):
+        yield "Your name must be 128 characters maximum."
 
 
 def password_error_messages_of(error: Any) -> Iterable[str]:
     if isinstance(error, errors.PasswordPower):
         yield (
             "Your password must contain at least one number, "
-            "an uppercase and lowercase Latin letter and a special character"
+            "an uppercase and lowercase Latin letter and a special character."
         )
 
     if isinstance(error, errors.PasswordTooLong):
-        yield "Your password must be 128 characters maximum"
+        yield "Your password must be 128 characters maximum."
 
 
 def user_validation_error_messages_of(error: Any) -> Iterable[str]:
@@ -43,12 +43,12 @@ def user_validation_error_messages_of(error: Any) -> Iterable[str]:
 
 def completion_error_messages_of(error: Any) -> Iterable[str]:
     if isinstance(error, errors.NoUser):
-        yield "Go back and enter your data again"
+        yield "Go back and enter your data again."
 
 
 def user_existence_error_messages_of(error: Any) -> Iterable[str]:
     if isinstance(error, errors.NoUser):
-        yield "Make sure you entered your data correctly"
+        yield "Make sure you entered your data correctly."
 
 
 def confirmation_error_messages_of(error: Any) -> Iterable[str]:
@@ -56,7 +56,7 @@ def confirmation_error_messages_of(error: Any) -> Iterable[str]:
         yield (
             "Unable to confirm. "
             "Try again after a while or contact tech. "
-            "support if all attempts are unsuccessful"
+            "support if all attempts are unsuccessful."
         )
 
 
@@ -67,11 +67,16 @@ class registration:
         def error_messages_of(
             error: Any,
             name: types_.Username,
+            email: types_.Email,
         ) -> Iterable[str]:
             if isinstance(error, errors.UserExists):
-                yield f"User \"{name}\" already exists"
+                yield f"\"{name}\" name is already taken."
+
+            if isinstance(error, errors.EmailExists):
+                yield f"\"{email}\" email is already taken."
+
             if isinstance(error, errors.EmailConfirmation):
-                yield "Make sure you entered your email correctly"
+                yield "Choose another email or try again after a while."
 
             yield from user_validation_error_messages_of(error)
 
@@ -92,11 +97,8 @@ class authorization:
     @val
     class opening:
         def error_messages_of(error: Any) -> Iterable[str]:
-            yield lib.search(
-                error,
-                confirmation_error_messages_of,
-                user_existence_error_messages_of,
-            )
+            yield from user_existence_error_messages_of(error)
+            yield from confirmation_error_messages_of(error)
 
     @val
     class completion:

@@ -16,13 +16,15 @@ class registration:
 
     def open_using(
         self,
-        name=types_.Username,
-        email=types_.Email,
-        password=types_.Password,
+        name: types_.Username,
+        email: types_.Email,
+        password: types_.Password,
+        repeated_password: types_.Password,
     ) -> types_.URL:
         return self._cases.open_using(
-            name, email, password,
+            name, email, password, repeated_password,
             is_there_user_named=self._adapters.is_there_user_named,
+            is_there_user_with_email=self._adapters.is_there_user_with_email,
             confirmation_page_url_of=self._adapters.confirmation_page_url_of,
             hash_of=self._adapters.hash_of,
             remember=self._adapters.remember,
@@ -34,6 +36,7 @@ class registration:
             remembered_user_of=self._adapters.remembered_user_of,
             forgotten=self._adapters.forgotten,
             is_there_user_named=self._adapters.is_there_user_named,
+            is_there_user_with_email=self._adapters.is_there_user_with_email,
             saved=self._adapters.saved,
             authorized=self._adapters.authorized |by| request,
         )
@@ -50,12 +53,11 @@ class authorization:
         self,
         name: types_.Username,
         password: types_.Password,
-        request: HttpRequest,
     ) -> types_.URL:
         return self._cases.open_using(
             name,
             password,
-            user_of=self._opening.user_of |by| request,
+            user_of=self._opening.user_of,
             is_hash_of=self._opening.is_hash_of,
             confirmation_page_url_of=self._opening.confirmation_page_url_of,
         )
@@ -79,11 +81,13 @@ class access_recovery:
         self,
         id: ID,
         new_password: types_.Password,
+        repeated_password: types_.Password,
         user_of: Callable[ID, User],
     ) -> types_.URL:
         return self._cases.open_using(
             id,
             new_password,
+            repeated_password,
             user_of=user_of,
             confirmation_page_url_of=self._opening.confirmation_page_url_of,
             hash_of=self._opening.hash_of,

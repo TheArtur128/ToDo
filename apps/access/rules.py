@@ -33,7 +33,14 @@ class passwords:
 
         return passwords.Powers.strong
 
-    def validate(password: Password) -> Iterable[errors.Access]:
+    def is_remembered(
+        password: Password,
+        repeated_password: Password,
+    ) -> Iterable[errors.Access]:
+        if password != repeated_password:
+            yield errors.PasswordMismatch()
+
+    def is_valid(password: Password) -> Iterable[errors.Access]:
         power = passwords.power_of(password)
 
         if power is passwords.Powers.weak:
@@ -47,7 +54,7 @@ class passwords:
 
 @val
 class users:
-    def validate(user: User) -> Iterable[errors.Access]:
+    def is_valid(user: User) -> Iterable[errors.Access]:
         if len(user.name) > 128:
             yield errors.UsernameTooLong()
         elif len(user.name) < 2:
@@ -56,6 +63,7 @@ class users:
 
 @val
 class authentication_users:
-    def validate(user: AuthenticationUser) -> Iterable[errors.Access]:
-        yield from users.validate(user)
-        yield from passwords.validate(user.password)
+    def is_valid(user: AuthenticationUser) -> Iterable[errors.Access]:
+        yield from users.is_valid(user)
+        yield from passwords.is_valid(user.password)
+

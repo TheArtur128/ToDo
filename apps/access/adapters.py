@@ -32,6 +32,9 @@ class _user_django_orm_repository:
     def has_named(name: Username) -> bool:
         return models.User.objects.filter(name=name).exists()
 
+    def has_with_email(email: Email) -> bool:
+        return models.User.objects.filter(email=email).exists()
+
     @_as_rule_getter
     def get_by_email(email: Email) -> Optional[_UserSculpture]:
         return models.User.objects.filter(email=email).first()
@@ -89,6 +92,9 @@ def _authorize(user: Sculpture[Any, models.User], request: HttpRequest) -> None:
 class registration:
     def is_there_user_named(name: Username) -> bool:
         return _user_django_orm_repository.has_named(name)
+
+    def is_there_user_with_email(email: Email) -> bool:
+        return _user_django_orm_repository.has_with_email(email)
 
     def confirmation_page_url_of(email: Email) -> Optional[URL]:
         return confirmation.open_port_of(

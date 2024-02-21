@@ -1,51 +1,54 @@
-from django.contrib.auth import forms
-from django.forms import (
-    Form, ValidationError, PasswordInput, CharField, EmailField
-)
-
-from apps.access.models import User
-from apps.access.types_ import Password
+from act import val
+from django import forms
 
 
-_password_error_messages = dict(password_mismatch="Password mismatch")
+@val
+class _user_form_fileds:
+    name = forms.CharField(
+        strip=True,
+        widget=forms.TextInput(attrs=dict(autocomplete="username"))
+    )
+
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs=dict(autocomplete="email"))
+    )
+
+    password = forms.CharField(
+        strip=True,
+        widget=forms.PasswordInput(attrs=dict(autocomplete="current-password")),
+    )
+
+    new_password = forms.CharField(
+        strip=True,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
+
+    password_to_repeat = forms.CharField(
+        strip=True,
+        widget=forms.PasswordInput
+    )
 
 
-class _PasswordConfirmationForm(Form):
-    error_messages = _password_error_messages
-
-    password1 = CharField(widget=PasswordInput, max_length=128)
-    password2 = CharField(widget=PasswordInput, max_length=128)
-
-    def clean_password2(self) -> Password:
-        password1 = self.cleaned_data["password1"]
-        password2 = self.cleaned_data["password2"]
-
-        if password1 != password2:
-            raise ValidationError(
-                self.error_messages["password_mismatch"],
-                code="password_mismatch",
-            )
-
-        return password2
+class UserLoginForm(forms.Form):
+    name = _user_form_fileds.name
+    password = _user_form_fileds.password
 
 
-class UserLoginForm(forms.AuthenticationForm):
-    class Meta:
-        model = User
-        fields = ("name", "password")
+class UserRegistrationForm(forms.Form):
+    name = _user_form_fileds.name
+    email = _user_form_fileds.email
+    new_password = _user_form_fileds.new_password
+    password_to_repeat = _user_form_fileds.password_to_repeat
 
 
-class UserRegistrationForm(forms.UserCreationForm):
-    error_messages = _password_error_messages
-
-    class Meta:
-        model = User
-        fields = ("name", "email", "password1", "password2")
+class _PasswordConfirmationForm(forms.Form):
+    new_password = _user_form_fileds.new_password
+    password_to_repeat = _user_form_fileds.password_to_repeat
 
 
 class RestoringAccessByNameForm(_PasswordConfirmationForm):
-    name = CharField(max_length=128)
+    name = _user_form_fileds.name
 
 
 class RestoringAccessByEmailForm(_PasswordConfirmationForm):
-    email = EmailField(max_length=154)
+    email = _user_form_fileds.email

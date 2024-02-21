@@ -7,10 +7,10 @@ from django.shortcuts import redirect
 
 from apps.confirmation import output as confirmation
 from apps.tasks import output as tasks
-from apps.shared import errors, hashing, models, renders, lib, ui
+from apps.shared import errors, models, renders, lib, ui, types_, validation
 
 
-Sculpture = lib.Sculpture
+Sculpture = types_.Sculpture
 Application = errors.Application
 
 confirmation = confirmation
@@ -20,14 +20,19 @@ ui = ui
 User = models.User
 created_user_of = tasks.created_user_of
 
-hashed = hashing.hashed
-unhashed = hashing.unhashed
-
 half_hidden = lib.half_hidden
 
-same = lib.same
-messages_of = lib.messages_of
-valid = lib.valid
+messages_of = errors.messages_of
+
+to_raise_multiple_errors = validation.to_raise_multiple_errors
+last = validation.last
+latest = validation.latest
+
+same = validation.same
+exists = validation.exists
+
+valid = validation.valid
+
 
 
 @partially

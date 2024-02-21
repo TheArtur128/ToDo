@@ -1,6 +1,6 @@
-from typing import Any, TypeVar
+from typing import Any
 
-from django.forms import Form
+from act import Unia
 
 
 type ErrorMessage = str
@@ -17,4 +17,6 @@ type Password = str
 type PasswordHash = str
 
 
-FormT = TypeVar("_FormT", bound=Form)
+type Sculpture[FormT, OriginalT] = (
+    Unia[FormT, type(_sculpture_original=OriginalT)]
+)

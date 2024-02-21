@@ -1,4 +1,6 @@
-from act import bad, by
+from typing import Iterable
+
+from act import bad, rwill
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -6,7 +8,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
-from apps.access import errors, services, ui
+from apps.access import services, ui
 from apps.access.forms import (
     UserLoginForm, UserRegistrationForm, RestoringAccessByNameForm,
     RestoringAccessByEmailForm
@@ -15,7 +17,7 @@ from apps.access.lib import confirmation, for_anonymous, renders, messages_of
 from apps.access.types_ import Email, URL
 
 
-type _ErrorMesages = bad[tuple[str]]
+type _ErrorMesages = bad[Iterable[str]]
 
 
 @confirmation.register_for(
@@ -28,8 +30,8 @@ def authorization_confirmation(
 ) -> HttpResponse | _ErrorMesages:
     try:
         services.authorization.complete_by(email, request)
-    except* errors.Access as group:
-        message_of = ui.authorization.completion.error_message_of
+    except ExceptionGroup as group:
+        message_of = ui.authorization.completion.error_messages_of
         return bad(messages_of(group, message_of))
 
     return redirect(reverse("tasks:index"))
@@ -45,8 +47,8 @@ def registration_confirmation(
 ) -> HttpResponse | _ErrorMesages:
     try:
         services.registration.complete_by(email, request)
-    except* errors.Access as group:
-        message_of = ui.registration.completion.error_message_of
+    except ExceptionGroup as group:
+        message_of = ui.registration.completion.error_messages_of
         return bad(messages_of(group, message_of))
 
     return redirect(reverse("tasks:index"))
@@ -62,8 +64,8 @@ def access_recovery_confirmation(
 ) -> HttpResponse | _ErrorMesages:
     try:
         services.access_recovery.complete_by(email, request)
-    except* errors.Access as group:
-        message_of = ui.access_recovery.completion.error_message_of
+    except ExceptionGroup as group:
+        message_of = ui.access_recovery.completion.error_messages_of
         return bad(messages_of(group, message_of))
 
     return redirect(reverse("tasks:index"))
@@ -77,7 +79,7 @@ def logout(request: HttpRequest) -> HttpResponse:
     return redirect(reverse("tasks:index"))
 
 
-class LoginView(confirmation.OpeningView):
+class _LoginView(confirmation.OpeningView):
     _form_type = UserLoginForm
     _template_name = "access/login.html"
 
@@ -85,12 +87,11 @@ class LoginView(confirmation.OpeningView):
     def _open_port(request: HttpRequest) -> URL | bad[list[str]]:
         try:
             return services.authorization.open_using(
-                request.POST["username"],
-                request.POST["password"],
-                request,
+                name=request.POST["name"],
+                password=request.POST["password"],
             )
-        except* errors.Access as group:
-            message_of = ui.authorization.opening.error_message_of
+        except ExceptionGroup as group:
+            message_of = ui.authorization.opening.error_messages_of
             return bad(messages_of(group, message_of))
 
 
@@ -102,13 +103,18 @@ class _RegistrationView(confirmation.OpeningView):
     def _open_port(request: HttpRequest) -> URL | _ErrorMesages:
         try:
             return services.registration.open_using(
-                name=request.POST["name"],
-                email=request.POST["email"],
-                password=request.POST["password1"],
+                request.POST["name"],
+                request.POST["email"],
+                request.POST["new_password"],
+                request.POST["password_to_repeat"],
             )
-        except* errors.Access as group:
-            message_of = ui.registration.opening.error_message_of
-            return bad(messages_of(group, message_of |by| request.POST["name"]))
+        except ExceptionGroup as group:
+            message_of = ui.registration.opening.error_messages_of
+            message_of = rwill(message_of)(
+                request.POST["name"],
+                request.POST["email"],
+            )
+            return bad(messages_of(group, message_of))
 
 
 class _AccessRecoveryView(confirmation.OpeningView):
@@ -118,8 +124,8 @@ class _AccessRecoveryView(confirmation.OpeningView):
     def _open_port(self, request: HttpRequest) -> URL | _ErrorMesages:
         try:
             return self._access_recovery(request)
-        except* errors.Access as group:
-            message_of = ui.access_recovery.opening.error_message_of
+        except ExceptionGroup as group:
+            message_of = ui.access_recovery.opening.error_messages_of
             return bad(messages_of(group, message_of))
 
 
@@ -131,7 +137,7 @@ class _AccessRecoveryByNameView(_AccessRecoveryView):
     def _access_recovery(request: HttpRequest) -> URL:
         return services.access_recovery.open_via_name_using(
             request.POST["name"],
-            request.POST["password1"],
+            request.POST["new_password"],
         )
 
 
@@ -143,7 +149,7 @@ class _AccessRecoveryByEmailView(_AccessRecoveryView):
     def _access_recovery(request: HttpRequest) -> URL:
         return services.access_recovery.open_via_email_using(
             request.POST["email"],
-            request.POST["password1"],
+            request.POST["new_password"],
         )
 
 
@@ -155,7 +161,7 @@ def profile(request: HttpRequest) -> HttpResponse:
 
 registrate = for_anonymous(_RegistrationView.as_view())
 
-login = for_anonymous(LoginView.as_view())
+login = for_anonymous(_LoginView.as_view())
 
 restore_access_by_name = for_anonymous(_AccessRecoveryByNameView.as_view())
 

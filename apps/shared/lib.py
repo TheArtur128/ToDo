@@ -1,15 +1,11 @@
+from functools import partial
 from secrets import token_urlsafe
-from typing import Callable, Optional, Iterable
+from typing import Callable, Concatenate, Union, Iterator
 
-from act import fun, then, to, Unia, flat
+from act import fun, then, to, of, ok, Pm, PmA, PmD
 from act.cursors.static import t
 
 from apps.shared.types_ import Token
-
-
-type Sculpture[FormT, OriginalT] = (
-    Unia[FormT, type(_sculpture_original=OriginalT)]
-)
 
 
 def token_generator_with(*, length: int) -> Callable[[], Token]:
@@ -40,33 +36,68 @@ def half_hidden(
     return start + middle + end
 
 
-def same[V](value: Optional[V], *, else_: Exception) -> V:
-    if value is None:
-        raise else_ from else_
+def _to_decorate_with_parameters[A, R](
+    callback_handler: Callable[Concatenate[Callable[[], A], PmD], R]
+) -> Callable[PmD, Callable[Callable[PmA, A], Callable[PmA, R]]]:
+    def get_decorator(
+        *callback_handler_args: PmD.args,
+        **callback_handler_kwargs: PmD.kwargs,
+    ):
+        def decorator(action: Callable[PmA, A]) -> Callable[PmA, R]:
+            def wrapper(
+                *action_args: PmA.args,
+                **action_kwargs: PmA.kwargs,
+            ) -> R:
+                callback = partial(action, *action_args, **action_kwargs)
+                return callback_handler(
+                    callback,
+                    *callback_handler_args,
+                    **callback_handler_kwargs
+                )
 
-    return value
+            return wrapper
+        return decorator
+    return get_decorator
 
 
-def valid[V](value: V, validate: Callable[V, Iterable[Exception]]) -> V:
-    checks = tuple(validate(value))
+def _to_decorate_without_parameters[A, R](
+    callback_handler: Callable[Callable[[], A], R]
+) -> Callable[Callable[Pm, A], Callable[Pm, R]]:
+    def decorator(action: Callable[Pm, A]) -> Callable[Pm, R]:
+        def wrapper(*args: Pm.args, **kwargs: Pm.kwargs) -> R:
+            callback = partial(action, *args, **kwargs)
+            return callback_handler(callback)
 
-    if len(checks) != 0:
-        raise ExceptionGroup(str(), checks)
-
-    return value
+        return wrapper
+    return decorator
 
 
-def messages_of[GroupT: ExceptionGroup, ErrorT: Exception, R](
-    group: GroupT,
-    *searchers: Callable[ErrorT, Iterable[R]],
-) -> tuple[R]:
-    messages = flat(
-        search_using(error)
-        for search_using in searchers
-        for error in group.exceptions
+def to_decorate[A, R](with_parameters: bool = False) -> Union[
+    Callable[
+        Callable[Callable[[], A], R],
+        Callable[Callable[Pm, A], Callable[Pm, R]]
+    ],
+    Callable[
+        Callable[Concatenate[Callable[[], A], PmD], R],
+        Callable[PmD, Callable[Callable[PmA, A], Callable[PmA, R]]]
+    ],
+]:
+    return (
+        _to_decorate_with_parameters
+        if with_parameters
+        else _to_decorate_without_parameters
     )
 
-    if len(messages) == 0:
-        raise group from group
 
-    return messages
+class ReturningIterator[V](Iterator):
+    def __init__(self, iterator: Iterator[V]) -> None:
+        self.__iterator = iterator
+
+    def __next__(self) -> V:
+        try:
+            return next(self.__iterator)
+        except StopIteration as stop:
+            if stop.value is None:
+                raise stop from stop
+
+            return stop.value.value if of(ok, stop.value) else stop.value

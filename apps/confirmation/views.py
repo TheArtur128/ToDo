@@ -1,4 +1,4 @@
-from typing import Optional, Callable, Mapping
+from typing import Optional, Callable, Mapping, Iterable
 
 from act import bad, of
 from django.forms import Form
@@ -37,7 +37,7 @@ def confirm(
         if result is not None:
             return result
         if of(bad, result):
-            errors = result.value
+            errors = tuple(result.value)
 
         is_activation_failed = True
 
@@ -54,7 +54,10 @@ def confirm(
 
 
 class OpeningView(lib.ViewWithForm):
-    type __OpenedPort = Optional[types_.URL | bad[list[types_.ErrorMessage]]]
+    type __OpenedPort = Optional[
+        types_.URL
+        | bad[Iterable[types_.ErrorMessage]]
+    ]
 
     def _open_port(self, request: HttpRequest) -> __OpenedPort:
         raise NotImplementedError
@@ -65,11 +68,11 @@ class OpeningView(lib.ViewWithForm):
         request: HttpRequest,
         form: Form,
         render_with: Callable[Mapping, HttpResponse],
-    ) -> HttpResponse | bad[list[types_.ErrorMessage]]:
+    ) -> HttpResponse | bad[tuple[types_.ErrorMessage]]:
         result = self._open_port(request)
 
         if result is None:
-            return bad([ui.opening.failure_message])
+            return bad((ui.opening.failure_message, ))
         elif of(bad, result):
             return result
 

@@ -2,14 +2,15 @@ from typing import Callable, Mapping, Type, Iterable
 
 from act import bad, of, fun, flat
 from act.cursors.static import v, _
+from django.forms import Form
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.generic import View
 
-from apps.shared.types_ import ErrorMessage, FormT
+from apps.shared.types_ import ErrorMessage
 
 
-class ViewWithForm(View):
+class ViewWithForm[FormT: Form](View):
     form_type = property(fun(v._form_type))
     template_name = property(v._template_name)
 
