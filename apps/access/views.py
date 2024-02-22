@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from act import bad, rwill
+from act import bad, rwill, by
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -48,7 +48,10 @@ def registration_confirmation(
     try:
         services.registration.complete_by(email, request)
     except ExceptionGroup as group:
-        message_of = ui.registration.completion.error_messages_of
+        message_of = (
+            ui.registration.completion.error_messages_of
+            |by| reverse("access:sign-in")
+        )
         return bad(messages_of(group, message_of))
 
     return redirect(reverse("tasks:index"))

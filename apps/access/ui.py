@@ -1,7 +1,6 @@
 from typing import Any, Iterable
 
 from act import val, type
-from django.urls import reverse
 
 from apps.access import errors, types_, lib
 
@@ -82,11 +81,11 @@ class registration:
 
     @val
     class completion:
-        def error_messages_of(error: Any) -> Iterable[str]:
+        def error_messages_of(error: Any, login_page_url: types_.URL) -> Iterable[str]:
             if isinstance(error, errors.UserExists):
                 yield (
                     f"User registration has already been completed. "
-                    f"Login <a href=\"{reverse("access:sign-in")}\">here<a/>"
+                    f"Login <a href=\"{login_page_url}\">here<a/>"
                 )
 
             yield from completion_error_messages_of(error)
