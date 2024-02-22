@@ -81,7 +81,10 @@ class registration:
 
     @val
     class completion:
-        def error_messages_of(error: Any, login_page_url: types_.URL) -> Iterable[str]:
+        def error_messages_of(
+            error: Any,
+            login_page_url: types_.URL,
+        ) -> Iterable[str]:
             if isinstance(error, errors.UserExists):
                 yield (
                     f"User registration has already been completed. "
