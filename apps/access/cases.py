@@ -55,7 +55,6 @@ class registration:
     ) -> UserT:
         user = remembered_user_of(email)
         yield from exists(user, errors.NoUser())
-        yield from rules.users.is_valid(user)
 
         if is_there_user_named(user.name):
             yield errors.UsernameExists()
@@ -81,7 +80,6 @@ class authorization:
     ) -> URL:
         user = user_of(name)
         yield from exists(user, errors.NoUser())
-        yield from rules.users.is_valid(user)
 
         if not is_hash_of(password, user.password_hash):
             yield errors.PasswordMismatch()
@@ -102,7 +100,6 @@ class authorization:
     ) -> AuthorizedT:
         user = user_of(email)
         yield from exists(user, errors.NoUser())
-        yield from rules.users.is_valid(user)
 
         yield raise_
 
@@ -124,7 +121,6 @@ class access_recovery:
     ) -> URL:
         user = user_of(id)
         yield from exists(user, errors.NoUser())
-        yield from rules.users.is_valid(user)
         yield from (
             rules.passwords.is_remembered(new_password, repeated_password)
         )
@@ -152,7 +148,6 @@ class access_recovery:
     ) -> UserT:
         user = user_of(email)
         yield from exists(user, errors.NoUser())
-        yield from rules.users.is_valid(user)
         yield raise_
 
         password_hash = remebered_password_hash_of(user.email)
