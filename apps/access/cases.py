@@ -121,6 +121,7 @@ class access_recovery:
     ) -> URL:
         user = user_of(id)
         yield from exists(user, errors.NoUser())
+        yield from rules.passwords.is_valid(new_password)
         yield from (
             rules.passwords.is_remembered(new_password, repeated_password)
         )
@@ -151,7 +152,7 @@ class access_recovery:
         yield raise_
 
         password_hash = remebered_password_hash_of(user.email)
-        yield from latest(exists(password_hash, errors.NoPassword()))
+        yield from latest(exists(password_hash, errors.NoPasswordHash()))
 
         forget_password_hash_under(user.email)
 
