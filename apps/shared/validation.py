@@ -13,8 +13,8 @@ def same[V](value: Optional[V], *, else_: Exception) -> V:
     return value
 
 
-def exists[V, M](value: Optional[V], message: M) -> tuple[M]:
-    return (message, ) if value is None else tuple()
+def exists[V, M](value: Optional[V], *messages: M) -> tuple[M]:
+    return messages if value is None else tuple()
 
 
 def valid[V](value: V, validate: Callable[V, Iterable[Exception]]) -> V:

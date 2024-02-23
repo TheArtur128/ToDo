@@ -220,7 +220,6 @@ def test_returning_iterator() -> None:
     assert tuple(lib.ReturningIterator(generate())) == (1, None)
 
 
-
 def test_latest() -> None:
     result = tuple(validation.latest([]))
     assert result == tuple()
@@ -237,3 +236,22 @@ def test_latest() -> None:
     result = tuple(validation.latest(range(256)))
     assert result == (*range(255), validation.last(255))
 
+
+def test_exists() -> None:
+    result = validation.exists(None, ':P')
+    assert result == (':P', )
+
+    result = tuple(validation.exists(None, None))
+    assert result == (None, )
+
+    result = tuple(validation.exists(':P', None))
+    assert result == tuple()
+
+    result = tuple(validation.exists(':P', ':D'))
+    assert result == tuple()
+
+    result = tuple(validation.exists(':P', 1, 2, 3))
+    assert result == tuple()
+
+    result = tuple(validation.exists(None, 1, 2, 3))
+    assert result == (1, 2, 3)
