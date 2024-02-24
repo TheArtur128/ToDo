@@ -1,27 +1,27 @@
 from django.urls import path
 
-from apps.access.view import routes
+from apps.access.presentation import views
 
 
 app_name = "access"
 
 urlpatterns = [
-    path("sign-in", routes.login, name="sign-in"),
-    path("sign-up", routes.registrate, name="sign-up"),
-    path("logout", routes.logout, name="logout"),
+    path("sign-in", views.login, name="sign-in"),
+    path("sign-up", views.registrate, name="sign-up"),
+    path("logout", views.logout, name="logout"),
     path(
         "restore-access-by-name",
-        routes.restore_access_by_name,
+        views.restore_access_by_name,
         name="restore-by-name"
     ),
     path(
         "restore-access-by-email",
-        routes.restore_access_by_email,
+        views.restore_access_by_email,
         name="restore-by-email"
     ),
     path(
         "profile",
-        routes.profile,
+        views.profile,
         name="profile",
     ),
 ]

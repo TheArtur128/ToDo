@@ -10,7 +10,7 @@ from django.views.decorators.http import require_GET
 
 from apps.access.adapters import controllers
 from apps.access.core.types_ import Email, URL
-from apps.access.view import ui, forms
+from apps.access.presentation import ui, forms
 from apps.access.lib import confirmation, for_anonymous, renders, messages_of
 
 
