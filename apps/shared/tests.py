@@ -25,7 +25,10 @@ def test_messages_of() -> None:
 
     group = ExceptionGroup(str(), (a, b))
 
-    searchers = (on(a, [1, 2], else_=[]), on(b, [3, 4], else_=[]))
+    searchers = (
+        on("TypeError", [1, 2], else_=[]),
+        on("ValueError", [3, 4], else_=[]),
+    )
 
     try:
         errors.messages_of(group, *searchers)
@@ -35,10 +38,12 @@ def test_messages_of() -> None:
     messages = errors.messages_of(ExceptionGroup(str(), (a, b)), *searchers)
     assert messages == (1, 2, 3, 4)
 
-    messages = errors.messages_of(group, on(a, [128], else_=[]), to(tuple()))
+    searchers = (on("TypeError", [128], else_=[]), to(tuple()))
+    messages = errors.messages_of(group, *searchers)
     assert messages == (128, )
 
-    messages = errors.messages_of(group, to(tuple()), on(a, [128], else_=[]))
+    searchers = (on("TypeError", [128], else_=[]), to(tuple()))
+    messages = errors.messages_of(group, *searchers)
     assert messages == (128, )
 
 
