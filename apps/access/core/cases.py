@@ -3,10 +3,8 @@ from typing import Callable, Optional
 from act import val, raise_, struct
 
 from apps.access.core import errors, rules
-from apps.access.core.sugar import (
-    last, latest, exists, to_raise_multiple_errors
-)
 from apps.access.core.types_ import Username, Email, Password, PasswordHash, URL
+from apps.access.lib import last, latest, exists, to_raise_multiple_errors
 
 
 @struct
