@@ -12,40 +12,44 @@
 ### So
 - Dividing all features into areas as units of operation
 - Isolating areas by allocating separate django applications for them (On average, one application per area or a maximum of 3)
-- Isolating applications by fixing all dependencies between each other with special input (`lib` & `config`) and output (`output`) modules only through which application dependencies can pass
+- Isolating applications by fixing all dependencies between each other with special input (`lib` & `models` & `types` & `forms`) and output (`output`) modules only through which application dependencies can pass
 - Minimizing the use of client-server relationships by introducing generating front on the backed part
-- Separation of **general** application and domain logic from the main part of the application by introducing cheap contracts (`cases` & `rules`)
-- Separation of the periphery of representation formation from others (`ui`)
-- Formation of stabilizing units of logic use (`services`)
+- Separation of the UI periphery (`ui`) from the transport periphery (django `views` / `http`)
+- Separation of general application and domain logic from the main part of applications by introducing contract modules (`cases` & `rules`) and implementation modules (`services` & `repos`) for them
+- Formation of stable and smaller modules (`controllers`) for logic use
 
-In case of increasing complexity, it is necessary to divide applications into microservices, optionally combining them, forming an RPC API based on their output modules and separate libraries from common functionality.
+In case of increasing complexity, it is necessary to divide applications into microservices, optionally combining them, forming an RPC API based on their `output` modules and separate libraries from common functionality.
 
 After 30 applications, the transition is critical.
 
 ### Map
-<img src="https://github.com/TheArtur128/ToDo/blob/main/decor/design.webp"/>
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="https://github.com/TheArtur128/ToDo/blob/main/assets/dark-theme-design.webp">
+ <img src="https://github.com/TheArtur128/ToDo/blob/main/assets/light-theme-design.webp">
+</picture>
 
 #### Dependency types
 - `A —> B` is a dependency of `A` on `B` when `A` knows about `B`
-- `A --> B` is a dependency of `A` on `B` when `A` does not know about `B`
+- `A *-* B` is a dependency between `A` and `B` when `A` and `B` are the same element
 
 #### Element types
-- Elements from which dependency arrows come out and into are files</br>
-- Elements in which files are nested are applications
+- Elements from which dependency arrows come out and into are modules
+- Elements in which modules are nested are layers
+- Elements in which layers are nested are applications
 
-`A` and `A contract` are the same file, but with the emphasis that changes occurring in files that `A` depends on will be suspended by introducing adaptation code to preserve the external behavior of `A`.</br>
+Modules nested within applications are global modules.
 
 ## Naming
 
-Application verticals are identified by the same name, or a logically converted name for a specific element type in the corresponding layer files (`rules`, `cases`, `adapters`, `services`, `ui`):
+Application verticals are identified by the same name, or a logically converted name for a specific element type in corresponding layers (`core`, `adapters`, `presentation`):
 ```py
 authorization = val(...)  # rules
 
 def authorize(...): ...  # cases
 
-authorization = val(...)  # adapters
+authorization = val(...)  # services
 
-def authorized(...): ...  # services
+def authorized(...): ...  # controllers
 
 authorization = val(...)  # ui
 ```
