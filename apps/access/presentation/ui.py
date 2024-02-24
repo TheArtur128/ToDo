@@ -54,6 +54,11 @@ def user_validation_messages_of(error: Any) -> Iterable[str]:
     yield from password_messages_of(error)
 
 
+def password_repetition_messages_of(error: Any) -> Iterable[str]:
+    if isinstance(error, errors.PasswordMismatch):
+        yield "Repeated password is not correct."
+
+
 def completion_messages_of(error: Any) -> Iterable[str]:
     if isinstance(error, errors.NoUser):
         yield "Go back and enter your data again."
@@ -86,8 +91,7 @@ class registration:
             if isinstance(error, errors.EmailExists):
                 yield f"\"{email}\" email is already taken."
 
-            if isinstance(error, errors.PasswordMismatch):
-                yield "Repeated password is not correct."
+            yield from password_repetition_messages_of(error)
 
             if isinstance(error, errors.EmailConfirmation):
                 yield "Choose another email or try again after a while."
@@ -129,6 +133,19 @@ class authorization:
 class access_recovery:
     @val
     class opening:
-        def messages_of(error: Any) -> Iterable[str]:
+        def using_name_messages_of(error: Any) -> Iterable[str]:
             if isinstance(error, errors.NoUser):
-                yield default_exitsing_message
+                yield "Make sure you entered your name correctly."
+
+            yield from access_recovery.opening._other_messages_of(error)
+
+        def using_email_messages_of(error: Any) -> Iterable[str]:
+            if isinstance(error, errors.NoUser):
+                yield "Make sure you entered your email correctly."
+
+            yield from access_recovery.opening._other_messages_of(error)
+
+        def _other_messages_of(error: Any) -> Iterable[str]:
+            yield from password_messages_of(error)
+            yield from password_repetition_messages_of(error)
+            yield from confirmation_messages_of(error)

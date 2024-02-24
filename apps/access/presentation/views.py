@@ -117,40 +117,36 @@ class _RegistrationView(confirmation.OpeningView):
             return bad(messages_of(group, message_of))
 
 
-class _AccessRecoveryView(confirmation.OpeningView):
-    def _access_recovery(request: HttpRequest) -> URL:
-        raise NotImplementedError
-
-    def _open_port(self, request: HttpRequest) -> URL | _ErrorMesages:
-        try:
-            return self._access_recovery(request)
-        except ExceptionGroup as group:
-            message_of = ui.access_recovery.opening.messages_of
-            return bad(messages_of(group, message_of))
-
-
-class _AccessRecoveryByNameView(_AccessRecoveryView):
+class _AccessRecoveryByNameView(confirmation.OpeningView):
     _form_type = forms.RestoringAccessByNameForm
     _template_name = "access/recovery-by-name.html"
 
-    @staticmethod
-    def _access_recovery(request: HttpRequest) -> URL:
-        return controllers.access_recovery.open_using_name(
-            request.POST["name"],
-            request.POST["new_password"],
-        )
+    def _open_port(self, request: HttpRequest) -> URL | _ErrorMesages:
+        try:
+            return controllers.access_recovery.open_using_name(
+                request.POST["name"],
+                request.POST["new_password"],
+                request.POST["password_to_repeat"],
+            )
+        except ExceptionGroup as group:
+            message_of = ui.access_recovery.opening.using_name_messages_of
+            return bad(messages_of(group, message_of))
 
 
-class _AccessRecoveryByEmailView(_AccessRecoveryView):
+class _AccessRecoveryByEmailView(confirmation.OpeningView):
     _form_type = forms.RestoringAccessByEmailForm
     _template_name = "access/recovery-by-email.html"
 
-    @staticmethod
-    def _access_recovery(request: HttpRequest) -> URL:
-        return controllers.access_recovery.open_using_email(
-            request.POST["email"],
-            request.POST["new_password"],
-        )
+    def _open_port(self, request: HttpRequest) -> URL | _ErrorMesages:
+        try:
+            return controllers.access_recovery.open_using_email(
+                request.POST["email"],
+                request.POST["new_password"],
+                request.POST["password_to_repeat"],
+            )
+        except ExceptionGroup as group:
+            message_of = ui.access_recovery.opening.using_email_messages_of
+            return bad(messages_of(group, message_of))
 
 
 @login_required
