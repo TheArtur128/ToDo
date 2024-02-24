@@ -8,7 +8,6 @@ from django_redis import get_redis_connection
 from apps.access.adapters import models
 from apps.access.adapters.types_ import Sculpture
 from apps.access.core import rules
-from apps.access.core.types_ import Email, PasswordHash, Username
 from apps.access.lib import confirmation, created_user_of
 
 
@@ -34,18 +33,18 @@ class user_django_orm_repository:
 
         return user
 
-    def has_named(name: Username) -> bool:
+    def has_named(name: str) -> bool:
         return models.User.objects.filter(name=name).exists()
 
-    def has_with_email(email: Email) -> bool:
+    def has_with_email(email: str) -> bool:
         return models.User.objects.filter(email=email).exists()
 
     @_as_rule_getter
-    def get_by_email(email: Email) -> Optional[_UserSculpture]:
+    def get_by_email(email: str) -> Optional[_UserSculpture]:
         return models.User.objects.filter(email=email).first()
 
     @_as_rule_getter
-    def get_by_name(name: Username) -> Optional[_UserSculpture]:
+    def get_by_name(name: str) -> Optional[_UserSculpture]:
         return models.User.objects.filter(name=name).first()
 
 
@@ -63,7 +62,7 @@ class user_redis_repository:
         return user
 
     @do(optionally)
-    def get_by(do, self, email: Email) -> Optional[rules.User]:
+    def get_by(do, self, email: str) -> Optional[rules.User]:
         name = do(self._connection.hget)(email, "name").decode()
 
         password_hash = do(self._connection.hget)(email, "password_hash")
@@ -78,23 +77,24 @@ class user_redis_repository:
 
 @obj
 class redis_password_hash_repository:
+    type _PasswordHash = str
     _connection = get_redis_connection("passwords")
 
     def saved_under(
         self,
-        email: Email,
-        password_hash: PasswordHash,
-    ) -> PasswordHash:
+        email: str,
+        password_hash: _PasswordHash,
+    ) -> _PasswordHash:
         self._connection.set(email, password_hash)
         self._connection.expire(email, confirmation.activity_minutes * 60)
 
         return password_hash
 
     @do(optionally)
-    def get_by(do, self, email: Email) -> Optional[PasswordHash]:
+    def get_by(do, self, email: str) -> Optional[_PasswordHash]:
         return do(self._connection.get)(email).decode()
 
-    def deleted(self, email: Email) -> None:
+    def deleted(self, email: str) -> None:
         self._connection.delete(email)
         return email
 

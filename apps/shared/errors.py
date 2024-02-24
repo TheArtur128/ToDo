@@ -3,12 +3,12 @@ from typing import Callable, Iterable
 from act import flat, Special
 
 
-def messages_of[ErrorT: Exception, R](
+def messages_of[R](
     group: ExceptionGroup,
-    *searchers: Callable[ErrorT, Iterable[R]],
+    *searchers: Callable[str, Iterable[R]],
 ) -> tuple[R]:
     message_groups = tuple(
-        tuple(search_using(error) for search_using in searchers)
+        tuple(search_using(type(error).__name__) for search_using in searchers)
         for error in group.exceptions
     )
 

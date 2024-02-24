@@ -7,7 +7,6 @@ from django.http import HttpRequest
 
 from apps.access.adapters import models, types_
 from apps.access.core import rules
-from apps.access.core.types_ import URL, Email
 from apps.access.lib import confirmation
 
 
@@ -28,7 +27,7 @@ class registration:
     class opening:
         hash_of = make_password
 
-        def confirmation_page_url_of(email: Email) -> Optional[URL]:
+        def confirmation_page_url_of(email: str) -> Optional[str]:
             return confirmation.open_port_of(
                 confirmation.subjects.registration,
                 confirmation.via.email,
@@ -44,7 +43,7 @@ class authorization:
     class opening:
         is_hash_of = check_password
 
-        def confirmation_page_url_of(user: rules.User) -> Optional[URL]:
+        def confirmation_page_url_of(user: rules.User) -> Optional[str]:
             return confirmation.open_port_of(
                 confirmation.subjects.authorization,
                 confirmation.via.email,
@@ -60,7 +59,7 @@ class access_recovery:
     class opening:
         hash_of = make_password
 
-        def confirmation_page_url_of(user: rules.User) -> Optional[URL]:
+        def confirmation_page_url_of(user: rules.User) -> Optional[str]:
             return confirmation.open_port_of(
                 confirmation.subjects.access_recovery,
                 confirmation.via.email,

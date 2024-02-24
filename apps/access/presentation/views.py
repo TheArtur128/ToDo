@@ -9,7 +9,6 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET
 
 from apps.access.adapters import controllers
-from apps.access.core.types_ import Email, URL
 from apps.access.presentation import ui, forms
 from apps.access.lib import confirmation, for_anonymous, renders, messages_of
 
@@ -23,7 +22,7 @@ type _ErrorMesages = bad[Iterable[str]]
 )
 def authorization_confirmation(
     request: HttpRequest,
-    email: Email,
+    email: str,
 ) -> HttpResponse | _ErrorMesages:
     try:
         controllers.authorization.complete_by(email, request)
@@ -40,7 +39,7 @@ def authorization_confirmation(
 )
 def registration_confirmation(
     request: HttpRequest,
-    email: Email,
+    email: str,
 ) -> HttpResponse | _ErrorMesages:
     try:
         controllers.registration.complete_by(email, request)
@@ -60,7 +59,7 @@ def registration_confirmation(
 )
 def access_recovery_confirmation(
     request: HttpRequest,
-    email: Email,
+    email: str,
 ) -> HttpResponse | _ErrorMesages:
     try:
         controllers.access_recovery.complete_by(email, request)
@@ -84,7 +83,7 @@ class _LoginView(confirmation.OpeningView):
     _template_name = "access/login.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> URL | bad[list[str]]:
+    def _open_port(request: HttpRequest) -> str | bad[list[str]]:
         try:
             return controllers.authorization.open_using(
                 name=request.POST["name"],
@@ -100,7 +99,7 @@ class _RegistrationView(confirmation.OpeningView):
     _template_name = "access/registration.html"
 
     @staticmethod
-    def _open_port(request: HttpRequest) -> URL | _ErrorMesages:
+    def _open_port(request: HttpRequest) -> str | _ErrorMesages:
         try:
             return controllers.registration.open_using(
                 request.POST["name"],
@@ -121,7 +120,7 @@ class _AccessRecoveryByNameView(confirmation.OpeningView):
     _form_type = forms.RestoringAccessByNameForm
     _template_name = "access/recovery-by-name.html"
 
-    def _open_port(self, request: HttpRequest) -> URL | _ErrorMesages:
+    def _open_port(self, request: HttpRequest) -> str | _ErrorMesages:
         try:
             return controllers.access_recovery.open_using_name(
                 request.POST["name"],
@@ -137,7 +136,7 @@ class _AccessRecoveryByEmailView(confirmation.OpeningView):
     _form_type = forms.RestoringAccessByEmailForm
     _template_name = "access/recovery-by-email.html"
 
-    def _open_port(self, request: HttpRequest) -> URL | _ErrorMesages:
+    def _open_port(self, request: HttpRequest) -> str | _ErrorMesages:
         try:
             return controllers.access_recovery.open_using_email(
                 request.POST["email"],

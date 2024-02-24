@@ -3,7 +3,7 @@ from act import val, will
 from django.http import HttpRequest
 
 from apps.access.adapters import services, repos, models
-from apps.access.core import cases, types_
+from apps.access.core import cases
 
 
 type User = models.User
@@ -17,7 +17,7 @@ class registration:
         temporary_repo=repos.user_redis_repository,
     )
 
-    def complete_by(email: types_.Email, request: HttpRequest) -> User:
+    def complete_by(email: str, request: HttpRequest) -> User:
         return cases.registration.complete_by(
             email,
             service=services.registration.Completion(request),
@@ -33,7 +33,7 @@ class authorization:
         repo=repos.user_django_orm_repository,
     )
 
-    def complete_by(email: types_.Email, request: HttpRequest) -> User:
+    def complete_by(email: str, request: HttpRequest) -> User:
         return cases.authorization.complete_by(
             email,
             service=services.authorization.Completion(request),
@@ -55,7 +55,7 @@ class access_recovery:
         password_hash_repo=repos.redis_password_hash_repository,
     )
 
-    def complete_by(email: types_.Email, request: HttpRequest) -> User:
+    def complete_by(email: str, request: HttpRequest) -> User:
         return cases.access_recovery.complete_by(
             email,
             service=services.access_recovery.Completion(request),

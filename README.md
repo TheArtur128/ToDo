@@ -24,8 +24,8 @@ After 30 applications, the transition is critical.
 
 ### Map
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="https://github.com/TheArtur128/ToDo/blob/main/assets/dark-theme-design.webp">
- <img src="https://github.com/TheArtur128/ToDo/blob/main/assets/light-theme-design.webp">
+ <source media="(prefers-color-scheme: dark)" srcset="https://github.com/TheArtur128/ToDo/blob/main/assets/dark-theme-design.png">
+ <img src="https://github.com/TheArtur128/ToDo/blob/main/assets/light-theme-design.png">
 </picture>
 
 #### Dependency types
