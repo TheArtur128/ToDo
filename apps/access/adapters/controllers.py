@@ -43,19 +43,22 @@ class authorization:
 
 @val
 class access_recovery:
-    open_using_name = will(cases.access_recovery.open_using_name)(
+    open_using_name = will(cases.access_recovery.open_using)(
         service=services.access_recovery.opening,
-        repo=repos.user_django_orm_repository,
+        user_repo=repos.access_recovery.name_user_repository,
+        password_hash_repo=repos.redis_password_hash_repository,
     )
 
-    open_using_email = will(cases.access_recovery.open_using_email)(
+    open_using_email = will(cases.access_recovery.open_using)(
         service=services.access_recovery.opening,
-        repo=repos.user_django_orm_repository,
+        user_repo=repos.access_recovery.email_user_repository,
+        password_hash_repo=repos.redis_password_hash_repository,
     )
 
     def complete_by(email: types_.Email, request: HttpRequest) -> User:
         return cases.access_recovery.complete_by(
             email,
             service=services.access_recovery.Completion(request),
-            repo=repos.user_django_orm_repository,    
+            user_repo=repos.user_django_orm_repository,
+            password_hash_repo=repos.redis_password_hash_repository,
         )

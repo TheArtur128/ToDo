@@ -14,7 +14,7 @@ class UserRepository:
     has_with_email: Callable[Email, bool]
     get_by_email: Callable[Email, Optional[rules.User]]
     get_by_name: Callable[Email, Optional[rules.User]]
-    commit: Callable[rules.User, rules.User]
+    committed: Callable[rules.User, rules.User]
 
 
 @struct
@@ -152,45 +152,23 @@ class access_recovery:
     class CompletionService:
         authorized: Callable[rules.User, rules.User]
 
-    def open_using_name(
-        name: Username,
-        new_password: Password,
-        repeated_password: Password,
-        *
-        service: OpeningService,
-        user_repo: UserRepository,
-        password_hash_repo: TemporaryPasswordHashRepository,
-    ) -> URL:
-        return access_recovery._open_for(
-            user_repo.get_by_name(name), new_password, repeated_password,
-            service,
-            password_hash_repo,
-        )
+    type UserID = Username | Email
 
-    def open_using_email(
-        name: Email,
-        new_password: Password,
-        repeated_password: Password,
-        *
-        service: OpeningService,
-        user_repo: UserRepository,
-        password_hash_repo: TemporaryPasswordHashRepository,
-    ) -> URL:
-        return access_recovery._open_for(
-            user_repo.get_by_name(name), new_password, repeated_password,
-            service,
-            password_hash_repo,
-        )
+    @struct
+    class UserRepository[ID: UserID]:
+        user_of: Callable[ID, rules.User]
 
     @to_raise_multiple_errors
-    def _open_for(
-        user: Optional[rules.User],
+    def open_using[ID: UserID](
+        id: ID,
         new_password: Password,
         repeated_password: Password,
         *,
         service: OpeningService,
+        user_repo: UserRepository[ID],
         password_hash_repo: TemporaryPasswordHashRepository,
     ) -> URL:
+        user = user_repo.user_of(id)
         yield from exists(user, errors.NoUser())
         yield from rules.passwords.is_valid(new_password)
         yield from (

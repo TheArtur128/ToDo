@@ -1,6 +1,8 @@
 from typing import Optional
 
-from act import val, obj, do, optionally, sculpture_of, fbind_by, then
+from act import (
+    val, obj, do, optionally, sculpture_of, fbind_by, then, original_of
+)
 from django_redis import get_redis_connection
 
 from apps.access.adapters import models
@@ -25,6 +27,12 @@ class user_django_orm_repository:
     def saved(user: rules.User) -> _UserSculpture:
         user = created_user_of(user.name, user.email, user.password_hash)
         return _for_rules(user)
+
+    def committed[U: _UserSculpture](user: U) -> U:
+        record = original_of(user)
+        record.save()
+
+        return user
 
     def has_named(name: Username) -> bool:
         return models.User.objects.filter(name=name).exists()
@@ -69,16 +77,29 @@ class user_redis_repository:
 
 
 @obj
-class password_hash_redis_repository:
+class redis_password_hash_repository:
     _connection = get_redis_connection("passwords")
 
-    def save_under(self, email: Email, password_hash: PasswordHash) -> None:
+    def saved_under(
+        self,
+        email: Email,
+        password_hash: PasswordHash,
+    ) -> PasswordHash:
         self._connection.set(email, password_hash)
         self._connection.expire(email, confirmation.activity_minutes * 60)
+
+        return password_hash
 
     @do(optionally)
     def get_by(do, self, email: Email) -> Optional[PasswordHash]:
         return do(self._connection.get)(email).decode()
 
-    def delete(self, email: Email) -> None:
+    def deleted(self, email: Email) -> None:
         self._connection.delete(email)
+        return email
+
+
+@val
+class access_recovery:
+    name_user_repository = val(user_of=user_django_orm_repository.get_by_name)
+    email_user_repository = val(user_of=user_django_orm_repository.get_by_email)
