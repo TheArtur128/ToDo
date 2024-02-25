@@ -61,7 +61,7 @@ class registration:
             yield errors.UsernameExists()
 
         if repo.has_with_email(email):
-            yield errors.UserEmailExists()
+            yield errors.EmailExists()
 
         yield raise_
 
