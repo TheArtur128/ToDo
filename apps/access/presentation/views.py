@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from act import bad, rwill, by
+from act import bad, by
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -109,10 +109,6 @@ class _RegistrationView(confirmation.OpeningView):
             )
         except ExceptionGroup as group:
             message_of = ui.registration.opening.messages_of
-            message_of = rwill(message_of)(
-                request.POST["name"],
-                request.POST["email"],
-            )
             return bad(messages_of(group, message_of))
 
 

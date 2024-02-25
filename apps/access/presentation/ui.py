@@ -79,16 +79,12 @@ def confirmation_messages_of(error: Any) -> Iterable[str]:
 class registration:
     @val
     class opening:
-        def messages_of(
-            error: Any,
-            name: str,
-            email: str,
-        ) -> Iterable[str]:
+        def messages_of(error: Any) -> Iterable[str]:
             if error == "UserExists":
-                yield f"\"{name}\" name is already taken."
+                yield "This name is already in use."
 
             if error == "EmailExists":
-                yield f"\"{email}\" email is already taken."
+                yield "This email is already in use."
 
             yield from password_repetition_messages_of(error)
 
