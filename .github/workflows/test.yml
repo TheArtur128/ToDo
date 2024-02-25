@@ -19,8 +19,4 @@ jobs:
         run: poetry install --with dev
 
       - name: pytest
-        env:
-          ARE_TESTS_RUNNING: 1
-          BASE_URL: http://127.0.0.1:8000/
-
         run: poetry run pytest

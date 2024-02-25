@@ -10,13 +10,12 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-BASE_URL = getenv("BASE_URL")
+BASE_URL = getenv("BASE_URL", default="http://127.0.0.1:8000/")
 
 SECRET_KEY = getenv("SECRET_KEY", default=token_urlsafe(64))
 
 IS_DEV = bool(int(getenv("IS_DEV", default="1")))
 
-ARE_TESTS_RUNNING = bool(int(getenv("ARE_TESTS_RUNNING", default='0')))
 DEBUG = IS_DEV
 
 ALLOWED_HOSTS = ['*']
@@ -68,7 +67,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3"
+        "NAME": BASE_DIR / "db" / "db.sqlite3"
     }
 }
 
@@ -124,60 +123,68 @@ STATIC_ROOT = BASE_DIR / "static"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-if not ARE_TESTS_RUNNING:
-    EMAIL_HOST = getenv("EMAIL_HOST")
-    EMAIL_HOST_USER = getenv("EMAIL_HOST_USER")
-    EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD")
-    EMAIL_PORT = int(getenv("EMAIL_PORT"))
-    EMAIL_USE_TLS = bool(int(getenv("EMAIL_USE_TLS", default=False)))
-    EMAIL_USE_SSL = bool(int(getenv("EMAIL_USE_SSL", default=False)))
+EMAIL_HOST = getenv("EMAIL_HOST", default=None)
+EMAIL_HOST_USER = getenv("EMAIL_HOST_USER", default=None)
+EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD", default=None)
+EMAIL_PORT = int(getenv("EMAIL_PORT", default=0))
+EMAIL_USE_TLS = bool(int(getenv("EMAIL_USE_TLS", default=False)))
+EMAIL_USE_SSL = bool(int(getenv("EMAIL_USE_SSL", default=False)))
 
-    DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL")
-    EMAIL_ADMIN = getenv("EMAIL_ADMIN", default=DEFAULT_FROM_EMAIL)
+DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL", default=None)
+EMAIL_ADMIN = getenv("EMAIL_ADMIN", default=DEFAULT_FROM_EMAIL)
 
 
 CONFIRMATION_SESSION_CODE_LENGTH = 64
 CONFIRMATION_ACTIVATION_CODE_LENGTH = 8
 CONFIRMATION_ACTIVITY_MINUTES = 8
 
+REDIS_PASSWORD = getenv("REDIS_PASSWORD", default="todo")
+REDIS_SOCKET = getenv("REDIS_SOCKET", default="localhost:6379")
+
+REDIS_BASIC_LOCATION = f"redis://{REDIS_SOCKET}"
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/0",
+        "LOCATION": f"{REDIS_BASIC_LOCATION}/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": REDIS_PASSWORD,
         }
     },
     "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/1",
+        "LOCATION": f"{REDIS_BASIC_LOCATION}/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": REDIS_PASSWORD,
         }
     },
     "confirmation": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/2",
+        "LOCATION": f"{REDIS_BASIC_LOCATION}/2",
         "TIMEOUT": 60 * CONFIRMATION_ACTIVITY_MINUTES,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": REDIS_PASSWORD,
         }
     },
     "accounts": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/3",
+        "LOCATION": f"{REDIS_BASIC_LOCATION}/3",
         "TIMEOUT": 60 * CONFIRMATION_ACTIVITY_MINUTES,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": REDIS_PASSWORD,
         }
     },
     "passwords": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/4",
+        "LOCATION": f"{REDIS_BASIC_LOCATION}/4",
         "TIMEOUT": 60 * CONFIRMATION_ACTIVITY_MINUTES,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": REDIS_PASSWORD,
         }
     },
 }
