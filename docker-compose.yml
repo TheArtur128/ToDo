@@ -1,0 +1,22 @@
+version: "3"
+services:
+  todo:
+    build: .
+    container_name: todo-app
+    network_mode: host
+    volumes:
+      - ./db:/code/todo/db
+    environment:
+      - REDIS_PASSWORD=todo
+      - REDIS_SOCKET=localhost:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: todo-redis
+    network_mode: host
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "todo"]
+
