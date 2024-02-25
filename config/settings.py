@@ -14,9 +14,10 @@ BASE_URL = getenv("BASE_URL")
 
 SECRET_KEY = getenv("SECRET_KEY", default=token_urlsafe(64))
 
-DEBUG = True
+IS_DEV = bool(int(getenv("IS_DEV", default="1")))
 
 ARE_TESTS_RUNNING = bool(int(getenv("ARE_TESTS_RUNNING", default='0')))
+DEBUG = IS_DEV
 
 ALLOWED_HOSTS = ['*']
 

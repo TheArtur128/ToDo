@@ -1,4 +1,4 @@
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Any
 
 from act import (
     val, to, by, struct, io, do, Do, optionally, reformer_of, I, bad
@@ -25,6 +25,10 @@ class sendings:
     email: _Sending[types_.Email] = val(
         method=adapters.methods.email,
         __call__=adapters.opening.send_activation_code_by.email,
+    )
+    console: _Sending[Any] = val(
+        method=adapters.methods.console,
+        __call__=adapters.opening.send_activation_code_by.console,
     )
 
 

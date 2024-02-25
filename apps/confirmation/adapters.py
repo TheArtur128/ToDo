@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from operator import setitem
 from urllib.parse import urljoin
-from typing import Callable, Optional, Iterable
+from typing import Callable, Optional, Iterable, Any
 
 from act import val, obj, to, do, optionally, binary, fun, I, Do, bad
 from act.cursors.static import p, _
@@ -75,6 +75,9 @@ class opening:
     ) -> ActivationPlace:
         confirmation_page_url = opening._confirmation_page_url_of(endpoint)
 
+        if config.is_dev:
+            send_activation_code = opening.send_activation_code_by.console
+
         do(send_activation_code)(endpoint, confirmation_page_url)
         _endpoint_repository.save(endpoint)
 
@@ -115,6 +118,15 @@ class opening:
             )
 
             return result_code == 1
+
+        def console(
+            endpoint: Endpoint[Any],
+            url: ActivationPlace,
+        ) -> bool:
+            print(
+                f"{endpoint.port.subject} confirmation for "
+                f"\"{endpoint.user_id}\" in {url}: {endpoint.activation_code}"
+            )
 
 
 @val
