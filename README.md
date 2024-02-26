@@ -1,3 +1,13 @@
+## Deployment
+To deploy this application locally:
+- clone this repository
+- optionally populate a `.env` file based on the `.env.template` file, or set the appropriate environment variables
+- run within `docker`
+```
+git clone https://github.com/TheArtur128/ToDo.git
+docker compose --project-directory ./ToDo up
+```
+
 ## Desing
 
 > This application is educational and created in the imaginary setting.
