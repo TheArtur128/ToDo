@@ -6,9 +6,8 @@ COPY . .
 
 RUN apk add npm && \
 npm install typescript -g && \
-tsc && \
 apk add poetry && \
 poetry install --without dev
 
-ENTRYPOINT ["poetry", "run"]
+ENTRYPOINT ["poetry", "run", "scripts/entrypoint.sh"]
 CMD ["python", "manage.py", "runserver"]

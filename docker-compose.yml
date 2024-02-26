@@ -12,7 +12,6 @@ services:
     depends_on:
       - redis
     restart: unless-stopped
-    command: ["ash", "scripts/start-dev-server.sh"]
 
   redis:
     image: redis:alpine
