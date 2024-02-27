@@ -10,15 +10,15 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-BASE_URL = getenv("BASE_URL", default="http://127.0.0.1:8000/")
-
 SECRET_KEY = getenv("SECRET_KEY", default=token_urlsafe(64))
 
 IS_DEV = bool(int(getenv("IS_DEV", default="1")))
 
 DEBUG = IS_DEV
 
-ALLOWED_HOSTS = ['*']
+HOST = getenv("HOST", default="http://localhost:8000")
+ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = [HOST]
 
 INSTALLED_APPS = [
     "django.contrib.admin",

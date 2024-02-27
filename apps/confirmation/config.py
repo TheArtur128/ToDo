@@ -19,7 +19,7 @@ class methods:
     console: Method
 
 
-base_url = settings.BASE_URL
+base_url = settings.HOST
 is_dev = settings.IS_DEV and settings.EMAIL_HOST is None
 
 session_code_length = settings.CONFIRMATION_SESSION_CODE_LENGTH
