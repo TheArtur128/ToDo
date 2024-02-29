@@ -9,6 +9,7 @@ services:
     depends_on:
       - postgres
       - redis
+    command: ["scripts/start.sh", "python", "manage.py", "runserver"]
     restart: unless-stopped
 
   postgres:

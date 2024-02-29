@@ -9,5 +9,5 @@ npm install typescript -g && \
 apk add poetry && \
 poetry install
 
-ENTRYPOINT ["poetry", "run", "scripts/entrypoint.sh"]
+ENTRYPOINT ["poetry", "run"]
 CMD ["python", "manage.py", "runserver"]
