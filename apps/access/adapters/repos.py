@@ -8,7 +8,7 @@ from django_redis import get_redis_connection
 from apps.access.adapters import models
 from apps.access.adapters.types_ import Sculpture
 from apps.access.core import rules
-from apps.access.lib import confirmation, created_user_of
+from apps.access.lib import confirmation, create_defaut_task_settings
 
 
 type _UserSculpture = Sculpture[rules.User, models.User]
@@ -24,8 +24,12 @@ _as_rule_getter = fbind_by(... |then>> optionally(_for_rules))
 @val
 class user_django_orm_repository:
     def saved(user: rules.User) -> _UserSculpture:
-        user = created_user_of(user.name, user.email, user.password_hash)
-        return _for_rules(user)
+        return _for_rules(models.User.objects.create(
+            name=user.name,
+            email=user.email,
+            password_hash=user.password_hash,
+            default_settings=create_defaut_task_settings(),
+        ))
 
     def committed[U: _UserSculpture](user: U) -> U:
         record = original_of(user)

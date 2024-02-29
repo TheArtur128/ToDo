@@ -50,7 +50,10 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "apps/access/presentation/templates"],
+        "DIRS": [
+            BASE_DIR / "apps/access/presentation/templates",
+            BASE_DIR / "apps/tasks/presentation/templates",
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -123,6 +126,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 STATIC_ROOT = BASE_DIR / "static"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "apps/tasks/presentation/static",
+]
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

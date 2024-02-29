@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.tasks.views import index
+from apps.tasks.presentation.views import index
 
 
 app_name = "tasks"

@@ -161,7 +161,7 @@ cython_debug/
 
 # Custom
 test.py
-static
+/static
 *.js
 
 # Custom Redis

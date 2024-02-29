@@ -1,4 +1,7 @@
-from apps.tasks import services
+from typing import Callable
+
+from apps.tasks.adapters import models, controllers
 
 
-created_user_of = services.users.create
+create_defaut_task_settings: Callable[[], models.TaskSettings]
+create_defaut_task_settings = controllers.task_settings.create_defaut

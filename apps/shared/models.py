@@ -82,7 +82,6 @@ class TaskSettings(_VisualizableMixin, models.Model):
     remove_on = models.IntegerField(
         choices=Task.Status.choices,
         default=Task.Status.done,
-        null=True,
     )
 
     def __str__(self) -> str:
@@ -166,7 +165,10 @@ class User(
     is_superuser = models.BooleanField(default=False)
 
     tasks = models.ManyToManyField(Task, blank=True)
-    default_settings = models.OneToOneField(TaskSettings, on_delete=models.PROTECT)
+    default_settings = models.OneToOneField(
+        TaskSettings,
+        on_delete=models.PROTECT,
+    )
 
     USERNAME_FIELD = "name"
     EMAIL_FIELD = "email"

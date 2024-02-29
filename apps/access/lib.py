@@ -14,7 +14,7 @@ confirmation = confirmation
 renders = renders
 ui = ui
 
-created_user_of = tasks.created_user_of
+create_defaut_task_settings = tasks.create_defaut_task_settings
 
 half_hidden = lib.half_hidden
 
