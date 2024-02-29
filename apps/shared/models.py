@@ -1,6 +1,7 @@
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
+from django.contrib.postgres.indexes import HashIndex
 from django.db.models import (
     Model, CASCADE, PositiveIntegerField, DateTimeField, BooleanField,
     CharField, EmailField, ManyToManyField, ForeignKey, PROTECT,
@@ -174,6 +175,9 @@ class User(_VisualizableMixin, AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ("email", "password")
 
     objects = CustomUserManager()
+
+    class Meta:
+        indexes = [HashIndex(fields=["name"]), HashIndex(fields=["email"])]
 
     def has_module_perms(self, label) -> bool:
         return self.is_superuser and self.is_staff and self.is_active
