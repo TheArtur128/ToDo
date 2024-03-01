@@ -27,7 +27,7 @@ class user_django_orm_repository:
         return _for_rules(models.User.objects.create(
             name=user.name,
             email=user.email,
-            password_hash=user.password_hash,
+            password=user.password_hash,
             default_settings=create_defaut_task_settings(),
         ))
 
