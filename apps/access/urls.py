@@ -19,9 +19,4 @@ urlpatterns = [
         views.restore_access_by_email,
         name="restore-by-email"
     ),
-    path(
-        "profile",
-        views.profile,
-        name="profile",
-    ),
 ]

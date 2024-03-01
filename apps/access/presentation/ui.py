@@ -1,20 +1,7 @@
 from string import punctuation
 from typing import Any, Iterable
 
-from act import val, type
-
-from apps.access import lib
-
-
-User = type(name=str, email=str)
-
-
-@val
-class profile:
-    def page_of(user: User) -> lib.ui.LazyPage:
-        context = dict(name=user.name, email=lib.half_hidden(user.email, 4))
-
-        return lib.ui.LazyPage("access/profile.html", context)
+from act import val
 
 
 def username_messages_of(error: Any) -> Iterable[str]:

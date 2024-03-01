@@ -10,7 +10,7 @@ from django.views.decorators.http import require_GET
 
 from apps.access.adapters import controllers
 from apps.access.presentation import ui, forms
-from apps.access.lib import confirmation, for_anonymous, renders, messages_of
+from apps.access.lib import confirmation, for_anonymous, messages_of
 
 
 type _ErrorMesages = bad[Iterable[str]]
@@ -142,12 +142,6 @@ class _AccessRecoveryByEmailView(confirmation.OpeningView):
         except ExceptionGroup as group:
             message_of = ui.access_recovery.opening.using_email_messages_of
             return bad(messages_of(group, message_of))
-
-
-@login_required
-@require_GET
-def profile(request: HttpRequest) -> HttpResponse:
-    return renders.rendered(ui.profile.page_of(request.user), request)
 
 
 registrate = for_anonymous(_RegistrationView.as_view())

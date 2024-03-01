@@ -29,8 +29,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.postgres",
 
+    "rest_framework",
+
     "apps.access",
     "apps.confirmation",
+    "apps.profile",
     "apps.shared",
     "apps.tasks",
 ]
@@ -52,6 +55,7 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
             BASE_DIR / "apps/access/presentation/templates",
+            BASE_DIR / "apps/profile/presentation/templates",
             BASE_DIR / "apps/tasks/presentation/templates",
         ],
         "APP_DIRS": True,

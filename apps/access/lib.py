@@ -7,16 +7,12 @@ from django.shortcuts import redirect
 
 from apps.confirmation import output as confirmation
 from apps.tasks import output as tasks
-from apps.shared import errors, renders, lib, ui, validation
+from apps.shared import errors, validation
 
 
 confirmation = confirmation
-renders = renders
-ui = ui
 
 create_defaut_task_settings = tasks.create_defaut_task_settings
-
-half_hidden = lib.half_hidden
 
 messages_of = errors.messages_of
 
