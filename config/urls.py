@@ -6,10 +6,10 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('', include("apps.access.urls", namespace="access")),
+    path('', include("apps.access.presentation.urls", namespace="access")),
     path('', include("apps.confirmation.urls", namespace="confirmation")),
-    path('', include("apps.profile.urls", namespace="profile")),
-    path('', include("apps.tasks.urls", namespace="tasks")),
+    path('', include("apps.profile.presentation.urls", namespace="profile")),
+    path('', include("apps.tasks.presentation.urls", namespace="tasks")),
 ]
 
 if settings.DEBUG:
