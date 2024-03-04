@@ -5,7 +5,12 @@ from typing import Iterable
 from act import type, val, by
 
 from apps.access.core import errors
-from apps.access.core.types_ import Username, Email, Password, PasswordHash
+
+
+type Username = str
+type Email = str
+type Password = str
+type PasswordHash = str
 
 
 AuthenticationUser = type(name=Username, email=Email, password=Password)
