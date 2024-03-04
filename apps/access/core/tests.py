@@ -4,19 +4,19 @@ from apps.access.core import rules, errors
 from apps.access.core.cases import authorization
 
 
-neutral_user = rules.User("name", "email", "password_hash")
+user = rules.User(0, "name", "email", "password_hash")
 
 
 _user_repo_base = val(
     saved=lambda u: u,
-    commit=lambda u: u,
+    committed=lambda u: u,
 )
 
 full_user_repo = _user_repo_base & val(
     has_named=to(True),
     has_with_email=to(True),
-    get_by_email=lambda e: neutral_user & val(email=e),
-    get_by_name=lambda n: neutral_user & val(name=n),
+    get_by_email=lambda e: user & val(email=e),
+    get_by_name=lambda n: user & val(name=n),
 )
 
 empty_user_repo = _user_repo_base & val(
@@ -30,7 +30,7 @@ empty_user_repo = _user_repo_base & val(
 _base_temporary_user_repo = val(saved=lambda u: u, deleted=lambda u: u)
 
 full_temporary_user_repo = _base_temporary_user_repo & val(
-    get_by=lambda email: neutral_user & val(email=email),
+    get_by=lambda email: user & val(email=email),
 )
 
 empty_temporary_user_repo = (

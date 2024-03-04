@@ -33,7 +33,7 @@ INSTALLED_APPS = [
 
     "apps.access",
     "apps.confirmation",
-    "apps.profile",
+    "apps.profile_",
     "apps.shared",
     "apps.tasks",
 ]
@@ -53,11 +53,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [
-            BASE_DIR / "apps/access/presentation/templates",
-            BASE_DIR / "apps/profile/presentation/templates",
-            BASE_DIR / "apps/tasks/presentation/templates",
-        ],
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -111,7 +107,7 @@ AUTH_PASSWORD_VALIDATORS = [
     }
 ]
 
-AUTH_USER_MODEL = "shared.User"
+AUTH_USER_MODEL = "access.User"
 
 LOGIN_URL = "/sign-in"
 
@@ -130,10 +126,6 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 STATIC_ROOT = BASE_DIR / "static"
-
-STATICFILES_DIRS = [
-    BASE_DIR / "apps/tasks/presentation/static",
-]
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

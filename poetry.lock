@@ -77,6 +77,16 @@ redis = ">=3,<4.0.0 || >4.0.0,<4.0.1 || >4.0.1"
 hiredis = ["redis[hiredis] (>=3,!=4.0.0,!=4.0.1)"]
 
 [[package]]
+name = "event-bus"
+version = "1.0.2"
+description = "A simple python event bus."
+optional = false
+python-versions = "*"
+files = [
+    {file = "event-bus-1.0.2.tar.gz", hash = "sha256:0a04385cca50e7cf4e1bccde288bf95bbe64cd81144b4d32c86448d946180c5c"},
+]
+
+[[package]]
 name = "iniconfig"
 version = "2.0.0"
 description = "brain-dead simple config-ini parsing"
@@ -355,4 +365,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "709682df9f8c542742bd633d620dd483958fa6faeb97e6441da389fc7748668e"
+content-hash = "9ab00b6dd1b3412e22e710eb05d4c3c168eae49eadafc877bf9ceede6a5e6c8e"

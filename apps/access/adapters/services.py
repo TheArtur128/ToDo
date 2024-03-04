@@ -5,16 +5,16 @@ from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password
 from django.http import HttpRequest
 
-from apps.access.adapters import models, types_
+from apps.access import models
 from apps.access.core import rules
-from apps.access.lib import confirmation
+from apps.access.lib import confirmation, Sculpture
 
 
 class _Authorizable:
     def __init__(self, request: HttpRequest = None) -> None:
         self.__request = request
 
-    def authorized[U: types_.Sculpture[Any, models.User]](self, user: U) -> U:
+    def authorized[U: Sculpture[Any, models.User]](self, user: U) -> U:
         auth.login(self.__request, original_of(user))
         return user
 

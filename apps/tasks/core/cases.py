@@ -6,10 +6,20 @@ from apps.tasks.core import rules
 
 
 @val
-class task_settings:
+class users:
     @struct
-    class Repo:
-        create_defaut: Callable[[], rules.default_new_task_settings]
+    class UserRepo[ID: int]:
+        user_of: Callable[ID, rules.User]
+        saved: Callable[rules.User, rules.User]
 
-    def create_defaut(*, repo: Repo) -> rules.default_new_task_settings:
-        return repo.create_defaut()
+    def on_is_registred(
+        id: int,
+        *,
+        user_repo: UserRepo,
+    ) -> rules.User:
+        user = user_repo.user_of(id)
+
+        if user is not None:
+            return user
+
+        return user_repo.saved(rules.users.created_with(id))

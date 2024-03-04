@@ -7,7 +7,7 @@
             {% csrf_token %}
             {% block form_title %}{% endblock %}
             <div class="form-fields">{% block fields %}{% endblock %}</div>
-            <div class="push"><button type="submit" class="push-data">Push</button></div>
+            <div><button type="submit" class="big-button">Push</button></div>
             {% block extension %}{% endblock %}
         </form>
         {% if errors %}

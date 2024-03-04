@@ -49,6 +49,7 @@ button {
   background-color: #8e7aff;
   color: #282828;
   border: solid 1px #8c78ff;
+  cursor: pointer;
 }
 
 button:active {
@@ -121,8 +122,7 @@ div {
   bottom: 0px;
 }
 
-.push-data {
-  width: 55px;
+.big-button {
   height: 30px;
   font-size: 17px;
 }
@@ -203,4 +203,10 @@ div {
   border: solid 2px #c8c8c9;
   background-color: #e6e2d6;
   border-radius: 6px;
+}
+
+#to-map-button {
+  width: 55px;
+  height: 30px;
+  font-size: 17px;
 }

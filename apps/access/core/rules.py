@@ -8,8 +8,9 @@ from apps.access.core import errors
 from apps.access.core.types_ import Username, Email, Password, PasswordHash
 
 
-User = type(name=Username, email=Email, password_hash=PasswordHash)
 AuthenticationUser = type(name=Username, email=Email, password=Password)
+RegistrationUser = type(name=Username, email=Email, password_hash=PasswordHash)
+User = type(id=int, name=Username, email=Email, password_hash=PasswordHash)
 
 
 @val
@@ -71,6 +72,12 @@ class users:
             yield errors.UsernameTooLong()
         elif len(user.name) < 2:
             yield errors.UsernameTooShort()
+
+
+@val
+class registration_users:
+    def is_valid(user: RegistrationUser) -> Iterable[errors.Access]:
+        yield from users.is_valid(user)
 
 
 @val

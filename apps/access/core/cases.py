@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 
 from act import val, raise_, struct
 
@@ -9,7 +9,7 @@ from apps.access.lib import last, latest, exists, to_raise_multiple_errors
 
 @struct
 class UserRepository:
-    saved: Callable[rules.User, rules.User]
+    saved: Callable[rules.RegistrationUser, rules.User]
     has_named: Callable[Username, bool]
     has_with_email: Callable[Email, bool]
     get_by_email: Callable[Email, Optional[rules.User]]
@@ -19,9 +19,9 @@ class UserRepository:
 
 @struct
 class TemporaryUserRepository:
-    saved: Callable[rules.User, rules.User]
-    get_by: Callable[Email, rules.User]
-    deleted: Callable[rules.User, rules.User]
+    saved: Callable[rules.RegistrationUser, rules.RegistrationUser]
+    get_by: Callable[Email, rules.RegistrationUser]
+    deleted: Callable[rules.RegistrationUser, rules.RegistrationUser]
 
 
 @struct
@@ -41,6 +41,10 @@ class registration:
     @struct
     class CompletionService:
         authorized: Callable[rules.User, rules.User]
+
+    @struct
+    class EventBus[ID: int]:
+        send_user_is_registered: Callable[ID, Any]
 
     @to_raise_multiple_errors
     def open_using(
@@ -69,7 +73,9 @@ class registration:
         yield from exists(confirmation_page_url, errors.EmailConfirmation())
         yield raise_
 
-        user = rules.User(user.name, user.email, service.hash_of(user.password))
+        password_hash = service.hash_of(user.password)
+
+        user = rules.RegistrationUser(user.name, user.email, password_hash)
         temporary_repo.saved(user)
 
         return confirmation_page_url
@@ -79,6 +85,7 @@ class registration:
         email: Email,
         *,
         service: CompletionService,
+        event_bus: EventBus,
         repo: UserRepository,
         temporary_repo: TemporaryUserRepository,
     ) -> UserT:
@@ -93,7 +100,10 @@ class registration:
 
         yield raise_
 
-        return service.authorized(repo.saved(temporary_repo.deleted(user)))
+        user = repo.saved(temporary_repo.deleted(user))
+        event_bus.send_user_is_registered(user.id)
+
+        return service.authorized(user)
 
 
 @val

@@ -7,8 +7,6 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.generic import View
 
-from apps.shared.types_ import ErrorMessage
-
 
 class ViewWithForm[FormT: Form](View):
     form_type = property(fun(v._form_type))
@@ -46,5 +44,5 @@ class ViewWithForm[FormT: Form](View):
         request: HttpRequest,
         form: FormT,
         render_with: Callable[Mapping, HttpResponse]
-    ) -> HttpResponse | bad[Iterable[ErrorMessage]]:
+    ) -> HttpResponse | bad[Iterable[str]]:
         raise NotImplementedError
