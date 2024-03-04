@@ -22,10 +22,10 @@ docker compose --project-directory ./ToDo up
 ### So
 - Dividing all features into areas as units of operation
 - Isolating areas by allocating separate django applications for them (On average, one application per area or a maximum of 3)
-- Isolating applications by fixing all dependencies between each other with special input (`lib` & `models` & `types` & `forms`) and output (`output`) modules only through which application dependencies can pass
+- Isolating applications by fixing all dependencies between each other with special input (`lib`) and output (`output`) modules only through which application dependencies can pass
 - Minimizing the use of client-server relationships by introducing generating front on the backed part
 - Separation of the UI periphery (`ui`) from the transport periphery (django `views` / `http`)
-- Separation of general application and domain logic from the main part of applications by introducing contract modules (`cases` & `rules`) and implementation modules (`services` & `repos`) for them
+- Separation of general application and domain logic from the main part of applications by introducing contract modules (`cases` & `rules`) and implementation modules (`services` & `repos` & `event_buses`) for them
 - Formation of stable and smaller modules (`controllers`) for logic use
 
 In case of increasing complexity, it is necessary to divide applications into microservices, optionally combining them, forming an RPC API based on their `output` modules and separate libraries from common functionality.
