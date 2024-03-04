@@ -3,40 +3,42 @@ from typing import Callable, Optional, Any
 from act import val, raise_, struct
 
 from apps.access.core import errors, rules
-from apps.access.core.types_ import Username, Email, Password, PasswordHash, URL
 from apps.access.lib import last, latest, exists, to_raise_multiple_errors
+
+
+type URL = str
 
 
 @struct
 class UserRepository:
     saved: Callable[rules.RegistrationUser, rules.User]
-    has_named: Callable[Username, bool]
-    has_with_email: Callable[Email, bool]
-    get_by_email: Callable[Email, Optional[rules.User]]
-    get_by_name: Callable[Email, Optional[rules.User]]
+    has_named: Callable[rules.Username, bool]
+    has_with_email: Callable[rules.Email, bool]
+    get_by_email: Callable[rules.Email, Optional[rules.User]]
+    get_by_name: Callable[rules.Email, Optional[rules.User]]
     committed: Callable[rules.User, rules.User]
 
 
 @struct
 class TemporaryUserRepository:
     saved: Callable[rules.RegistrationUser, rules.RegistrationUser]
-    get_by: Callable[Email, rules.RegistrationUser]
+    get_by: Callable[rules.Email, rules.RegistrationUser]
     deleted: Callable[rules.RegistrationUser, rules.RegistrationUser]
 
 
 @struct
 class TemporaryPasswordHashRepository:
-    get_by: Callable[Email, PasswordHash]
-    saved_under: Callable[[Email, PasswordHash], PasswordHash]
-    deleted: Callable[Email, Email]
+    get_by: Callable[rules.Email, rules.PasswordHash]
+    saved_under: Callable[[rules.Email, rules.PasswordHash], rules.PasswordHash]
+    deleted: Callable[rules.Email, rules.Email]
 
 
 @val
 class registration:
     @struct
     class OpeningService:
-        confirmation_page_url_of: Callable[Email, Optional[URL]]
-        hash_of: Callable[Password, PasswordHash]
+        confirmation_page_url_of: Callable[rules.Email, Optional[URL]]
+        hash_of: Callable[rules.Password, rules.PasswordHash]
 
     @struct
     class CompletionService:
@@ -48,10 +50,10 @@ class registration:
 
     @to_raise_multiple_errors
     def open_using(
-        name=Username,
-        email=Email,
-        password=Password,
-        repeated_password=Password,
+        name=rules.Username,
+        email=rules.Email,
+        password=rules.Password,
+        repeated_password=rules.Password,
         *,
         service: OpeningService,
         repo: UserRepository,
@@ -62,16 +64,18 @@ class registration:
         yield from rules.authentication_users.is_valid(user)
 
         if repo.has_named(name):
-            yield errors.UsernameExists()
+            yield errors.rules.UsernameExists()
 
         if repo.has_with_email(email):
-            yield errors.EmailExists()
+            yield errors.rules.EmailExists()
 
         yield raise_
 
         confirmation_page_url = service.confirmation_page_url_of(email)
-        yield from exists(confirmation_page_url, errors.EmailConfirmation())
-        yield raise_
+        yield from latest(exists(
+            confirmation_page_url,
+            errors.rules.EmailConfirmation(),
+        ))
 
         password_hash = service.hash_of(user.password)
 
@@ -82,7 +86,7 @@ class registration:
 
     @to_raise_multiple_errors
     def complete_by[UserT: rules.User](
-        email: Email,
+        email: rules.Email,
         *,
         service: CompletionService,
         event_bus: EventBus,
@@ -93,10 +97,10 @@ class registration:
         yield from exists(user, errors.NoUser())
 
         if repo.has_named(user.name):
-            yield errors.UsernameExists()
+            yield errors.rules.UsernameExists()
 
         if repo.has_with_email(email):
-            yield errors.UserEmailExists()
+            yield errors.Userrules.EmailExists()
 
         yield raise_
 
@@ -110,7 +114,7 @@ class registration:
 class authorization:
     @struct
     class OpeningService:
-        is_hash_of: Callable[[Password, PasswordHash], bool]
+        is_hash_of: Callable[[rules.Password, rules.PasswordHash], bool]
         confirmation_page_url_of: Callable[rules.User, Optional[URL]]
 
     @struct
@@ -119,8 +123,8 @@ class authorization:
 
     @to_raise_multiple_errors
     def open_using[UserT: rules.User](
-        name: Username,
-        password: Password,
+        name: rules.Username,
+        password: rules.Password,
         *,
         service: OpeningService,
         repo: UserRepository,
@@ -138,7 +142,7 @@ class authorization:
 
     @to_raise_multiple_errors
     def complete_by(
-        email: Email,
+        email: rules.Email,
         *,
         service: CompletionService,
         repo: UserRepository,
@@ -155,14 +159,14 @@ class authorization:
 class access_recovery:
     @struct
     class OpeningService:
-        hash_of: Callable[Password, PasswordHash]
+        hash_of: Callable[rules.Password, rules.PasswordHash]
         confirmation_page_url_of: Callable[rules.User, Optional[URL]]
     
     @struct
     class CompletionService:
         authorized: Callable[rules.User, rules.User]
 
-    type UserID = Username | Email
+    type UserID = rules.Username | rules.Email
 
     @struct
     class UserRepository[ID: UserID]:
@@ -171,8 +175,8 @@ class access_recovery:
     @to_raise_multiple_errors
     def open_using[ID: UserID](
         id: ID,
-        new_password: Password,
-        repeated_password: Password,
+        new_password: rules.Password,
+        repeated_password: rules.Password,
         *,
         service: OpeningService,
         user_repo: UserRepository[ID],
@@ -199,7 +203,7 @@ class access_recovery:
 
     @to_raise_multiple_errors
     def complete_by(
-        email: Email,
+        email: rules.Email,
         *,
         service: CompletionService,
         user_repo: UserRepository,
