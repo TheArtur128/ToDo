@@ -8,7 +8,8 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
-from apps.access import controllers, ui, forms
+from apps.access import ui, forms
+from apps.access.adapters import controllers
 from apps.access.lib import confirmation, for_anonymous, messages_of
 
 

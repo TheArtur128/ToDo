@@ -3,7 +3,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
-from apps.tasks import controllers
+from apps.tasks.adapters import controllers
 from apps.tasks.lib import event_bus
 
 
