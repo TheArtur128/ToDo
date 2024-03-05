@@ -32,15 +32,17 @@ In case of increasing complexity, it is necessary to divide applications into mi
 
 After 30 applications, the transition is critical.
 
-### Map
+After separating all applications of the `main` microservice into separate microservices, it becomes the `front` microservice.
+
+### Application structure map
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="https://github.com/TheArtur128/ToDo/blob/main/assets/dark-theme-design.png">
- <img src="https://github.com/TheArtur128/ToDo/blob/main/assets/light-theme-design.png">
+ <source media="(prefers-color-scheme: dark)" srcset="https://github.com/TheArtur128/ToDo/blob/main/assets/application-structure-map/dark-theme.png">
+ <img src="https://github.com/TheArtur128/ToDo/blob/main/assets/application-structure-map/light-theme.png">
 </picture>
 
 #### Dependency types
-- `A —> B` is a dependency of `A` on `B` when `A` knows about `B`
-- `A *-* B` is a dependency between `A` and `B` when `A` and `B` are the same element
+- `A —> B` is a dependency of `A` on `B` when `A` uses `B`
+- `A --> B` is a dependency between `A` and `B` when `A` implements protocols used by `B`
 
 #### Element types
 - Elements from which dependency arrows come out and into are modules
@@ -48,6 +50,19 @@ After 30 applications, the transition is critical.
 - Elements in which layers are nested are applications
 
 Modules nested within applications are global modules.
+
+`Shared app` is a special application with an arbitrary structure that has no dependencies on other applications.</br>
+All modules of this application are `output` modules.
+
+### Application relationship map
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="https://github.com/TheArtur128/ToDo/blob/main/assets/application-relationship-map/dark-theme.png">
+ <img src="https://github.com/TheArtur128/ToDo/blob/main/assets/application-relationship-map/light-theme.png">
+</picture>
+
+#### Dependency types
+- `A —> B` is a dependency of `A` on `B` when `A`'s `lib` module uses `B`'s `output` modules
+- `A --> B` is a dependency between `A` and `B` when `A` reads a message from the local message bus sent by `B`
 
 ## Naming
 
@@ -120,7 +135,7 @@ class send:
 
 ## Priorities
 
-Use `type` and `struct` from the [`act`](https://github.com/TheArtur128/Act) library instead of `dataclass` if possible:
+Use `type` and `struct` from the [act](https://github.com/TheArtur128/Act) library instead of `dataclass` if possible:
 ```py
 # Bad
 @dataclass
