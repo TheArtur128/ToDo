@@ -1,7 +1,7 @@
 from act import val
 
-from apps.tasks.adapters import repos
-from apps.tasks.core import cases
+from apps.map.adapters import repos
+from apps.map.core import cases
 
 
 @val

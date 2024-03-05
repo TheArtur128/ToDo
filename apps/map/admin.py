@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.tasks import models
+from apps.map import models
 
 
 admin.site.register(models.User)

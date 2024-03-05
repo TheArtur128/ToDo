@@ -2,7 +2,7 @@ from typing import Callable
 
 from act import val, struct
 
-from apps.tasks.core import rules
+from apps.map.core import rules
 
 
 @val

@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.tasks.lib import mixins
+from apps.map.lib import mixins
 
 
 class _Positionable(models.Model):

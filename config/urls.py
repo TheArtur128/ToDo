@@ -8,8 +8,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path('', include("apps.access.urls", namespace="access")),
     path('', include("apps.confirmation.urls", namespace="confirmation")),
+    path('', include("apps.map.urls", namespace="map")),
     path('', include("apps.profile_.urls", namespace="profile_")),
-    path('', include("apps.tasks.urls", namespace="tasks")),
 ]
 
 if settings.DEBUG:

@@ -31,9 +31,9 @@ INSTALLED_APPS = [
 
     "apps.access",
     "apps.confirmation",
+    "apps.map",
     "apps.profile_",
     "apps.shared",
-    "apps.tasks",
 ]
 
 MIDDLEWARE = [

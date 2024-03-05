@@ -2,8 +2,8 @@ from typing import Optional
 
 from act import obj, optionally
 
-from apps.tasks import models
-from apps.tasks.core import rules
+from apps.map import models
+from apps.map.core import rules
 
 
 type User = models.User

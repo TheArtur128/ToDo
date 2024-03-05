@@ -30,7 +30,7 @@ def authorization_confirmation(
         message_of = ui.authorization.completion.messages_of
         return bad(messages_of(group, message_of))
 
-    return redirect(reverse("tasks:map"))
+    return redirect(reverse("map:map"))
 
 
 @confirmation.register_for(
@@ -50,7 +50,7 @@ def registration_confirmation(
         )
         return bad(messages_of(group, message_of))
 
-    return redirect(reverse("tasks:map"))
+    return redirect(reverse("map:map"))
 
 
 @confirmation.register_for(
@@ -67,7 +67,7 @@ def access_recovery_confirmation(
         message_of = ui.access_recovery.completion.messages_of
         return bad(messages_of(group, message_of))
 
-    return redirect(reverse("tasks:map"))
+    return redirect(reverse("map:map"))
 
 
 @login_required
@@ -75,7 +75,7 @@ def access_recovery_confirmation(
 def logout(request: HttpRequest) -> HttpResponse:
     auth.logout(request)
 
-    return redirect(reverse("tasks:map"))
+    return redirect(reverse("map:map"))
 
 
 class _LoginView(confirmation.OpeningView):
