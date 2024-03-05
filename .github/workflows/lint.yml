@@ -12,11 +12,8 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: install poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-
-      - name: install dependences
-        run: poetry install --with dev
+      - name: install ruff
+        run: pip install ruff
 
       - name: ruff
-        run: poetry run ruff .
+        run: python -m ruff .
