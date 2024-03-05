@@ -13,11 +13,11 @@ docker compose --project-directory ./ToDo up
 > This application is educational and created in the imaginary setting.
 
 ### Why
-- Relatively large starting team
+- Starting team of 15-20 people with permanent hiring
 - Great need for speed in adding features
 - Inconsistent workload in the near future
-- Relatively low fault tolerance requirement
-- Relatively low availability requirement
+- Low fault-tolerance requirement at the start
+- Low availability requirement at the start
 
 ### So
 - Dividing all features into areas as units of operation
@@ -27,10 +27,16 @@ docker compose --project-directory ./ToDo up
 - Separation of the UI periphery (`ui`) from the transport periphery (django `views` / `http`)
 - Separation of general application and domain logic from the main part of applications by introducing contract modules (`cases` & `rules`) and implementation modules (`services` & `repos` & `event_buses`) for them
 - Formation of stable and smaller modules (`controllers`) for logic use
+- Splitting applications into microservices after 30 applications or when an inconsistent workload occurs.
 
-In case of increasing complexity, it is necessary to divide applications into microservices, optionally combining them, forming an RPC API based on their `output` modules and separate libraries from common functionality.
+Once separation begins, the original monolithic application becomes the `main` microservice.
 
-After 30 applications, the transition is critical.
+The division is made in the following steps:
+1. Complete removal of the `adapters` and `core` layers of the desired application into its microservice
+2. Partial removal of the `ui` module into the microservice according to its implementation module actor
+3. Optionally create/supplement a library of common functionality between microservices
+4. Based on the `output` interface of the module and the actors that include the `views` module of the original application create RPC and RESTful APIs for the microservice used [FastAPI](https://github.com/tiangolo/fastapi) and implement eventing by using Kafka and [FastStream](https://github.com/airtai/faststream) for it.
+5. Change dependent applications of the `main` microservice so that they use APIs and message broker of the new microservice.
 
 After separating all applications of the `main` microservice into separate microservices, it becomes the `front` microservice.
 
