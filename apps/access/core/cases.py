@@ -64,17 +64,17 @@ class registration:
         yield from rules.authentication_users.is_valid(user)
 
         if repo.has_named(name):
-            yield errors.rules.UsernameExists()
+            yield errors.UsernameExists()
 
         if repo.has_with_email(email):
-            yield errors.rules.EmailExists()
+            yield errors.EmailExists()
 
         yield raise_
 
         confirmation_page_url = service.confirmation_page_url_of(email)
         yield from latest(exists(
             confirmation_page_url,
-            errors.rules.EmailConfirmation(),
+            errors.EmailConfirmation(),
         ))
 
         password_hash = service.hash_of(user.password)
@@ -97,10 +97,10 @@ class registration:
         yield from exists(user, errors.NoUser())
 
         if repo.has_named(user.name):
-            yield errors.rules.UsernameExists()
+            yield errors.UsernameExists()
 
         if repo.has_with_email(email):
-            yield errors.Userrules.EmailExists()
+            yield errors.EmailExists()
 
         yield raise_
 

@@ -14,6 +14,7 @@ class users:
 
     def on_is_registred(
         id: int,
+        first_user_map_name: str,
         *,
         user_repo: UserRepo,
     ) -> rules.User:
@@ -22,4 +23,6 @@ class users:
         if user is not None:
             return user
 
-        return user_repo.saved(rules.users.created_with(id))
+        user = rules.users.created_with(id, first_user_map_name)
+
+        return user_repo.saved(user)

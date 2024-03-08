@@ -11,17 +11,61 @@ class _Positionable(models.Model):
         abstract = True
 
 
+class Map(_Positionable):
+    top = models.OneToOneField(
+        "MapTop",
+        related_name="map",
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+    global_task_settings = models.OneToOneField(
+        "TaskSettings",
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+
+class MapTop(models.Model):
+    user = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="maps",
+    )
+    name = models.CharField(max_length=128)
+    next = models.OneToOneField(
+        "self",
+        related_name="previous",
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+
 class Task(mixins.Visualizable, _Positionable):
     class Status(models.IntegerChoices):
         active = (1, "active")
         done = (2, "done")
         failed = (3, "failed")
 
-    user = models.ForeignKey(
-        "User",
+    root_map = models.ForeignKey(
+        "Map",
         on_delete=models.CASCADE,
         related_name="tasks",
     )
+    submap = models.OneToOneField(
+        "Map",
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
     description = models.CharField(max_length=128)
     status = models.IntegerField(choices=Status.choices, default=Status.active)
     settings = models.OneToOneField(
