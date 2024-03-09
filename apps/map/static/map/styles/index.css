@@ -1,0 +1,85 @@
+#panels .block {
+  border-radius: 8px;
+}
+
+#panels div {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  padding-top: 0px;
+}
+
+#way-panel {
+  top: 5px;
+  height: 75px;
+  position: absolute;
+  right: 5px;
+  width: 250px;
+}
+
+#creation-panel {
+  user-select: none;
+  text-align: left;
+  height: 98px;
+  width: 323px;
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translate(-50%);
+  border-color: #1dcc74;
+}
+
+#avatar {
+  user-select: none;
+  border: solid 2px #d8dce3;
+  border-radius: 35px;
+  position: absolute;
+  left: 72%;
+  top: 9%;
+}
+
+#back-button {
+  user-select: none;
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  left: 46.7%;
+  top: 13%;
+  border: solid 2px #c8c8c9;
+  background-color: #e6e2d6;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#add-button {
+  user-select: none;
+  cursor: pointer;
+  position: relative;
+  left: 13px;
+  top: 4px;
+  background-color: #21ea85;
+  border: solid 2px #25ac68;
+  border-radius: 50px;
+}
+
+#description {
+  font-family: "Nunito";
+  font-weight: 500;
+  user-select: contain;
+  resize: none;
+  position: relative;
+  top: 10px;
+  left: 10px;
+  border-radius: 6px;
+  background-color: #e7fff3;
+  overflow: hidden;
+}
+
+#description:focus {
+  background-color: #21ea85;
+}
+
+#map {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}

@@ -1,15 +1,26 @@
 {% extends "shared/base.html" %}
 {% load static %}
 
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href={% static 'map/styles/index.css' %}>
+{% endblock %}
+
 {% block body %}
-    <div id="index-ways" class="block">
-        <a href="{% url 'profile_:profile' %}">
-            <img id="avatar" src="{% static 'shared/images/avatars/robot.png' %}" width="57" height="57">
-        </a>
-        <div id="back-button">
-            <img src="{% static 'shared/images/back-button.png' %}" width="50" height="50">
+    <canvas id="map"></canvas>
+    <div id="panels">
+        <div id="creation-panel" class="block">
+            <textarea id="description", maxlength="128" rows="4" cols="32" required></textarea>
+            <img id="add-button" width="60" height="60" src="{% static 'map/images/add-button.png' %}">
+        </div>
+        <div id="way-panel" class="block">
+            <a href="{% url 'profile_:profile' %}">
+                <img id="avatar" src="{% static 'shared/images/avatars/robot.png' %}" width="57" height="57">
+            </a>
+            <div id="back-button">
+                <img src="{% static 'shared/images/back-button.png' %}" width="50" height="50">
+            </div>
         </div>
     </div>
-    This is a main page :D
-    <script type="text/javascript" src="{% static 'map/scripts/index.js' %}"></script>
+    <script type="module" src="{% static 'map/scripts/index.js' %}"></script>
 {% endblock %}
