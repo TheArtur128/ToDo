@@ -47,7 +47,7 @@ After separating all applications of the `main` microservice into separate micro
 </picture>
 
 #### Dependency types
-- `A —> B` is a dependency of `A` on `B` when `A` uses `B`
+- `A —> B` is a dependency between `A` and `B` when `A` uses `B`
 - `A --> B` is a dependency between `A` and `B` when `A` implements protocols used by `B`
 
 #### Element types
