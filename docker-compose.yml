@@ -22,7 +22,7 @@ services:
       POSTGRES_DB: todo
       POSTGRES_USER: todo
       POSTGRES_PASSWORD: todo
-    restart: always
+    restart: unless-stopped
 
   redis:
     image: redis:alpine
