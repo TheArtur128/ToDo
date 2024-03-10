@@ -35,7 +35,7 @@ The division is made in the following steps:
 1. Complete removal of the `adapters` and `core` layers of the desired application into its microservice
 2. Partial removal of the `ui` module into the microservice according to its implementation module actor
 3. Optionally create/supplement a library of common functionality between microservices
-4. Based on the `output` interface of the module and the actors that include the `views` module of the original application create RPC and RESTful APIs for the microservice used [FastAPI](https://github.com/tiangolo/fastapi) and implement eventing by using Kafka and [FastStream](https://github.com/airtai/faststream) for it.
+4. Based on the `output` interface of the module and the actors that include the `views` module of the original application create RPC and RESTful APIs for the microservice used [FastAPI](https://github.com/tiangolo/fastapi) and implement eventing by using RabbitMQ and [FastStream](https://github.com/airtai/faststream) for it.
 5. Change dependent applications of the `main` microservice so that they use APIs and message broker of the new microservice.
 
 After separating all applications of the `main` microservice into separate microservices, it becomes the `front` microservice.
