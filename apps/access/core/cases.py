@@ -50,10 +50,10 @@ class registration:
 
     @to_raise_multiple_errors
     def open_using(
-        name=rules.Username,
-        email=rules.Email,
-        password=rules.Password,
-        repeated_password=rules.Password,
+        name: rules.Username,
+        email: rules.Email,
+        password: rules.Password,
+        repeated_password: rules.Password,
         *,
         service: OpeningService,
         repo: UserRepository,
