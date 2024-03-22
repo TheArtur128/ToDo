@@ -51,14 +51,14 @@ User = type(
 
 @val
 class maps:
-    def is_name_valid(name: str) -> Iterable[errors.Core]:
+    def is_name_valid(name: str) -> Iterable[errors.Map]:
         if len(name) > 128:
             yield errors.MapNameIsTooLong()
 
         if len(name) == 0:
             yield errors.MapNameIsTooShort()
 
-    def is_valid(top_map: TopMap) -> Iterable[errors.Core]:
+    def is_valid(top_map: TopMap) -> Iterable[errors.Map]:
         yield from maps.is_name_valid(top_map.name)
 
 
@@ -100,10 +100,10 @@ class tasks:
             position=Position(x=x, y=y),
         )
 
-    def is_valid(task: Task) -> Iterable[errors.Core]:
+    def is_valid(task: Task) -> Iterable[errors.Map]:
         yield from tasks.is_description_valid(task.description)
 
-    def is_description_valid(description: str) -> Iterable[errors.Core]:
+    def is_description_valid(description: str) -> Iterable[errors.Map]:
         if len(description) > 128:
             yield errors.TaskDescriptionIsTooLong()
 

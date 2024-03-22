@@ -13,7 +13,9 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(
+    urlpatterns.extend(static(
         settings.STATIC_URL,
         document_root=settings.STATIC_ROOT
-    )
+    ))
+
+    urlpatterns.append(path("api/auth", include('rest_framework.urls')))

@@ -1,85 +1,24 @@
-from typing import Optional
+from typing import Optional, Any
 
-from act import tmap, optionally, obj
+from act import optionally, obj, original_of, type
+from django.db import transaction
+from rest_framework.request import Request
 
 from apps.map import models
+from apps.map.adapters import sculptures
 from apps.map.core import rules
 
 
 type User = models.User
-
-
-def _task_settings_of(
-    task_settings_record: models.TaskSettings,
-) -> rules.TaskSettings:
-    return rules.TaskSettings(
-        remove_task_on=rules.TaskStatus(task_settings_record.remove_task_on),
-    )
-
-
-def _submap_of(map_record: models.Map) -> rules.Submap:
-    global_task_settings = optionally(_task_settings_of)(
-        map_record.global_task_settings,
-    )
-
-    return rules.Submap(
-        id=map_record.id,
-        user_position=rules.Position(x=map_record.x, y=map_record.y),
-        global_task_settings=global_task_settings,
-        tasks=tmap(_task_of, map_record.tasks),
-    )
-
-
-def _task_of(task_record: models.Task) -> rules.Task:
-    return rules.Task(
-        id=task_record.id,
-        description=task_record.description,
-        status=rules.TaskStatus(task_record.status),
-        settings=optionally(_task_settings_of)(task_record.settings),
-        submap=optionally(_submap_of)(task_record),
-        position=rules.Position(x=task_record.x, y=task_record.y),
-    )
-
-
-def _top_map_of(map_top_record: models.MapTop) -> rules.TopMap:
-    global_task_settings = optionally(_task_settings_of)(
-        map_top_record.global_task_settings,
-    )
-
-    user_position = rules.Position(
-        x=map_top_record.map.x,
-        y=map_top_record.map.y,
-    )
-
-    tasks = tmap(_task_of, map_top_record.map.tasks)
-
-    return rules.TopMap(
-        id=map_top_record.id,
-        name=map_top_record.name,
-        global_task_settings=global_task_settings,
-        user_position=user_position,
-        tasks=tasks,
-        next=optionally(_top_map_of)(map_top_record.next),
-        previous=optionally(_top_map_of)(map_top_record.previous),
-    )
-
-
-def _user_of(user_record: models.User) -> rules.User:
-    global_task_settings = optionally(_task_settings_of)(
-        user_record.global_task_settings,
-    )
-
-    return rules.User(
-        id=user_record.id,
-        maps=tmap(_top_map_of, user_record.maps),
-        global_task_settings=global_task_settings,
-    )
+type Task = models.Task
 
 
 @obj
 class django_orm_users:
     def user_of(self, id: int) -> Optional[User]:
-        return optionally(_user_of)(models.User.objects.filter(id=id).first())
+        user_record = models.User.objects.filter(id=id).first()
+
+        return optionally(sculptures.user_of)(user_record)
 
     def saved(self, user: rules.User) -> User:
         settings_record = self._create_task_settings(user.global_task_settings)
@@ -122,3 +61,36 @@ class django_orm_users:
         return models.TaskSettings.objects.create(
             remove_task_on=settings_record.remove_task_on.value
         )
+
+
+class django_orm_case_tasks:
+    class UserRepo:
+        def __init__(self, request: Request) -> None:
+            self.__request = request
+
+        def get_current(self) -> Optional[rules.User]:
+            if not isinstance(self.__request.user, models.User):
+                return None
+
+            return sculptures.user_of(self.__request.user)
+
+    @obj
+    class top_maps:
+        def top_map_of(id: int) -> Optional[rules.TopMap]:
+            top = models.MapTop.objects.filter(id=id).first()
+
+            return optionally(sculptures.top_map_of)(top)
+
+    @obj
+    class tasks:
+        def saved[S: type(_sculpture_original=models.Task)](
+            task_sculpture: S,
+        ) -> S:
+            task_record = original_of(task_sculpture)
+            task_record.save()
+
+            return task_sculpture
+
+
+def django_orm_uow(*_: Any, **__: Any) -> transaction.Atomic:
+    return transaction.atomic()

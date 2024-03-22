@@ -1,10 +1,17 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
-from apps.map.views import map_
+from apps.map import views
+
+
+router = DefaultRouter()
+
+router.register("tasks", views.TaskViewSet, "task")
 
 
 app_name = "map"
 
 urlpatterns = [
-    path('', map_, name="map"),
+    path('', views.map_, name="map"),
+    path('api/map/0.1v/', include(router.urls)),
 ]

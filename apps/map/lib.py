@@ -11,6 +11,9 @@ mixins = val(Visualizable=mixins.Visualizable)
 
 
 to_raise_multiple_errors = validation.to_raise_multiple_errors
+
+raise_ = validation.raise_
+
 last = validation.last
 latest = validation.latest
 

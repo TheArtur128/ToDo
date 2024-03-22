@@ -16,7 +16,11 @@ IS_DEV = bool(int(getenv("IS_DEV", default="1")))
 
 DEBUG = IS_DEV
 
-HOST = getenv("HOST", default="http://localhost:8000")
+PROTOCOL = getenv("PROTOCOL", default="http://")
+DOMAIN = getenv("DOMAIN", default="localhost")
+
+HOST = f"{PROTOCOL}{DOMAIN}"
+
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [HOST]
 
@@ -28,6 +32,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.postgres",
+
+    "rest_framework",
 
     "apps.access",
     "apps.confirmation",
@@ -44,6 +50,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.shared.middleware.default_header_settings_middleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -198,3 +205,14 @@ CACHES = {
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': (
+        'rest_framework.pagination.PageNumberPagination'
+    ),
+    'PAGE_SIZE': 5,
+}
+
+
+DEFAULT_HEADERS = {"HTTP_HOST": DOMAIN}
