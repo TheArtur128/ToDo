@@ -1,6 +1,6 @@
 from typing import Iterator, Callable
 
-from act import tmap, optionally, Unia, type, val
+from act import optionally, Unia, type, val, out
 from django.db.models.query import QuerySet
 
 from apps.map import models
@@ -73,18 +73,17 @@ def task_of(task_record: models.Task) -> rules.Task:
 
 @_to_make_sculpture
 def top_map_of(map_top_record: models.MapTop) -> rules.TopMap:
+    map_ = out(map_top_record).map
+
     global_task_settings = optionally(task_settings_of)(
-        map_top_record.global_task_settings,
+        out(map_).global_task_settings,
     )
 
-    user_position = rules.Position(
-        x=map_top_record.map.x,
-        y=map_top_record.map.y,
-    )
+    user_position = rules.Position(x=map_.x, y=map_.y)
 
     tasks = QuerySetSculpture(
         task_of,
-        map_top_record.map.tasks.all(),
+        map_.tasks.all(),
         map_top_record,
     )
 
@@ -95,7 +94,7 @@ def top_map_of(map_top_record: models.MapTop) -> rules.TopMap:
         user_position=user_position,
         tasks=tasks,
         next=optionally(top_map_of)(map_top_record.next),
-        previous=optionally(top_map_of)(map_top_record.previous),
+        previous=optionally(top_map_of)(out(map_top_record).previous),
     )
 
 
@@ -107,6 +106,6 @@ def user_of(user_record: models.User) -> rules.User:
 
     return rules.User(
         id=user_record.id,
-        maps=tmap(top_map_of, user_record.maps.all()),
+        maps=QuerySetSculpture(top_map_of, user_record.maps.all(), user_record),
         global_task_settings=global_task_settings,
     )

@@ -59,7 +59,7 @@ class tasks:
         yield from exists(current_user, errors.NoCurrentUser())
 
         top_map = top_map_repo.top_map_of(top_map_id)
-        yield from exists(current_user, errors.NoTopMap())
+        yield from exists(top_map, errors.NoTopMap())
 
         yield raise_
 

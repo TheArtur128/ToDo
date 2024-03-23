@@ -1,6 +1,6 @@
 from typing import Optional, Any
 
-from act import optionally, obj, original_of, type
+from act import optionally, val, obj, original_of, type
 from django.db import transaction
 from rest_framework.request import Request
 
@@ -31,16 +31,13 @@ class django_orm_users:
         for top_map in user.maps:
             self._create_map(top_map, user_record)
 
-        return user_record
+        return sculptures.user_of(user_record)
 
     def _create_map(
         self,
-        top_map: Optional[rules.TopMap],
+        top_map: rules.TopMap,
         user_record: models.User,
     ) -> models.MapTop:
-        if top_map is None:
-            return None
-
         map_record = models.Map.objects.create(
             x=top_map.user_position.x,
             y=top_map.user_position.y,
@@ -64,24 +61,23 @@ class django_orm_users:
 
 
 class django_orm_case_tasks:
-    class UserRepo:
+    class Users:
         def __init__(self, request: Request) -> None:
             self.__request = request
 
         def get_current(self) -> Optional[rules.User]:
-            if not isinstance(self.__request.user, models.User):
-                return None
+            return optionally(sculptures.user_of)(
+                models.User.objects.filter(id=self.__request.user.id).first()
+            )
 
-            return sculptures.user_of(self.__request.user)
-
-    @obj
+    @val
     class top_maps:
         def top_map_of(id: int) -> Optional[rules.TopMap]:
             top = models.MapTop.objects.filter(id=id).first()
 
             return optionally(sculptures.top_map_of)(top)
 
-    @obj
+    @val
     class tasks:
         def saved[S: type(_sculpture_original=models.Task)](
             task_sculpture: S,

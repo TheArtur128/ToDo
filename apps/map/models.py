@@ -12,15 +12,6 @@ class _Positionable(models.Model):
 
 
 class Map(_Positionable):
-    top = models.OneToOneField(
-        "MapTop",
-        related_name="map",
-        on_delete=models.SET_NULL,
-        default=None,
-        null=True,
-        blank=True,
-    )
-
     global_task_settings = models.OneToOneField(
         "TaskSettings",
         on_delete=models.SET_NULL,
@@ -31,6 +22,12 @@ class Map(_Positionable):
 
 
 class MapTop(models.Model):
+    map = models.OneToOneField(
+        Map,
+        related_name="top",
+        on_delete=models.CASCADE,
+    )
+
     user = models.ForeignKey(
         "User",
         on_delete=models.CASCADE,

@@ -31,9 +31,9 @@ class tasks:
             description,
             x,
             y,
-            user_repo=repos.django_orm_case_tasks.UserRepo(request),
+            user_repo=repos.django_orm_case_tasks.Users(request),
             top_map_repo=repos.django_orm_case_tasks.top_maps,
-            task_repo=repos.django_orm_case_tasks.task_repo,
+            task_repo=repos.django_orm_case_tasks.tasks,
             uow=repos.django_orm_uow,
             service=services.tasks,
         )

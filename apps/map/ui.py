@@ -1,4 +1,4 @@
-from typing import Optional, Container
+from typing import Callable, Optional, Container
 
 from act import val, type
 from rest_framework import status
@@ -8,6 +8,10 @@ first_user_map_name = "Main"
 
 
 APIErrorResult = type(status_code=int, type=Optional[str])
+
+type APIErrorResultFactory[ValuesT: Container] = (
+    Callable[ValuesT, Optional[APIErrorResult]]
+)
 
 
 @val
