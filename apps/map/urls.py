@@ -13,5 +13,5 @@ app_name = "map"
 
 urlpatterns = [
     path('', views.map_, name="map"),
-    path('api/map/0.1v/', include(router.urls)),
+    path('api/0.1v/map/', include(router.urls)),
 ]
