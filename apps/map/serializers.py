@@ -7,9 +7,9 @@ from apps.map.adapters import controllers
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Task
-        fields = ["id", "root_map_id", "description", "x", "y"]
+        fields = ["id", "top_map_id", "description", "x", "y"]
 
-    root_map_id = serializers.IntegerField(read_only=True, source="root_map.id")
+    top_map_id = serializers.IntegerField(source="root_map.id")
 
     def create(self, validated_data: dict) -> models.Task:
         return controllers.tasks.add(

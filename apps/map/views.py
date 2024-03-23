@@ -14,7 +14,7 @@ from apps.map.lib import event_bus
 
 def _error_response_for(result: ui.APIErrorResult) -> Response:
     return Response(
-        dict(type=result.type),
+        dict(detail=result.type),
         status=result.status_code,
         exception=True,
     )
