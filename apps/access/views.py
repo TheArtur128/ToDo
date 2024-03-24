@@ -10,7 +10,7 @@ from django.views.decorators.http import require_GET
 
 from apps.access import ui, forms
 from apps.access.adapters import controllers
-from apps.access.lib import confirmation, for_anonymous, messages_of
+from apps.access.lib import confirmation, for_anonymous, messages_of, event_bus
 
 
 type _ErrorMesages = bad[Iterable[str]]
@@ -151,3 +151,9 @@ login = for_anonymous(_LoginView.as_view())
 restore_access_by_name = for_anonymous(_AccessRecoveryByNameView.as_view())
 
 restore_access_by_email = for_anonymous(_AccessRecoveryByEmailView.as_view())
+
+
+event_bus.add_event(
+    controllers.registration.roll_back_completion,
+    "user_registration_is_failed",
+)

@@ -2,7 +2,7 @@ from act import val, will
 
 from django.http import HttpRequest
 
-from apps.access.adapters import event_buses, services, repos
+from apps.access.adapters import event_buses, services, repos, uows
 from apps.access.core import cases
 
 
@@ -24,6 +24,14 @@ class registration:
             event_bus=event_buses.registration,
             repo=repos.user_django_orm_repository,
             temporary_repo=repos.user_redis_repository,
+            uow=uows.django_orm,
+        )
+
+    def roll_back_completion(user_id: int) -> None:
+        return cases.registration.roll_back_completion(
+            user_id,
+            repo=repos.user_django_orm_repository,
+            uow=uows.django_orm,
         )
 
 

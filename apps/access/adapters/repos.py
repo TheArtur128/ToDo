@@ -42,6 +42,10 @@ class user_django_orm_repository:
         return models.User.objects.filter(email=email).exists()
 
     @_as_rule_getter
+    def id_user_of(id: int) -> Optional[User]:
+        return models.User.objects.filter(id=id).first()
+
+    @_as_rule_getter
     def get_by_email(email: str) -> Optional[User]:
         return models.User.objects.filter(email=email).first()
 

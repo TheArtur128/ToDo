@@ -1,7 +1,7 @@
 from act import val, original_of
 from rest_framework.request import Request
 
-from apps.map.adapters import config, repos, services
+from apps.map.adapters import config, repos, services, uows
 from apps.map.core import cases
 
 
@@ -12,6 +12,7 @@ class users:
             id,
             config.first_user_map_name,
             user_repo=repos.django_orm_users,
+            uow=uows.django_orm,
         )
 
         return original_of(user)
@@ -34,7 +35,7 @@ class tasks:
             user_repo=repos.django_orm_case_tasks.Users(request),
             top_map_repo=repos.django_orm_case_tasks.top_maps,
             task_repo=repos.django_orm_case_tasks.tasks,
-            uow=repos.django_orm_uow,
+            uow=uows.django_orm,
             service=services.tasks,
         )
 

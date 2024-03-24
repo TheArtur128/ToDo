@@ -8,18 +8,24 @@ from apps.map.lib import to_raise_multiple_errors, raise_, last, exists
 
 
 @val
-class users:
+class users[ID: int]:
     @struct
-    class UserRepo[ID: int]:
+    class UserRepo:
         user_of: Callable[ID, rules.User]
         saved: Callable[rules.User, rules.User]
+
+    EventBus = type(sent_failed_registration_message_with=Callable[ID, str])
+
+    UoW = Callable[UserRepo, AbstractContextManager]
 
     def on_is_registred(
         id: int,
         first_user_map_name: str,
         *,
         user_repo: UserRepo,
-    ) -> rules.User:
+        uow: UoW,
+        event_bus: EventBus,
+    ) -> Optional[rules.User]:
         user = user_repo.user_of(id)
 
         if user is not None:
@@ -27,7 +33,13 @@ class users:
 
         user = rules.users.created_with(id, first_user_map_name)
 
-        return user_repo.saved(user)
+        with uow(user_repo):
+            try:
+                return user_repo.saved(user)
+            except Exception as error:
+                event_bus.sent_failed_registration_message_with(id)
+
+                raise error from error
 
 
 @val

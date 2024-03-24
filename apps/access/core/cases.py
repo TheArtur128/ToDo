@@ -1,4 +1,5 @@
 from typing import Callable, Optional, Any
+from contextlib import AbstractContextManager
 
 from act import val, raise_, struct
 
@@ -10,12 +11,14 @@ type URL = str
 
 
 @struct
-class UserRepository:
+class UserRepository[ID: int]:
     saved: Callable[rules.RegistrationUser, rules.User]
     has_named: Callable[rules.Username, bool]
     has_with_email: Callable[rules.Email, bool]
+    id_user_of: Callable[ID, Optional[rules.User]]
     get_by_email: Callable[rules.Email, Optional[rules.User]]
     get_by_name: Callable[rules.Email, Optional[rules.User]]
+    deleted: Callable[rules.User, rules.User]
     committed: Callable[rules.User, rules.User]
 
 
@@ -35,6 +38,13 @@ class TemporaryPasswordHashRepository:
 
 @val
 class registration:
+    CompletionUoW = Callable[
+        [UserRepository, TemporaryUserRepository],
+        AbstractContextManager,
+    ]
+
+    CompletionRollbackUoW = Callable[UserRepository, AbstractContextManager]
+
     @struct
     class OpeningService:
         confirmation_page_url_of: Callable[rules.Email, Optional[URL]]
@@ -92,6 +102,7 @@ class registration:
         event_bus: EventBus,
         repo: UserRepository,
         temporary_repo: TemporaryUserRepository,
+        uow: CompletionUoW
     ) -> UserT:
         user = temporary_repo.get_by(email)
         yield from exists(user, errors.NoUser())
@@ -104,10 +115,26 @@ class registration:
 
         yield raise_
 
-        user = repo.saved(temporary_repo.deleted(user))
+        with uow(repo, temporary_repo):
+            user = repo.saved(temporary_repo.deleted(user))
+
         event_bus.send_user_is_registered(user.id)
 
         return service.authorized(user)
+
+    def roll_back_completion(
+        id: int,
+        *,
+        repo: UserRepository,
+        uow: CompletionRollbackUoW,
+    ) -> None:
+        user = repo.id_user_of(id)
+
+        if user is None:
+            return
+
+        with uow(repo):
+            repo.deleted(user)
 
 
 @val

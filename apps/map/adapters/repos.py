@@ -86,7 +86,3 @@ class django_orm_case_tasks:
             task_record.save()
 
             return task_sculpture
-
-
-def django_orm_uow(*_: Any, **__: Any) -> transaction.Atomic:
-    return transaction.atomic()
