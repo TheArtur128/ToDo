@@ -4,7 +4,7 @@ from typing import Callable, Iterable, Optional, Any
 from act import val, struct, type
 
 from apps.map.core import rules, errors
-from apps.map.lib import to_raise_multiple_errors, raise_, last, exists
+from apps.map.lib import to_raise_multiple_errors, raise_, last, latest, exists
 
 
 @val
@@ -83,3 +83,14 @@ class tasks:
             service.add_to(top_map.tasks, task)
 
         return task
+
+    @to_raise_multiple_errors
+    def on_top_map_with_id(
+        top_map_id: int,
+        *,
+        top_map_repo: TopMapRepo,
+    ) -> Iterable[rules.Task]:
+        top_map = top_map_repo.top_map_of(top_map_id)
+        yield from latest(exists(top_map, errors.NoTopMap()))
+
+        return top_map.tasks

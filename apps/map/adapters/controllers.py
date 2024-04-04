@@ -1,13 +1,15 @@
 from act import val, original_of
+from django.db.models.query import QuerySet
 from rest_framework.request import Request
 
+from apps.map import models
 from apps.map.adapters import config, repos, services, uows
 from apps.map.core import cases
 
 
 @val
 class users:
-    def on_is_registred(id: int) -> repos.User:
+    def on_is_registred(id: int) -> models.User:
         user = cases.users.on_is_registred(
             id,
             config.first_user_map_name,
@@ -26,7 +28,7 @@ class tasks:
         description: str,
         x: int,
         y: int,
-    ) -> repos.Task:
+    ) -> models.Task:
         task = cases.tasks.add(
             top_map_id,
             description,
@@ -40,3 +42,13 @@ class tasks:
         )
 
         return original_of(task)
+
+    def on_top_map_with_id(top_map_id: int) -> (
+        "QuerySet[models.Task, models.Task]"
+    ):
+        tasks = cases.tasks.on_top_map_with_id(
+            top_map_id,
+            top_map_repo=repos.django_orm_case_tasks.top_maps,
+        )
+
+        return tasks.query_set
