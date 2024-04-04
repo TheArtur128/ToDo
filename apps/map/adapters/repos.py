@@ -1,7 +1,7 @@
 from typing import Optional
 
 from act import optionally, val
-from django import db
+from django import db  # noqa: F401
 from rest_framework.request import Request
 
 from apps.map import models

@@ -42,7 +42,9 @@ class rules:
         self,
         task_settings_record: models.TaskSettings,
     ) -> core.rules.TaskSettings:
-        remove_task_on = core.rules.TaskStatus(task_settings_record.remove_task_on)
+        remove_task_on = core.rules.TaskStatus(
+            task_settings_record.remove_task_on,
+        )
 
         return _with_original_which_is(task_settings_record)(
             core.rules.TaskSettings(remove_task_on=remove_task_on)
