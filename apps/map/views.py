@@ -38,7 +38,7 @@ def map_(request: HttpRequest) -> HttpResponse:
     return render(request, "map/map.html")
 
 
-class TaskViewSet(viewsets.ModelViewSet):
+class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Task.objects.all()
     serializer_class = serializers.TaskSerializer
 

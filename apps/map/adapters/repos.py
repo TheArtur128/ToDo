@@ -1,6 +1,7 @@
 from typing import Optional
 
 from act import optionally, val
+from django import db
 from rest_framework.request import Request
 
 from apps.map import models
@@ -10,6 +11,7 @@ from apps.map.core import rules
 
 type User = models.User
 type Task = models.Task
+type Tasks = "db.models.query.QuerySet[models.Task, models.Task]"
 
 
 @val
@@ -46,6 +48,4 @@ class django_orm_case_tasks:
     @val
     class tasks:
         def saved(task: rules.Task) -> rules.Task:
-            return sculptures.rules.task_of(
-                sculptures.DjangoOrmRecords(are_saved=True).task_of(task)
-            )
+            return task

@@ -42,14 +42,14 @@ class rules:
         self,
         task_settings_record: models.TaskSettings,
     ) -> core.rules.TaskSettings:
-        remove_task_on = rules.TaskStatus(task_settings_record.remove_task_on)
+        remove_task_on = core.rules.TaskStatus(task_settings_record.remove_task_on)
 
-        return _with_original_which_is(task_settings_record)(rules.TaskSettings(
-            remove_task_on=remove_task_on,
-        ))
+        return _with_original_which_is(task_settings_record)(
+            core.rules.TaskSettings(remove_task_on=remove_task_on)
+        )
 
     def submap_of(self, map_record: models.Map) -> core.rules.Submap:
-        global_task_settings = optionally(rules.task_settings_of)(
+        global_task_settings = optionally(self.task_settings_of)(
             map_record.global_task_settings,
         )
 
@@ -59,9 +59,9 @@ class rules:
             map_record,
         )
 
-        return _with_original_which_is(map_record)(rules.Submap(
+        return _with_original_which_is(map_record)(core.rules.Submap(
             id=map_record.id,
-            user_position=rules.Position(x=map_record.x, y=map_record.y),
+            user_position=core.rules.Position(x=map_record.x, y=map_record.y),
             global_task_settings=global_task_settings,
             tasks=tasks,
         ))
@@ -70,10 +70,10 @@ class rules:
         return _with_original_which_is(task_record)(core.rules.Task(
             id=task_record.id,
             description=task_record.description,
-            status=rules.TaskStatus(task_record.status),
+            status=core.rules.TaskStatus(task_record.status),
             settings=optionally(self.task_settings_of)(task_record.settings),
             submap=optionally(self.submap_of)(task_record),
-            position=rules.Position(x=task_record.x, y=task_record.y),
+            position=core.rules.Position(x=task_record.x, y=task_record.y),
         ))
 
     def top_map_of(self, map_top_record: models.MapTop) -> core.rules.TopMap:
@@ -83,7 +83,7 @@ class rules:
             map_.global_task_settings,
         )
 
-        user_position = rules.Position(x=map_.x, y=map_.y)
+        user_position = core.rules.Position(x=map_.x, y=map_.y)
 
         tasks = QuerySetSculpture(
             self.task_of,
@@ -91,7 +91,7 @@ class rules:
             map_top_record,
         )
 
-        return _with_original_which_is(map_top_record)(rules.TopMap(
+        return _with_original_which_is(map_top_record)(core.rules.TopMap(
             id=map_top_record.id,
             name=map_top_record.name,
             global_task_settings=global_task_settings,
@@ -112,7 +112,7 @@ class rules:
             user_record,
         )
 
-        return _with_original_which_is(user_record)(rules.User(
+        return _with_original_which_is(user_record)(core.rules.User(
             id=user_record.id,
             maps=maps,
             global_task_settings=global_task_settings,
@@ -236,7 +236,6 @@ class DjangoOrmRecords:
 
         return submap_record
 
-    @partially
     def _current[R: _DjangoOrmRecord](self, record: R) -> R:
         if self._are_saved:
             record.save()

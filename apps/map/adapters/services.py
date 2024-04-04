@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from act import val, Special, original_of, Unia, type
+from act import val, Special, Unia, type
 
 from apps.map import models
 from apps.map.core import rules
@@ -27,4 +27,9 @@ class tasks:
     ) -> None:
         assert isinstance(tasks, sculptures.QuerySetSculpture)
 
-        original_of(task).root_map = tasks.owner
+        task_record = sculptures.DjangoOrmRecords(are_saved=True).task_of(
+            task,
+            tasks.owner.map,
+        )
+
+        task._sculpture_original = task_record
