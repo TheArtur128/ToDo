@@ -67,7 +67,7 @@ All modules of this application are `output` modules.
 </picture>
 
 #### Dependency types
-- `A —> B` is a dependency of `A` on `B` when `A`'s `lib` module uses `B`'s `output` modules
+- `A —> B` is a dependency between `A` and `B` when `A`'s `lib` module uses `B`'s `output` modules
 - `A --> B` is a dependency between `A` and `B` when `A` reads a message from the local message bus sent by `B`
 
 ## Naming
