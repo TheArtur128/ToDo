@@ -4,8 +4,7 @@ from typing import Iterator, Callable, Iterable, Self
 from act import optionally, obj, type, val, partially, Unia, out, by, Pm, Cn
 from django import db
 
-from apps.map import models
-from apps.map import core
+from apps.map import core, models, ui
 
 
 class QuerySetSculpture[OriginalT, RuleT, OwnerT]:
@@ -270,3 +269,14 @@ class DjangoOrmRecords:
         map_record: models.Map,
     ) -> tuple[models.Task, ...]:
         return self.__records_of(tasks, record_of=self.task_of |by| map_record)
+
+
+@val
+class renderable:
+    def task_of(task_record: models.Task) -> ui.Task:
+        return ui.Task(
+            description=task_record.description,
+            x=task_record.x,
+            y=task_record.y,
+            is_done=task_record.status != models.Task.Status.active,
+        )

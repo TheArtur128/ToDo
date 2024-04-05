@@ -1,0 +1,19 @@
+{% extends "map/base.html" %}
+{% load static %}
+
+{% block body %}
+{% block before-panels %}{% endblock %}
+<div id="panels">
+{% block panels %}
+    <div id="way-panel" class="block">
+        <a href="{% url 'profile_:profile' %}">
+            <img id="avatar" src="{% static 'shared/images/avatars/robot.png' %}" width="57" height="57">
+        </a>
+        <a href="{% url 'map:map-selection' %}" id="back-button">
+            <img src="{% static 'shared/images/back-button.png' %}" width="50" height="50">
+        </a>
+    </div>
+{% endblock %}
+</div>
+{% block after-panels %}{% endblock %}
+{% endblock %}

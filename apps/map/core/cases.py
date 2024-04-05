@@ -103,6 +103,6 @@ class top_maps:
     @to_raise_multiple_errors
     def get_all(*, user_repo: UserRepo) -> Iterable[rules.TopMap]:
         current_user = user_repo.get_current()
-        yield from exists(current_user, errors.NoCurrentUser())
+        yield from latest(exists(current_user, errors.NoCurrentUser()))
 
         return current_user.maps

@@ -2,7 +2,7 @@ from typing import Optional
 
 from act import optionally, val
 from django import db  # noqa: F401
-from rest_framework.request import Request
+from django.http import HttpRequest
 
 from apps.map import models
 from apps.map.adapters import sculptures
@@ -28,7 +28,7 @@ class django_orm_users:
 
 
 class DjangoOrmCurrentUsers:
-    def __init__(self, request: Request) -> None:
+    def __init__(self, request: HttpRequest) -> None:
         self.__request = request
 
     def get_current(self) -> Optional[rules.User]:

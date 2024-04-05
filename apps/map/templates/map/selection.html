@@ -1,0 +1,9 @@
+{% extends "map/navigation.html" %}
+
+{% block before-panels %}
+<div id="map-list">
+    {% for map in maps %}
+    <a class="map" href="{% url 'map:map' top_map_id=map.id %}">{{ map.name }}</a>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "shared/base.html" %}
+{% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href={% static 'map/styles/index.css' %}>
+{% endblock %}

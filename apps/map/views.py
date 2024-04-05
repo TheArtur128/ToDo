@@ -3,14 +3,14 @@ from typing import Optional
 from django.contrib.auth.decorators import login_required
 from django.db.models.query import QuerySet
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from rest_framework import viewsets, status, exceptions, mixins
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from apps.map import models, serializers, ui
 from apps.map.adapters import controllers
-from apps.map.lib import event_bus
+from apps.map.lib import event_bus, renders
 
 
 def _error_response_for(result: ui.APIErrorResult) -> Response:
@@ -35,8 +35,18 @@ def _error_result_of(
 
 @login_required
 @require_GET
-def map_(request: HttpRequest) -> HttpResponse:
-    return render(request, "map/map.html")
+def map_view(request: HttpRequest, top_map_id: int) -> HttpResponse:
+    tasks = controllers.tasks.renderable.on_top_map_with_id(top_map_id)
+
+    return renders.rendered(ui.tasks.controller_page_for(tasks), request)
+
+
+@login_required
+@require_GET
+def map_selection_view(request: HttpRequest) -> HttpResponse:
+    maps = controllers.top_maps.get_all(request)
+
+    return renders.rendered(ui.maps.selection_page_between(maps), request)
 
 
 class TaskViewSet(viewsets.ReadOnlyModelViewSet):
