@@ -5,7 +5,6 @@ from django.db.models.query import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.http import require_GET
 from rest_framework import viewsets, status, exceptions, mixins
-from rest_framework.request import Request
 from rest_framework.response import Response
 
 from apps.map import models, serializers, ui
