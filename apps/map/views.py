@@ -46,21 +46,12 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = "id"
 
 
-class TopMapTaskViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet
-):
-    serializer_class = serializers.TaskSerializer
-
-    def get_queryset(self) -> QuerySet:
-        assert len(self.args) >= 1
-        top_map_id = self.args[0]
-
-        return controllers.tasks.on_top_map_with_id(top_map_id)
+class _ViewSetErrorHandlingMixin:
+    _api_error_result_factory: ui.APIErrorResultFactory[tuple[str, ...]]
+    _api_error_result_factory = ui.as_result
 
     def handle_exception(self, error: Exception) -> Response:
-        result = _error_result_of(error, ui.tasks.as_result)
+        result = _error_result_of(error, self._api_error_result_factory)
 
         if result is not None:
             if result.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -69,6 +60,34 @@ class TopMapTaskViewSet(
             return _error_response_for(result)
 
         return super().handle_exception(error)
+
+
+class TopMapTaskViewSet(
+    _ViewSetErrorHandlingMixin,
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    serializer_class = serializers.TaskSerializer
+
+    def get_queryset(self) -> QuerySet:
+        return controllers.tasks.on_top_map_with_id(self.kwargs["top_map_id"])
+
+    def get_serializer(self, *args, **kwargs) -> serializers.TaskSerializer:
+        kwargs["top_map_id"] = self.kwargs["top_map_id"]
+
+        return super().get_serializer(*args, **kwargs)
+
+
+class TopMapViewSet(
+    _ViewSetErrorHandlingMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    serializer_class = serializers.TopMapSerializer
+
+    def get_queryset(self) -> QuerySet:
+        return controllers.top_maps.get_all(self.request)
 
 
 event_bus.add_event(controllers.users.on_is_registred, "user_is_registered")

@@ -34,7 +34,7 @@ class tasks:
             description,
             x,
             y,
-            user_repo=repos.django_orm_case_tasks.Users(request),
+            user_repo=repos.DjangoOrmCurrentUsers(request),
             top_map_repo=repos.django_orm_case_tasks.top_maps,
             task_repo=repos.django_orm_case_tasks.tasks,
             uow=uows.django_orm,
@@ -52,3 +52,12 @@ class tasks:
         )
 
         return tasks.query_set
+
+
+@val
+class top_maps:
+    def get_all(request: Request) -> "QuerySet[models.MapTop, models.MapTop]":
+        users = repos.DjangoOrmCurrentUsers(request)
+        top_maps = cases.top_maps.get_all(user_repo=users)
+
+        return top_maps.query_set

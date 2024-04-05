@@ -7,6 +7,7 @@ from apps.map import views
 router = DefaultRouter()
 
 router.register("tasks", views.TaskViewSet, "task")
+router.register("top-maps", views.TopMapViewSet, "top-map")
 
 app_name = "map"
 
@@ -14,13 +15,8 @@ urlpatterns = [
     path('', views.map_, name="map"),
     path('api/0.1v/map/', include(router.urls)),
     path(
-        'api/0.1v/map/top-map-tasks',
-        views.TopMapTaskViewSet.as_view({'post': 'create'}),
-        name="top-map-tasks",
-    ),
-    path(
-        'api/0.1v/map/top-map-tasks/<int:id>',
-        views.TopMapTaskViewSet.as_view({'get': 'list'}),
+        'api/0.1v/map/top-maps/<int:top_map_id>/tasks/',
+        views.TopMapTaskViewSet.as_view({'get': 'list', 'post': 'create'}),
         name="top-map-tasks",
     ),
 ]

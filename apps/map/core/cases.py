@@ -94,3 +94,15 @@ class tasks:
         yield from latest(exists(top_map, errors.NoTopMap()))
 
         return top_map.tasks
+
+
+@val
+class top_maps:
+    UserRepo = type(get_current=Callable[[], Optional[rules.User]])
+
+    @to_raise_multiple_errors
+    def get_all(*, user_repo: UserRepo) -> Iterable[rules.TopMap]:
+        current_user = user_repo.get_current()
+        yield from exists(current_user, errors.NoCurrentUser())
+
+        return current_user.maps

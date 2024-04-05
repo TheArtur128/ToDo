@@ -1,6 +1,6 @@
 from typing import Callable, Optional, Container
 
-from act import val, type
+from act import type
 from rest_framework import status
 
 
@@ -14,11 +14,9 @@ type APIErrorResultFactory[ValuesT: Container] = (
 )
 
 
-@val
-class tasks:
-    def as_result(errors: Container) -> Optional[APIErrorResult]:
-        if "NoCurrentUser" in errors:
-            return APIErrorResult(status.HTTP_401_UNAUTHORIZED, None)
+def as_result(errors: Container) -> Optional[APIErrorResult]:
+    if "NoCurrentUser" in errors:
+        return APIErrorResult(status.HTTP_401_UNAUTHORIZED, None)
 
-        if "NoTopMap" in errors or "DeniedAccessToTopMap" in errors:
-            return APIErrorResult(status.HTTP_404_NOT_FOUND, "NoTopMap")
+    if "NoTopMap" in errors or "DeniedAccessToTopMap" in errors:
+        return APIErrorResult(status.HTTP_404_NOT_FOUND, "NoTopMap")
