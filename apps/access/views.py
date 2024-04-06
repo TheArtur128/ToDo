@@ -1,6 +1,7 @@
 from typing import Iterable
 
 from act import bad, by
+from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -30,7 +31,7 @@ def authorization_confirmation(
         message_of = ui.authorization.completion.messages_of
         return bad(messages_of(group, message_of))
 
-    return redirect(reverse("map:map"))
+    return redirect(reverse("map:map-selection"))
 
 
 @confirmation.register_for(
@@ -50,7 +51,7 @@ def registration_confirmation(
         )
         return bad(messages_of(group, message_of))
 
-    return redirect(reverse("map:map"))
+    return redirect(reverse("map:map-selection"))
 
 
 @confirmation.register_for(
@@ -67,7 +68,7 @@ def access_recovery_confirmation(
         message_of = ui.access_recovery.completion.messages_of
         return bad(messages_of(group, message_of))
 
-    return redirect(reverse("map:map"))
+    return redirect(reverse("map:map-selection"))
 
 
 @login_required
@@ -75,7 +76,7 @@ def access_recovery_confirmation(
 def logout(request: HttpRequest) -> HttpResponse:
     auth.logout(request)
 
-    return redirect(reverse("map:map"))
+    return redirect(settings.LOGIN_URL)
 
 
 class _LoginView(confirmation.OpeningView):
