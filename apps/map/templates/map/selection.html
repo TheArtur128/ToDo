@@ -1,9 +1,18 @@
 {% extends "map/navigation.html" %}
+{% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href={% static 'map/styles/selection.css' %}>
+{% endblock %}
 
 {% block before-panels %}
-<div id="map-list">
-    {% for map in maps %}
-    <a class="map" href="{% url 'map:map' top_map_id=map.id %}">{{ map.name }}</a>
-    {% endfor %}
+<div id="selection-axis" class="front-axis">
+    <h2 id="label">Your maps</h2>
+    <div id="map-links" class="block">
+        {% for map in maps %}
+        <a class="map-link" href="{% url 'map:map' top_map_id=map.id %}">{{ map.name }}</a>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

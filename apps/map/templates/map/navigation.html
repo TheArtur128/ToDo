@@ -1,17 +1,20 @@
-{% extends "map/base.html" %}
+{% extends "shared/base.html" %}
 {% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href={% static 'map/styles/navigation.css' %}>
+{% endblock %}
 
 {% block body %}
 {% block before-panels %}{% endblock %}
 <div id="panels">
 {% block panels %}
     <div id="way-panel" class="block">
-        <a href="{% url 'profile_:profile' %}">
+        <a href={% block profile-path %}"{% url 'profile_:profile' %}"{% endblock %}>
             <img id="avatar" src="{% static 'shared/images/avatars/robot.png' %}" width="57" height="57">
         </a>
-        <a href="{% url 'map:map-selection' %}" id="back-button">
-            <img src="{% static 'shared/images/back-button.png' %}" width="50" height="50">
-        </a>
+        {% block after-profile %}{% endblock %}
     </div>
 {% endblock %}
 </div>

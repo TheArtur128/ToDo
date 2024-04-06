@@ -1,0 +1,38 @@
+#panels div {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  padding-top: 0px;
+}
+
+#way-panel {
+  border-radius: 40px;
+  top: 5px;
+  height: 75px;
+  position: absolute;
+  right: 5px;
+  width: 78px;
+}
+
+#avatar {
+  user-select: none;
+  border: solid 2px #d8dce3;
+  border-radius: 35px;
+  position: absolute;
+  top: 50%;
+  transform: translate(0%, -50%);
+  right: 8px;
+}
+
+#back-button {
+  top: 50%;
+  transform: translate(0%, -50%);
+  user-select: none;
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  right: 80px;
+  border: solid 2px #c8c8c9;
+  background-color: #e6e2d6;
+  border-radius: 6px;
+  cursor: pointer;
+}

@@ -1,0 +1,35 @@
+#selection-axis {
+  user-select: none;
+  text-align: center;
+  top: 43%;
+  transform: translate(-50%, -50%);
+}
+
+#map-links {
+  height: auto;
+  width: auto;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.map-link {
+  background-color: #8f7cf7;
+  border: 2.5px solid #8c78ff;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90px;
+  width: 170px;
+  color: #e4e0f4;
+  font-size: 18px;
+}
+
+.map-link:hover {
+  color: #fffae6;
+  background-color: #ffdc56;
+  border: 2.5px solid #ffd63a;
+}

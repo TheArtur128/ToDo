@@ -14,8 +14,8 @@ Task = type(description=str, x=int, y=int, is_done=bool)
 
 @val
 class tasks:
-    def controller_page_for(tasks: Iterable[Task]) -> ui.LazyPage:
-        return ui.LazyPage("map/map.html", dict(tasks=tasks))
+    def controller_page_for(tasks: Iterable[Task], map_id: int) -> ui.LazyPage:
+        return ui.LazyPage("map/map.html", dict(tasks=tasks, map_id=map_id))
 
 
 @val

@@ -7,7 +7,11 @@
         <div id="head" class="block">
             <h2 id="name">{{ name }}</h2>
             <p id="email">{{ email }}</p>
-            <a href={% url 'map:map-selection' %}>Back to select map</a>
+            {% if previous_map_id %}
+            <a href={% url 'map:map' top_map_id=previous_map_id %}>Back</a>
+            {% else %}
+            <a href={% url 'map:map-selection' %}>Back</a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

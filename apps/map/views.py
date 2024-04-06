@@ -36,8 +36,9 @@ def _error_result_of(
 @require_GET
 def map_view(request: HttpRequest, top_map_id: int) -> HttpResponse:
     tasks = controllers.tasks.renderable.on_top_map_with_id(top_map_id)
+    page = ui.tasks.controller_page_for(tasks, top_map_id)
 
-    return renders.rendered(ui.tasks.controller_page_for(tasks), request)
+    return renders.rendered(page, request)
 
 
 @login_required
