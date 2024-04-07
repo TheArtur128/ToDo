@@ -43,3 +43,14 @@
 #description:focus {
   background-color: #21ea85;
 }
+
+.task {
+  font-size: 14px;
+  overflow: hidden;
+  width: 233px;
+  height: 78px;
+  padding: 2px;
+  background-color: #21ea85;
+  border: solid 2px #1fdb7d;
+  border-radius: 6px;
+}
