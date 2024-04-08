@@ -13,11 +13,7 @@ from apps.map.lib import event_bus, renders
 
 
 def _error_response_for(result: ui.APIErrorResult) -> Response:
-    return Response(
-        dict(detail=result.type),
-        status=result.status_code,
-        exception=True,
-    )
+    return Response(result.body, status=result.status_code, exception=True)
 
 
 def _error_result_of(
@@ -49,16 +45,9 @@ def map_selection_view(request: HttpRequest) -> HttpResponse:
     return renders.rendered(ui.maps.selection_page_between(maps), request)
 
 
-class TaskViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = models.Task.objects.all()
-    serializer_class = serializers.TaskSerializer
-
-    lookup_field = "id"
-
-
 class _ViewSetErrorHandlingMixin:
     _api_error_result_factory: ui.APIErrorResultFactory[tuple[str, ...]]
-    _api_error_result_factory = ui.as_result
+    _api_error_result_factory = staticmethod(ui.as_result)
 
     def handle_exception(self, error: Exception) -> Response:
         result = _error_result_of(error, self._api_error_result_factory)
@@ -70,6 +59,19 @@ class _ViewSetErrorHandlingMixin:
             return _error_response_for(result)
 
         return super().handle_exception(error)
+
+
+class TaskViewSet(
+    _ViewSetErrorHandlingMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = models.Task.objects.all()
+    serializer_class = serializers.TaskSerializer
+
+    lookup_field = "id"
 
 
 class TopMapTaskViewSet(

@@ -44,9 +44,16 @@ class users[ID: int]:
 
 @val
 class tasks:
-    UserRepo = type(get_current=Callable[[], Optional[rules.User]])
+    UserRepo = type(
+        get_current=Callable[[], Optional[rules.User]],
+        user_having=Callable[rules.Task, Optional[rules.User]],
+    )
     TopMapRepo = type(top_map_of=Callable[int, Optional[rules.TopMap]])
-    TaskRepo = type(saved=Callable[rules.Task, rules.Task])
+    TaskRepo = type(
+        task_of=Callable[int, Optional[rules.Task]],
+        saved=Callable[rules.Task, rules.Task],
+        committed=Callable[rules.Task, rules.Task],
+    )
     UoW = Callable[TaskRepo, AbstractContextManager]
 
     @struct
@@ -58,6 +65,7 @@ class tasks:
     def add(
         top_map_id: int,
         description: str,
+        status_code: int,
         x: int,
         y: int,
         *,
@@ -79,7 +87,10 @@ class tasks:
             yield last(errors.DeniedAccessToTopMap())
 
         with uow(task_repo):
-            task = task_repo.saved(rules.tasks.created_with(description, x, y))
+            task = task_repo.saved(rules.tasks.created_with(
+                description, status_code, x, y,
+            ))
+
             service.add_to(top_map.tasks, task)
 
         return task
@@ -94,6 +105,42 @@ class tasks:
         yield from latest(exists(top_map, errors.NoTopMap()))
 
         return top_map.tasks
+
+    @to_raise_multiple_errors
+    def update_by_id(
+        task_id: int,
+        description: str,
+        status_code: int,
+        x: int,
+        y: int,
+        *,
+        tasks: TaskRepo,
+        users: UserRepo,
+        uow: UoW,
+    ) -> rules.Task:
+        yield from rules.tasks.is_status_code_valid(status_code)
+
+        task = tasks.task_of(task_id)
+        yield from exists(task, errors.NoTask())
+
+        current_user = users.get_current()
+        yield from exists(current_user, errors.NoCurrentUser())
+
+        task_owner = users.user_having(task)
+        yield from exists(task_owner, errors.NoTaskOwner())
+
+        if current_user.id != task_owner.id:
+            yield errors.DeniedAccessToTask()
+
+        yield raise_
+
+        with uow(tasks):
+            task.description = description
+            task.status = rules.TaskStatus(status_code)
+            task.position.x = x
+            task.position.y = y
+
+            return tasks.committed(task)
 
 
 @val

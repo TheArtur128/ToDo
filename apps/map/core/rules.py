@@ -87,14 +87,24 @@ class users:
 
 @val
 class tasks:
+    def is_status_code_valid(status_code: int) -> Iterable[errors.Map]:
+        if status_code not in TaskStatus:
+            yield errors.UnknownTaskStatus()
+
     @to_raise_multiple_errors
-    def created_with(description: str, x: int, y: int) -> Task:
+    def created_with(
+        description: str,
+        status_code: int,
+        x: int,
+        y: int,
+    ) -> Task:
         yield from latest(tasks.is_description_valid(description))
+        yield from latest(tasks.is_status_code_valid(status_code))
 
         return Task(
             id=None,
             description=description,
-            status=TaskStatus.active,
+            status=TaskStatus(status_code),
             settings=None,
             submap=None,
             position=Position(x=x, y=y),

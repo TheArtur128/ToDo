@@ -1,6 +1,6 @@
 from functools import partial
 
-from act import val, original_of, tmap
+from act import val, original_of, tmap, out
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
 
@@ -28,17 +28,19 @@ class tasks:
         request: HttpRequest,
         top_map_id: int,
         description: str,
+        status_code: int,
         x: int,
         y: int,
     ) -> models.Task:
         task = cases.tasks.add(
             top_map_id,
             description,
+            status_code,
             x,
             y,
             user_repo=repos.DjangoOrmCurrentUsers(request),
-            top_map_repo=repos.django_orm_case_tasks.top_maps,
-            task_repo=repos.django_orm_case_tasks.tasks,
+            top_map_repo=repos.django_orm_task_case.top_maps,
+            task_repo=repos.django_orm_task_case.Tasks(),
             uow=uows.django_orm,
             service=services.tasks,
         )
@@ -47,13 +49,38 @@ class tasks:
 
     _raw_on_top_map_with_id = partial(
         cases.tasks.on_top_map_with_id,
-        top_map_repo=repos.django_orm_case_tasks.top_maps,
+        top_map_repo=repos.django_orm_task_case.top_maps,
     )
 
     def on_top_map_with_id(top_map_id: int) -> (
         "QuerySet[models.Task, models.Task]"
     ):
         return tasks._raw_on_top_map_with_id(top_map_id).query_set
+
+    def update(
+        task_record: models.Task,
+        *,
+        request: HttpRequest,
+        description: str,
+        status_code: int,
+        x: int,
+        y: int,
+    ) -> models.Task:
+        task = cases.tasks.update_by_id(
+            task_id=task_record.id,
+            description=description,
+            status_code=status_code,
+            x=x,
+            y=y,
+            tasks=repos.django_orm_task_case.Tasks(task_record),
+            users=repos.django_orm_task_case.Users(request),
+            uow=uows.django_orm,
+        )
+
+        task_record = original_of(out(task))
+        assert task_record is not None
+
+        return task_record
 
     @val
     class renderable:

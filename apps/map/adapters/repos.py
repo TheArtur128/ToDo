@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, Any
 
-from act import optionally, val
+from act import optionally, val, out, original_of
 from django import db  # noqa: F401
 from django.http import HttpRequest
 
@@ -37,7 +37,7 @@ class DjangoOrmCurrentUsers:
         )
 
 @val
-class django_orm_case_tasks:
+class django_orm_task_case:
     @val
     class top_maps:
         def top_map_of(id: int) -> Optional[rules.TopMap]:
@@ -45,7 +45,34 @@ class django_orm_case_tasks:
 
             return optionally(sculptures.rules.top_map_of)(top)
 
-    @val
-    class tasks:
-        def saved(task: rules.Task) -> rules.Task:
+    class Tasks:
+        def __init__(self, task_record: Optional[models.Task] = None) -> None:
+            self.__task = optionally(sculptures.rules.task_of)(task_record)
+
+        def task_of(self, _: Any) -> Optional[rules.Task]:
+            return self.__task
+
+        def saved(self, task: rules.Task) -> rules.Task:
             return task
+
+        def committed(self, task: rules.Task) -> rules.Task:
+            task_record = original_of(out(task))
+            assert isinstance(task_record, models.Task)
+
+            task_record.description = task.description
+            task_record.status = task.status.value
+            task_record.x = task.position.x
+            task_record.y = task.position.y
+
+            task_record.save()
+
+            return task
+
+    class Users(DjangoOrmCurrentUsers):
+        def user_having(self, task: rules.Task) -> Optional[rules.User]:
+            task_record = original_of(out(task))
+            assert isinstance(task_record, models.Task)
+
+            top = out(task_record.root_map).top
+
+            return None if top is None else top.user
