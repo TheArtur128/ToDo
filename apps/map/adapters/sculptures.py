@@ -32,7 +32,7 @@ def _with_original_which_is[O, V](
     original: O,
     value: V,
 ) -> Unia[V, type(_sculpture_original=O)]:
-    return val(value) & type(_sculpture_original=original)
+    return val(value, _sculpture_original=original)
 
 
 @obj
@@ -73,7 +73,7 @@ class rules:
             description=task_record.description,
             status=core.rules.TaskStatus(task_record.status),
             settings=optionally(self.task_settings_of)(task_record.settings),
-            submap=optionally(self.submap_of)(task_record),
+            submap=optionally(self.submap_of)(task_record.submap),
             position=core.rules.Position(x=task_record.x, y=task_record.y),
         ))
 
