@@ -33,14 +33,14 @@ export async function drawMap<MapSurfaceT, TaskSurfaceT>(
         return false;
 
     tasks.forEach(task => {
-        let taskSurface = surfaces.taskOn(mapSurface, task.id);
+        let taskSurface = surfaces.taskSurfaceOn(mapSurface, task.id);
 
         if (taskSurface !== undefined) {
             drawing.redraw(taskSurface, task);
             return;
         }
 
-        taskSurface = surfaces.getEmptyTask();
+        taskSurface = surfaces.getEmptyTaskSurface();
         drawing.redraw(taskSurface, task);
         drawing.drawOn(mapSurface, taskSurface);        
     });

@@ -33,13 +33,13 @@ export class DOMRendering {
         return this.mapSurface;
     }
 
-    taskOn(mapSurface: MapDOMSurface, task_id: number): TaskDOMSurface | undefined {
+    taskSurfaceOn(mapSurface: MapDOMSurface, task_id: number): TaskDOMSurface | undefined {
         let taskSurface = mapSurface.querySelector(`#${this._taskSurfaceIdOf(task_id)}`);
 
         return taskSurface instanceof HTMLDivElement ? taskSurface : undefined
     }
 
-    getEmptyTask(): TaskDOMSurface {
+    getEmptyTaskSurface(): TaskDOMSurface {
         return document.createElement('div');
     }
 
