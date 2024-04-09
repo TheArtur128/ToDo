@@ -12,7 +12,7 @@ export type Drawing<MapSurfaceT, TaskSurfaceT> = {
 }
 
 export type Surfaces<MapSurfaceT, TaskSurfaceT> = {
-    mapOf: (m: Map) => MapSurfaceT | undefined,
+    mapSurfaceOf: (m: Map) => MapSurfaceT | undefined,
     taskSurfaceOn: (s: MapSurfaceT, task_id: number) => TaskSurfaceT | undefined,
     getEmptyTaskSurface: () => TaskSurfaceT,
 }

@@ -29,7 +29,7 @@ export class DOMRendering {
         this.mapSurface = mapSurface;
     }
 
-    mapOf(_: any): MapDOMSurface {
+    mapSurfaceOf(_: any): MapDOMSurface {
         return this.mapSurface;
     }
 

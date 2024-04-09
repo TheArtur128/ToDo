@@ -28,7 +28,7 @@ export async function drawMap<MapSurfaceT, TaskSurfaceT>(
     if (exitOf(tasks))
         return false;
 
-    let mapSurface = <MapSurfaceT>surfaces.mapOf(map);
+    let mapSurface = <MapSurfaceT>surfaces.mapSurfaceOf(map);
     if (exitOf(mapSurface))
         return false;
 
