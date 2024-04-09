@@ -42,7 +42,7 @@ def as_result(errors: Container) -> Optional[APIErrorResult]:
     if "UnknownTaskStatus" in errors:
         return APIErrorResult(
             status.HTTP_400_BAD_REQUEST,
-            dict(description=["Status code must be from 1 to 3."])
+            dict(status_code=["This field must be from 1 to 3."])
         )
 
     if "NoCurrentUser" in errors:
