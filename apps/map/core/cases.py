@@ -129,10 +129,10 @@ class tasks:
         task_owner = users.user_having(task)
         yield from exists(task_owner, errors.NoTaskOwner())
 
-        if current_user.id != task_owner.id:
-            yield errors.DeniedAccessToTask()
-
         yield raise_
+
+        if current_user.id != task_owner.id:
+            yield last(errors.DeniedAccessToTask())
 
         with uow(tasks):
             task.description = description
