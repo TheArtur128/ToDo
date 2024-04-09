@@ -21,9 +21,11 @@ export class MessageShowingWithCachedSearching {
 export type MapDOMSurface = HTMLDivElement;
 export type TaskDOMSurface = HTMLDivElement;
 
+type TaskDescriptionDOMSurface = HTMLTextAreaElement;
 
 export class DOMRendering {
     mapSurface: MapDOMSurface;
+    taskDescriptionSurfaceClassName = "task-description";
 
     constructor(mapSurface: MapDOMSurface) {
         this.mapSurface = mapSurface;
@@ -40,17 +42,25 @@ export class DOMRendering {
     }
 
     getEmptyTaskSurface(): TaskDOMSurface {
-        return document.createElement('div');
+        let surface = document.createElement('div');
+        surface.appendChild(this._getEmptyTaskDescriptionSurface());
+
+        surface.className = "block";
+        surface.style.position = "absolute";
+
+        return surface;
     }
 
     redraw(surface: TaskDOMSurface, task: types.Task): void {
         surface.id = this._taskSurfaceIdOf(task.id);
-        surface.className = "task";
-        surface.innerText = task.description;
-
-        surface.style.position = "absolute";
         surface.style.left = this._taskSurfacePositionCoordinateOf(task.x);
         surface.style.top = this._taskSurfacePositionCoordinateOf(task.y);
+
+        let query = `.${this.taskDescriptionSurfaceClassName}`;
+        let descriptionSurface = surface.querySelector(query);
+
+        if (descriptionSurface instanceof HTMLTextAreaElement)
+            descriptionSurface.value = task.description;
     }
 
     drawOn(mapSurface: MapDOMSurface, taskSurface: TaskDOMSurface): void {
@@ -63,5 +73,17 @@ export class DOMRendering {
 
     _taskSurfacePositionCoordinateOf(coordinate: number): string {
         return `${coordinate}px`;
+    }
+
+    _getEmptyTaskDescriptionSurface(): HTMLTextAreaElement {
+        let descriptionSurface = document.createElement("textarea");
+
+        descriptionSurface.className = this.taskDescriptionSurfaceClassName;
+        descriptionSurface.disabled = true;
+        descriptionSurface.maxLength = 128;
+        descriptionSurface.rows = 4;
+        descriptionSurface.cols = 32;
+
+        return descriptionSurface;
     }
 }

@@ -7,13 +7,12 @@
 {% endblock %}
 
 {% block before-panels %}
-<div id="map"></div>
+<div id="tasks"></div>
 {% endblock %}
 
 {% block panels %}
 <div id="creation-panel" class="block">
-    <textarea id="description", maxlength="128" rows="4" cols="32" required></textarea>
-    <img id="add-button" width="60" height="60" src="{% static 'map/images/add-button.png' %}">
+    <textarea id="new-task-description", class="task-description" maxlength="128" rows="4" cols="32" required></textarea>
 </div>
 {{ block.super }}
 {% endblock %}

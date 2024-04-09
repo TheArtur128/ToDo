@@ -7,50 +7,47 @@
   border-radius: 8px;
   user-select: none;
   text-align: left;
-  height: 98px;
-  width: 323px;
+  height: 88px;
+  width: auto;
+  padding: 5px;
   position: absolute;
-  bottom: 5px;
+  bottom: 0px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+  border-bottom-width: 0px; 
   left: 50%;
   transform: translate(-50%);
-  border-color: #1dcc74;
 }
 
-#add-button {
-  user-select: none;
-  cursor: pointer;
-  position: relative;
-  left: 13px;
-  top: 4px;
-  background-color: #21ea85;
-  border: solid 2px #25ac68;
-  border-radius: 50px;
+#tasks .block {
+  width: auto;
+  height: 86px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 5px;
+  padding-bottom: 25px;
+  border-radius: 8px;
 }
 
-#description {
-  font-family: "Nunito";
-  font-weight: 500;
-  user-select: contain;
+.task-description {
   resize: none;
-  position: relative;
-  top: 10px;
-  left: 10px;
-  border-radius: 6px;
-  background-color: #e7fff3;
-  overflow: hidden;
-}
-
-#description:focus {
-  background-color: #21ea85;
-}
-
-.task {
-  font-size: 14px;
   overflow: hidden;
   width: 233px;
   height: 78px;
-  padding: 2px;
-  background-color: #21ea85;
-  border: solid 2px #1fdb7d;
+  padding: 4px;
+  background-color: #4d4d4d;
+  border-width: 0px;
+  color: #dddddd;
   border-radius: 6px;
+  user-select: contain;
+  font-family: "Nunito";
+  font-weight: 500;
+}
+
+.task-description::selection {
+  background-color: #8e7aff;  
+}
+
+.task-description:focus {
+  color: #171717;
 }
