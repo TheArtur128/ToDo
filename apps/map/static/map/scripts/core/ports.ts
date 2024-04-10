@@ -1,18 +1,36 @@
-import { Task, Map } from "./types.js";
+import { Task, TaskPrototype, Map } from "./types.js";
 
 export type MessageShowing = {
-    show: (message: string) => any;
-    setWasShown: (message: string) => any,
-    isWasShown: (message: string) => boolean;
+    show(message: string): any;
+    setWasShown(message: string): any,
+    isWasShown(message: string): boolean;
 }
 
-export type Drawing<MapSurfaceT, TaskSurfaceT> = {
-    drawOn: (m: MapSurfaceT, t: TaskSurfaceT) => any,
-    redraw: (s: TaskSurfaceT, t: Task) => any,
+export type Drawing<MapSurface, Surface, Value> = {
+    drawOn(m: MapSurface, t: Surface): any,
+    eraseFrom(m: MapSurface, s: Surface): any
+    redraw(s: Surface, t: Value): any,
 }
 
-export type Surfaces<MapSurfaceT, TaskSurfaceT> = {
-    mapSurfaceOf: (m: Map) => MapSurfaceT | undefined,
-    taskSurfaceOn: (s: MapSurfaceT, task_id: number) => TaskSurfaceT | undefined,
-    getEmptyTaskSurface: () => TaskSurfaceT,
+export type MapSurfaces<MapSurface> = {
+    mapSurfaceOf(m: Map): MapSurface | undefined,
+}
+
+export type TaskSurfaces<MapSurface, TaskSurface> = {
+    taskSurfaceOn(s: MapSurface, task_id: number): TaskSurface | undefined,
+    getEmpty(): TaskSurface,
+}
+
+export type TaskPrototypeSurfaces<TaskPrototypeSurface> = {
+    getEmpty(): TaskPrototypeSurface,
+}
+
+export type SingleValueContainer<Value> = {
+    set(v: Value): any,
+    get(): Value | undefined,
+}
+
+export type RemoteTasks = {
+    tasksForMapWithId(id: number): Promise<Task[] | undefined>,
+    createdTaskFrom(p: TaskPrototype, mapId: number): Promise<Task | undefined>,
 }

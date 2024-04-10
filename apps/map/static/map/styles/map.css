@@ -29,7 +29,16 @@
   border-radius: 8px;
 }
 
+#tasks .block, .task-description {
+  cursor: grab;
+}
+
+#tasks .block:active, .task-description:active {
+  cursor: grabbing;
+}
+
 .task-description {
+  user-select: none;
   resize: none;
   overflow: hidden;
   width: 233px;
@@ -50,4 +59,12 @@
 
 .task-description:focus {
   color: #171717;
+}
+
+#new-task-description:hover {
+  cursor: text;
+}
+
+#new-task-description:active {
+  cursor: grabbing;
 }
