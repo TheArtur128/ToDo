@@ -34,3 +34,7 @@ export type RemoteTasks = {
     tasksForMapWithId(id: number): Promise<Task[] | undefined>,
     createdTaskFrom(p: TaskPrototype, mapId: number): Promise<Task | undefined>,
 }
+
+export type Logger = {
+    logMapHasNoSurface(m: Map): any;
+}

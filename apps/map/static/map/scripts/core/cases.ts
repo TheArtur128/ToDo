@@ -87,6 +87,36 @@ export const taskAdding = {
         return true;
     },
 
+    cancel<MapSurface, TaskPrototypeSurface, TaskPrototype>(
+        originalDescriptionSocket: ports.Socket<string>,
+        descriptionTemporarySocket: ports.Socket<string>,
+        getCurrentMapId: () => number,
+        taskPrototypeSocket: ports.Socket<TaskPrototype>,
+        taskPrototypeSurfaceSocket: ports.Socket<TaskPrototypeSurface>,
+        drawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
+        mapSurfaces: ports.MapSurfaces<MapSurface>,
+        logger: ports.Logger,
+    ): void {
+        let originalDescription = descriptionTemporarySocket.get();
+        services.setDefaultAt(originalDescriptionSocket, originalDescription);
+
+        taskPrototypeSocket.set(undefined);
+        let taskPrototypeSurface = services.popFrom(taskPrototypeSurfaceSocket);
+
+        if (taskPrototypeSurface === undefined)
+            return;
+
+        let map: Map = {id: getCurrentMapId()};
+        let mapSurface = mapSurfaces.mapSurfaceOf(map);
+
+        if (mapSurface === undefined) {
+            logger.logMapHasNoSurface(map);
+            return;
+        }
+
+        drawing.eraseFrom(mapSurface, taskPrototypeSurface);
+    },
+
     handle<MapSurface, TaskPrototypeSurface>(
         x: number,
         y: number,
