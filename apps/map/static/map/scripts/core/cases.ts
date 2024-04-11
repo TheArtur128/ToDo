@@ -45,9 +45,10 @@ export const taskAdding = {
     _errorMessage: "Your task could not be added",
 
     start<MapSurface, TaskPrototypeSurface>(
-        description: string,
         x: number,
         y: number,
+        originalDescriptionSocket: ports.Socket<string>,
+        descriptionTemporarySocket: ports.Socket<string>,
         getCurrentMapId: () => number,
         messageShowing: ports.MessageShowing,
         mapSurfaces: ports.MapSurfaces<MapSurface>,
@@ -56,6 +57,15 @@ export const taskAdding = {
         taskPrototypeSocket: ports.Socket<TaskPrototype>,
         taskPrototypeSurfaceSocket: ports.Socket<TaskPrototypeSurface>,
     ): boolean {
+        var description = services.popFrom(originalDescriptionSocket);
+
+        if (description === undefined) {
+            services.showErrorMessageOnce(this._errorMessage, messageShowing);
+            return false;
+        }
+
+        descriptionTemporarySocket.set(description);
+
         let map: Map = {id: getCurrentMapId()};
         let taskPrototype: TaskPrototype = {description: description, x: x, y: y}
 
