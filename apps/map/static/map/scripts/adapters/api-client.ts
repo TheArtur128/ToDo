@@ -1,22 +1,21 @@
 import * as types from "../core/types.js";
 
-export const client = {
+export const tasks = {
     async createdTaskFrom(
         taskPrototype: types.TaskPrototype,
         mapId: number,
     ): Promise<types.Task | undefined> {
         const url = this._topMapTaskEndpointURLWith(mapId);
-        const data = {
-            description: taskPrototype.description,
-            status_code: 1,
-            x: taskPrototype.x,
-            y: taskPrototype.y,
-        };
 
         const response = await fetch(url, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(data)
+          body: JSON.stringify({
+                description: taskPrototype.description,
+                status_code: 1,
+                x: taskPrototype.x,
+                y: taskPrototype.y,
+            })
         })
 
         if (!response.ok)
@@ -24,7 +23,7 @@ export const client = {
 
         const responseData = await response.json();
 
-        return {
+        return <types.Task>{
             id: responseData.id,
             description: responseData.description,
             x: responseData.x,

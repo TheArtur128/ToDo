@@ -19,68 +19,31 @@ export class MessageShowingWithCachedSearching {
     }
 }
 
-export namespace DOM {
-    export type MapSurface = HTMLDivElement;
-    export type TaskSurface = HTMLDivElement;
-    export type TaskPrototypeSurface = HTMLDivElement;
+export type MapSurface = HTMLDivElement;
+export type TaskSurface = HTMLDivElement;
+export type TaskPrototypeSurface = HTMLDivElement;
 
-    export type TaskDescriptionSurface = HTMLTextAreaElement;
+export type TaskDescriptionSurface = HTMLTextAreaElement;
 
-    export const taskDescriptionSurfaceClassName = "task-description";
+const _drawingBase = {
+    drawOn(mapSurface: MapSurface, surface: HTMLElement) {
+        mapSurface.appendChild(surface);
+    },
 
-    const _drawingBase = {
-        drawOn(mapSurface: MapSurface, surface: HTMLElement) {
-            mapSurface.appendChild(surface);
-        },
-
-        eraseFrom(mapSurface: MapSurface, surface: TaskPrototypeSurface) {
-            try {
-                mapSurface.removeChild(surface);
-            }
-            catch (NotFoundError) {} 
-        },
-    }
-
-    export const taskDrawing: ports.Drawing<MapSurface, TaskSurface, types.Task> = {
-        ..._drawingBase,
-
-        redraw(surface: TaskSurface, task: types.Task) {
-            surface.id = DOM._taskSurfaceIdOf(task.id);
-            surface.style.left = DOM._taskSurfacePositionCoordinateOf(task.x);
-            surface.style.top = DOM._taskSurfacePositionCoordinateOf(task.y);
-
-            let query = `.${DOM.taskDescriptionSurfaceClassName}`;
-            let descriptionSurface = surface.querySelector(query);
-
-            if (descriptionSurface instanceof HTMLTextAreaElement)
-                descriptionSurface.value = task.description;
+    eraseFrom(mapSurface: MapSurface, surface: HTMLElement) {
+        try {
+            mapSurface.removeChild(surface);
         }
-    }
+        catch (NotFoundError) {} 
+    },
+}
 
-    export const taskPrototypeDrawing: ports.Drawing<
-        MapSurface,
-        TaskPrototypeSurface,
-        types.TaskPrototype
-    > = {
-        ..._drawingBase,
+export const tasks = {
+    _taskDescriptionSurfaceClassName: "task-description",
 
-        redraw(surface: TaskPrototypeSurface, taskPrototype: types.TaskPrototype) {
-            surface.style.left = DOM._taskSurfacePositionCoordinateOf(taskPrototype.x);
-            surface.style.top = DOM._taskSurfacePositionCoordinateOf(taskPrototype.y);
-        },
-    }
-
-    export const mapSurfacesOf = (mapSurface: MapSurface): ports.MapSurfaces<MapSurface> => {
-        return {mapSurfaceOf: _ => mapSurface};
-    }
-
-    type TaskSurfaces = (
-        ports.TaskSurfaces<MapSurface, TaskSurface>
-        & {_getEmptyTaskDescriptionSurface: () => TaskDescriptionSurface}
-    )
-    export const taskSurfaces: TaskSurfaces = {
+    surfaces: {
         taskSurfaceOn(mapSurface: MapSurface, task_id: number): TaskSurface | undefined {
-            let taskSurface = mapSurface.querySelector(`#${DOM._taskSurfaceIdOf(task_id)}`);
+            let taskSurface = mapSurface.querySelector(`#${tasks._surfaceIdOf(task_id)}`);
 
             return taskSurface instanceof HTMLDivElement ? taskSurface : undefined
         },
@@ -98,7 +61,7 @@ export namespace DOM {
         _getEmptyTaskDescriptionSurface(): TaskDescriptionSurface {
             let descriptionSurface = document.createElement("textarea");
 
-            descriptionSurface.className = DOM.taskDescriptionSurfaceClassName;
+            descriptionSurface.className = tasks._taskDescriptionSurfaceClassName;
             descriptionSurface.disabled = true;
             descriptionSurface.maxLength = 128;
             descriptionSurface.rows = 4;
@@ -106,9 +69,31 @@ export namespace DOM {
 
             return descriptionSurface;
         },
-    }
+    },
 
-    export const taskPrototypeSurfaces: ports.TaskPrototypeSurfaces<TaskPrototypeSurface> = {
+    drawing: <ports.Drawing<MapSurface, TaskSurface, types.Task>>{
+        ..._drawingBase,
+
+        redraw(surface: TaskSurface, task: types.Task) {
+            surface.id = tasks._surfaceIdOf(task.id);
+            surface.style.left = _surfacePositionCoordinateOf(task.x);
+            surface.style.top = _surfacePositionCoordinateOf(task.y);
+
+            let query = `.${tasks._taskDescriptionSurfaceClassName}`;
+            let descriptionSurface = surface.querySelector(query);
+
+            if (descriptionSurface instanceof HTMLTextAreaElement)
+                descriptionSurface.value = task.description;
+        }
+    },
+
+    _surfaceIdOf(id: number): string {
+        return `task-${id}`;
+    },
+}
+
+export const taskPrototypes = {
+    surfaces: <ports.TaskPrototypeSurfaces<TaskPrototypeSurface>>{
         getEmpty(): TaskPrototypeSurface {
             let surface = document.createElement('div');
 
@@ -117,29 +102,24 @@ export namespace DOM {
 
             return surface;
         }
-    }
+    },
 
-    export class SingleValueContainer<Value> {
-        #value: Value | undefined;
+    drawing: <ports.Drawing<MapSurface, TaskPrototypeSurface, types.TaskPrototype>>{
+        ..._drawingBase,
 
-        constructor(value: Value | undefined = undefined) {
-            this.#value = value;
-        }
+        redraw(surface: TaskPrototypeSurface, taskPrototype: types.TaskPrototype) {
+            surface.style.left = _surfacePositionCoordinateOf(taskPrototype.x);
+            surface.style.top = _surfacePositionCoordinateOf(taskPrototype.y);
+        },
+    },
+}
 
-        set(newValue: Value | undefined) {
-            this.#value = newValue;
-        }
+export const maps = {
+    surfacesOf(mapSurface: MapSurface): ports.MapSurfaces<MapSurface> {
+        return {mapSurfaceOf: _ => mapSurface};
+    },
+}
 
-        get(): Value | undefined {
-            return this.#value;
-        }
-    }
-
-    export const _taskSurfaceIdOf = (id: number): string => {
-        return `task-${id}`;
-    }
-
-    export const _taskSurfacePositionCoordinateOf = (coordinate: number): string => {
-        return `${coordinate}px`;
-    }
+export const _surfacePositionCoordinateOf = (coordinate: number): string => {
+    return `${coordinate}px`;
 }

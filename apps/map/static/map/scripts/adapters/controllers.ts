@@ -1,15 +1,15 @@
-import * as api from "./api.js";
+import * as apiClient from "./api-client.js";
 import * as parsers from "./parsers.js";
 import * as renderers from "./renderers.js";
 import * as cases from "../core/cases.js";
 
-export function drawMap(mapSurface: renderers.DOM.MapSurface): Promise<boolean> {
+export function drawMap(mapSurface: renderers.MapSurface): Promise<boolean> {
     return cases.drawMap(
         parsers.getCurrentMapId,
-        api.client,
+        apiClient.tasks,
         new renderers.MessageShowingWithCachedSearching(alert),
-        renderers.DOM.mapSurfacesOf(mapSurface),
-        renderers.DOM.taskSurfaces,
-        renderers.DOM.taskDrawing,
+        renderers.maps.surfacesOf(mapSurface),
+        renderers.tasks.surfaces,
+        renderers.tasks.drawing,
     );
 }
