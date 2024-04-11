@@ -1,24 +1,6 @@
 import * as ports from "../core/ports.js";
 import * as types from "../core/types.js";
 
-export class MessageShowingWithCachedSearching {
-    show: (message: string) => any;
-    shownMessages: Set<string>;
-
-    constructor(show: (message: string) => any) {
-        this.show = show;
-        this.shownMessages = new Set();
-    }
-
-    setWasShown(message: string): void {
-        this.shownMessages.add(message);
-    }
-
-    isWasShown(message: string): boolean {
-        return this.shownMessages.has(message);
-    }
-}
-
 export type MapSurface = HTMLDivElement;
 export type TaskSurface = HTMLDivElement;
 export type TaskPrototypeSurface = HTMLDivElement;

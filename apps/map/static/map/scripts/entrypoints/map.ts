@@ -1,4 +1,7 @@
 import * as controllers from "../adapters/controllers.js";
 
 
-controllers.drawMap(<HTMLDivElement>document.querySelector("#tasks"));
+const taskListElement = <HTMLDivElement>document.querySelector("#tasks");
+const creationPanelElement = <HTMLDivElement>document.querySelector("#creation-panel");
+
+controllers.drawMap(taskListElement);

@@ -25,8 +25,8 @@ export type TaskPrototypeSurfaces<TaskPrototypeSurface> = {
     getEmpty(): TaskPrototypeSurface,
 }
 
-export type SingleValueContainer<Value> = {
-    set(v: Value): any,
+export type Socket<Value> = {
+    set(v: Value | undefined): any,
     get(): Value | undefined,
 }
 

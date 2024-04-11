@@ -2,7 +2,7 @@ import * as ports from "./ports.js";
 import * as services from "./services.js";
 import { Task, TaskPrototype, Map } from "./types.js";
 
-export async function drawMap<MapSurface, TaskSurface, TaskPrototypeSurface>(
+export async function drawMap<MapSurface, TaskSurface>(
     getCurrentMapId: () => number,
     remoteTasks: ports.RemoteTasks,
     messageShowing: ports.MessageShowing,
@@ -53,8 +53,8 @@ export const taskAdding = {
         mapSurfaces: ports.MapSurfaces<MapSurface>,
         taskPrototypeSurfaces: ports.TaskPrototypeSurfaces<TaskPrototypeSurface>,
         drawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
-        singleTaskPrototypeContainer: ports.SingleValueContainer<TaskPrototype>,
-        singleTaskPrototypeSurfaceContainer: ports.SingleValueContainer<TaskPrototypeSurface>,
+        taskPrototypeSocket: ports.Socket<TaskPrototype>,
+        taskPrototypeSurfaceSocket: ports.Socket<TaskPrototypeSurface>,
     ): boolean {
         let map: Map = {id: getCurrentMapId()};
         let taskPrototype: TaskPrototype = {description: description, x: x, y: y}
@@ -68,8 +68,8 @@ export const taskAdding = {
 
         let taskPrototypeSurface = taskPrototypeSurfaces.getEmpty();
 
-        singleTaskPrototypeContainer.set(taskPrototype)
-        singleTaskPrototypeSurfaceContainer.set(taskPrototypeSurface);
+        taskPrototypeSocket.set(taskPrototype)
+        taskPrototypeSurfaceSocket.set(taskPrototypeSurface);
 
         drawing.redraw(taskPrototypeSurface, taskPrototype);
         drawing.drawOn(mapSurface, taskPrototypeSurface);
@@ -81,12 +81,12 @@ export const taskAdding = {
         x: number,
         y: number,
         messageShowing: ports.MessageShowing,
-        taskPrototypeContainer: ports.SingleValueContainer<TaskPrototype>,
-        taskPrototypeSurfaceContainer: ports.SingleValueContainer<TaskPrototypeSurface>,
+        taskPrototypeSocket: ports.Socket<TaskPrototype>,
+        taskPrototypeSurfaceSocket: ports.Socket<TaskPrototypeSurface>,
         drawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
     ): boolean {
-        let taskPrototype = taskPrototypeContainer.get();
-        let taskPrototypeSurface = taskPrototypeSurfaceContainer.get();
+        let taskPrototype = taskPrototypeSocket.get();
+        let taskPrototypeSurface = taskPrototypeSurfaceSocket.get();
 
         if (taskPrototype === undefined || taskPrototypeSurface === undefined) {
             services.showErrorMessageOnce(this._errorMessage, messageShowing);
@@ -94,7 +94,7 @@ export const taskAdding = {
         }
 
         taskPrototype = {...taskPrototype, x: x, y: y};
-        taskPrototypeContainer.set(taskPrototype);
+        taskPrototypeSocket.set(taskPrototype);
 
         drawing.redraw(taskPrototypeSurface, taskPrototype);
 
@@ -104,16 +104,16 @@ export const taskAdding = {
     async complete<MapSurface, TaskPrototypeSurface, TaskSurface>(
         getCurrentMapId: () => number,
         messageShowing: ports.MessageShowing,
-        taskPrototypeContainer: ports.SingleValueContainer<TaskPrototype>,
-        taskPrototypeSurfaceContainer: ports.SingleValueContainer<TaskPrototypeSurface>,
+        taskPrototypeSocket: ports.Socket<TaskPrototype>,
+        taskPrototypeSurfaceSocket: ports.Socket<TaskPrototypeSurface>,
         taskPrototypeDrawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
         taskDrawing: ports.Drawing<MapSurface, TaskSurface, Task>,
         mapSurfaces: ports.MapSurfaces<MapSurface>,
         taskSurfaces: ports.TaskSurfaces<MapSurface, TaskSurface>,
         remoteTasks: ports.RemoteTasks,
     ): Promise<boolean> {
-        let taskPrototype = taskPrototypeContainer.get();
-        let taskPrototypeSurface = taskPrototypeSurfaceContainer.get();
+        let taskPrototype = taskPrototypeSocket.get();
+        let taskPrototypeSurface = taskPrototypeSurfaceSocket.get();
 
         if (taskPrototype === undefined || taskPrototypeSurface === undefined) {
             services.showErrorMessageOnce(this._errorMessage, messageShowing);
@@ -142,5 +142,5 @@ export const taskAdding = {
         taskDrawing.drawOn(mapSurface, taskSurface);
 
         return true;
-    }
+    },
 }

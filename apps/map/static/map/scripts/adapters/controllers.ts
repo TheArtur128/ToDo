@@ -1,15 +1,19 @@
 import * as apiClient from "./api-client.js";
+import * as sockets from "./sockets.js";
+import * as domServices from "./dom-services.js";
+import * as loggers from "./loggers.js";
 import * as parsers from "./parsers.js";
-import * as renderers from "./renderers.js";
+import * as showing from "./showing.js";
 import * as cases from "../core/cases.js";
+import * as types from "../core/types.js";
 
-export function drawMap(mapSurface: renderers.MapSurface): Promise<boolean> {
+export function drawMap(mapElement: domServices.MapSurface): Promise<boolean> {
     return cases.drawMap(
         parsers.getCurrentMapId,
         apiClient.tasks,
-        new renderers.MessageShowingWithCachedSearching(alert),
-        renderers.maps.surfacesOf(mapSurface),
-        renderers.tasks.surfaces,
-        renderers.tasks.drawing,
+        showing.alertShowing,
+        domServices.maps.surfacesOf(mapElement),
+        domServices.tasks.surfaces,
+        domServices.tasks.drawing,
     );
 }
