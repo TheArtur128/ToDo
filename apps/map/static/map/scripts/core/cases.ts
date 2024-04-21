@@ -70,10 +70,8 @@ export const taskAdding = {
     ): boolean {
         var description = services.popFrom(originalDescriptionContainer);
 
-        if (description === undefined) {
-            services.showErrorMessageOnce(this._errorMessage, messageShowing);
+        if (description === undefined)
             return false;
-        }
 
         descriptionTemporaryContainer.set(description);
 
