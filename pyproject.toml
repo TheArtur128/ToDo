@@ -18,6 +18,7 @@ event-bus = "^1.0.2"
 djangorestframework = "^3.14.0"
 markdown = "^3.5.2"
 django-filter = "^24.1"
+sqlparse = "^0.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
