@@ -12,30 +12,41 @@ export async function drawMap<MapSurface, TaskSurface>(
 ): Promise<boolean> {
     let map: Map = {id: getCurrentMapId()};
 
-    let tasks = await remoteTasks.tasksForMapWithId(map.id);
     let mapSurface = <MapSurface>mapSurfaces.mapSurfaceOf(map);
 
-    if (mapSurface === undefined || tasks === undefined) {
-        services.showErrorMessageOnce(
-            "At the moment you are freed from any tasks!",
-            messageShowing,
-        );
-
+    if (mapSurface === undefined) {
+        messageShowing.show("All your tasks could not be displayed.");
         return false;
     }
 
-    tasks.forEach(task => {
+    let taskResults = remoteTasks.tasksForMapWithId(map.id);
+
+    let wereTasksLost = false;
+
+    for await (const taskResult of taskResults) {
+        if (taskResult === undefined) {
+            wereTasksLost = true;
+            continue;
+        }
+
+        let task = taskResult;
+
         let taskSurface = taskSurfaces.taskSurfaceOn(mapSurface, task.id);
 
         if (taskSurface !== undefined) {
             drawing.redraw(taskSurface, task);
-            return;
+            continue;
         }
 
         taskSurface = taskSurfaces.getEmpty();
         drawing.redraw(taskSurface, task);
         drawing.drawOn(mapSurface, taskSurface);        
-    });
+    }
+
+    if (wereTasksLost) {
+        messageShowing.show("Some of your tasks could not be displayed.");
+        return false;
+    }
 
     return true;
 }

@@ -1,5 +1,9 @@
 import { Task, TaskPrototype, Map } from "./types.js";
 
+export type AsyncIterable<Value> = {
+    [Symbol.asyncIterator](): AsyncIterator<Value>;
+}
+
 export type MessageShowing = {
     show(message: string): any;
     setWasShown(message: string): any,
@@ -31,7 +35,7 @@ export type Container<Value> = {
 }
 
 export type RemoteTasks = {
-    tasksForMapWithId(id: number): Promise<Task[] | undefined>,
+    tasksForMapWithId(id: number): AsyncIterable<Task | undefined>,
     createdTaskFrom(p: TaskPrototype, mapId: number): Promise<Task | undefined>,
 }
 

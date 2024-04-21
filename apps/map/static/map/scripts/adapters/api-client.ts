@@ -31,32 +31,24 @@ export const tasks = {
         }
     },
 
-    async tasksForMapWithId(
-      mapId: number,
-    ): Promise<types.Task[] | undefined> {
-      return this._tasksFrom(this._topMapTaskEndpointURLWith(mapId));
+    tasksForMapWithId(mapId: number): AsyncGenerator<types.Task | undefined> {
+        return this._tasksFrom(this._topMapTaskEndpointURLWith(mapId));
     },
 
-    async _tasksFrom(url: string): Promise<types.Task[] | undefined> {
-      let response = await fetch(url);
+    async *_tasksFrom(url: string): AsyncGenerator<types.Task | undefined> {
+        let response = await fetch(url);
 
-      if (!response.ok)
-        return undefined;
+        if (!response.ok) {
+            yield undefined;
+            return;
+        }
 
-      let tasks: types.Task[] = [];
+        let responseData = await response.json();
 
-      let responseData = await response.json();
+        yield* responseData.results;
 
-      tasks = tasks.concat(responseData.results);
-
-      if (responseData.next === null)
-        return tasks;
-
-      let nextTasks = await this._tasksFrom(responseData.next);
-      if (nextTasks === undefined)
-        return tasks;
-
-      return tasks.concat(nextTasks);
+        if (responseData.next !== null)
+            yield* this._tasksFrom(responseData.next);
     },
 
     _topMapTaskEndpointURLWith(mapId: number): string {
