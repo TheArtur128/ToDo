@@ -1,5 +1,5 @@
 import * as apiClient from "./api-client.js";
-import * as sockets from "./sockets.js";
+import * as containers from "./containers.js";
 import * as domServices from "./dom-services.js";
 import * as loggers from "./loggers.js";
 import * as parsers from "./parsers.js";
@@ -19,41 +19,41 @@ export function drawMap(mapElement: domServices.MapSurface): Promise<boolean> {
 }
 
 export const taskAdding = {
-    _taskPrototypeSocket: new sockets.SocketContainer<types.TaskPrototype>(),
-    _taskPrototypeSurfaceSocket: new sockets.SocketContainer<domServices.TaskPrototypeSurface>(),
-    _descriptionTemporarySocket: new sockets.SocketContainer<string>(),
+    _taskPrototypeContainer: new containers.StorageContainer<types.TaskPrototype>(),
+    _taskPrototypeSurfaceContainer: new containers.StorageContainer<domServices.TaskPrototypeSurface>(),
+    _descriptionTemporaryContainer: new containers.StorageContainer<string>(),
 
     start(
         mapElement: domServices.MapSurface,
-        descriptionInputElement: sockets.HTMLElementContainer,
+        descriptionInputElement: containers.StorageHTMLElement,
         x: number,
         y: number,
     ): boolean {
         return cases.taskAdding.start(
             x,
             y,
-            new sockets.HTMLElementSocket(descriptionInputElement),
-            this._descriptionTemporarySocket,
+            new containers.HTMLElementValueContainer(descriptionInputElement),
+            this._descriptionTemporaryContainer,
             parsers.getCurrentMapId,
             showing.alertShowing,
             domServices.maps.surfacesOf(mapElement),
             domServices.taskPrototypes.surfaces,
             domServices.taskPrototypes.drawing,
-            this._taskPrototypeSocket,
-            this._taskPrototypeSurfaceSocket,
+            this._taskPrototypeContainer,
+            this._taskPrototypeSurfaceContainer,
         );
     },
 
     cancel(
         mapElement: domServices.MapSurface,
-        descriptionInputElement: sockets.HTMLElementContainer
+        descriptionInputElement: containers.StorageHTMLElement
     ): void {
         cases.taskAdding.cancel(
-            new sockets.HTMLElementSocket(descriptionInputElement),
-            this._descriptionTemporarySocket,
+            new containers.HTMLElementValueContainer(descriptionInputElement),
+            this._descriptionTemporaryContainer,
             parsers.getCurrentMapId,
-            this._taskPrototypeSocket,
-            this._taskPrototypeSurfaceSocket,
+            this._taskPrototypeContainer,
+            this._taskPrototypeSurfaceContainer,
             domServices.taskPrototypes.drawing,
             domServices.maps.surfacesOf(mapElement),
             loggers.consoleLogger,
@@ -65,8 +65,8 @@ export const taskAdding = {
             x,
             y,
             showing.alertShowing,
-            this._taskPrototypeSocket,
-            this._taskPrototypeSurfaceSocket,
+            this._taskPrototypeContainer,
+            this._taskPrototypeSurfaceContainer,
             domServices.taskPrototypes.drawing,
         );
     },
@@ -75,8 +75,8 @@ export const taskAdding = {
         return cases.taskAdding.complete(
             parsers.getCurrentMapId,
             showing.alertShowing,
-            this._taskPrototypeSocket,
-            this._taskPrototypeSurfaceSocket,
+            this._taskPrototypeContainer,
+            this._taskPrototypeSurfaceContainer,
             domServices.taskPrototypes.drawing,
             domServices.tasks.drawing,
             domServices.maps.surfacesOf(mapElement),

@@ -1,6 +1,6 @@
 import * as ports from "../core/ports.js";
 
-export class SocketContainer<Value> implements ports.Socket<Value> {
+export class StorageContainer<Value> implements ports.Container<Value> {
     #value: Value | undefined;
 
     constructor(value: Value | undefined = undefined) {
@@ -16,12 +16,12 @@ export class SocketContainer<Value> implements ports.Socket<Value> {
     }
 }
 
-export type HTMLElementContainer = HTMLElement & {value: string}
+export type StorageHTMLElement = HTMLElement & {value: string}
 
-export class HTMLElementSocket implements ports.Socket<string> {
-    #inputElement: HTMLElementContainer;
+export class HTMLElementValueContainer implements ports.Container<string> {
+    #inputElement: StorageHTMLElement;
 
-    constructor(inputElement: HTMLElementContainer) {
+    constructor(inputElement: StorageHTMLElement) {
         this.#inputElement = inputElement
     }
 

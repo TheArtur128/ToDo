@@ -47,24 +47,24 @@ export const taskAdding = {
     start<MapSurface, TaskPrototypeSurface>(
         x: number,
         y: number,
-        originalDescriptionSocket: ports.Socket<string>,
-        descriptionTemporarySocket: ports.Socket<string>,
+        originalDescriptionContainer: ports.Container<string>,
+        descriptionTemporaryContainer: ports.Container<string>,
         getCurrentMapId: () => number,
         messageShowing: ports.MessageShowing,
         mapSurfaces: ports.MapSurfaces<MapSurface>,
         taskPrototypeSurfaces: ports.TaskPrototypeSurfaces<TaskPrototypeSurface>,
         drawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
-        taskPrototypeSocket: ports.Socket<TaskPrototype>,
-        taskPrototypeSurfaceSocket: ports.Socket<TaskPrototypeSurface>,
+        taskPrototypeContainer: ports.Container<TaskPrototype>,
+        taskPrototypeSurfaceContainer: ports.Container<TaskPrototypeSurface>,
     ): boolean {
-        var description = services.popFrom(originalDescriptionSocket);
+        var description = services.popFrom(originalDescriptionContainer);
 
         if (description === undefined) {
             services.showErrorMessageOnce(this._errorMessage, messageShowing);
             return false;
         }
 
-        descriptionTemporarySocket.set(description);
+        descriptionTemporaryContainer.set(description);
 
         let map: Map = {id: getCurrentMapId()};
         let taskPrototype: TaskPrototype = {description: description, x: x, y: y}
@@ -78,8 +78,8 @@ export const taskAdding = {
 
         let taskPrototypeSurface = taskPrototypeSurfaces.getEmpty();
 
-        taskPrototypeSocket.set(taskPrototype)
-        taskPrototypeSurfaceSocket.set(taskPrototypeSurface);
+        taskPrototypeContainer.set(taskPrototype)
+        taskPrototypeSurfaceContainer.set(taskPrototypeSurface);
 
         drawing.redraw(taskPrototypeSurface, taskPrototype);
         drawing.drawOn(mapSurface, taskPrototypeSurface);
@@ -88,20 +88,20 @@ export const taskAdding = {
     },
 
     cancel<MapSurface, TaskPrototypeSurface, TaskPrototype>(
-        originalDescriptionSocket: ports.Socket<string>,
-        descriptionTemporarySocket: ports.Socket<string>,
+        originalDescriptionContainer: ports.Container<string>,
+        descriptionTemporaryContainer: ports.Container<string>,
         getCurrentMapId: () => number,
-        taskPrototypeSocket: ports.Socket<TaskPrototype>,
-        taskPrototypeSurfaceSocket: ports.Socket<TaskPrototypeSurface>,
+        taskPrototypeContainer: ports.Container<TaskPrototype>,
+        taskPrototypeSurfaceContainer: ports.Container<TaskPrototypeSurface>,
         drawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
         mapSurfaces: ports.MapSurfaces<MapSurface>,
         logger: ports.Logger,
     ): void {
-        let originalDescription = descriptionTemporarySocket.get();
-        services.setDefaultAt(originalDescriptionSocket, originalDescription);
+        let originalDescription = descriptionTemporaryContainer.get();
+        services.setDefaultAt(originalDescriptionContainer, originalDescription);
 
-        taskPrototypeSocket.set(undefined);
-        let taskPrototypeSurface = services.popFrom(taskPrototypeSurfaceSocket);
+        taskPrototypeContainer.set(undefined);
+        let taskPrototypeSurface = services.popFrom(taskPrototypeSurfaceContainer);
 
         if (taskPrototypeSurface === undefined)
             return;
@@ -121,12 +121,12 @@ export const taskAdding = {
         x: number,
         y: number,
         messageShowing: ports.MessageShowing,
-        taskPrototypeSocket: ports.Socket<TaskPrototype>,
-        taskPrototypeSurfaceSocket: ports.Socket<TaskPrototypeSurface>,
+        taskPrototypeContainer: ports.Container<TaskPrototype>,
+        taskPrototypeSurfaceContainer: ports.Container<TaskPrototypeSurface>,
         drawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
     ): boolean {
-        let taskPrototype = taskPrototypeSocket.get();
-        let taskPrototypeSurface = taskPrototypeSurfaceSocket.get();
+        let taskPrototype = taskPrototypeContainer.get();
+        let taskPrototypeSurface = taskPrototypeSurfaceContainer.get();
 
         if (taskPrototype === undefined || taskPrototypeSurface === undefined) {
             services.showErrorMessageOnce(this._errorMessage, messageShowing);
@@ -134,7 +134,7 @@ export const taskAdding = {
         }
 
         taskPrototype = {...taskPrototype, x: x, y: y};
-        taskPrototypeSocket.set(taskPrototype);
+        taskPrototypeContainer.set(taskPrototype);
 
         drawing.redraw(taskPrototypeSurface, taskPrototype);
 
@@ -144,16 +144,16 @@ export const taskAdding = {
     async complete<MapSurface, TaskPrototypeSurface, TaskSurface>(
         getCurrentMapId: () => number,
         messageShowing: ports.MessageShowing,
-        taskPrototypeSocket: ports.Socket<TaskPrototype>,
-        taskPrototypeSurfaceSocket: ports.Socket<TaskPrototypeSurface>,
+        taskPrototypeContainer: ports.Container<TaskPrototype>,
+        taskPrototypeSurfaceContainer: ports.Container<TaskPrototypeSurface>,
         taskPrototypeDrawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
         taskDrawing: ports.Drawing<MapSurface, TaskSurface, Task>,
         mapSurfaces: ports.MapSurfaces<MapSurface>,
         taskSurfaces: ports.TaskSurfaces<MapSurface, TaskSurface>,
         remoteTasks: ports.RemoteTasks,
     ): Promise<boolean> {
-        let taskPrototype = taskPrototypeSocket.get();
-        let taskPrototypeSurface = taskPrototypeSurfaceSocket.get();
+        let taskPrototype = taskPrototypeContainer.get();
+        let taskPrototypeSurface = taskPrototypeSurfaceContainer.get();
 
         if (taskPrototype === undefined || taskPrototypeSurface === undefined) {
             services.showErrorMessageOnce(this._errorMessage, messageShowing);

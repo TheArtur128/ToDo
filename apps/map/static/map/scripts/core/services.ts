@@ -1,4 +1,4 @@
-import { MessageShowing, Socket } from "./ports.js";
+import { MessageShowing, Container } from "./ports.js";
 
 export function showErrorMessageOnce(
     errorMessage: string,
@@ -11,21 +11,21 @@ export function showErrorMessageOnce(
     messageShowing.setWasShown(errorMessage);
 }
 
-export function popFrom<Value>(socket: Socket<Value>): Value | undefined {
-    let value = socket.get();
+export function popFrom<Value>(container: Container<Value>): Value | undefined {
+    let value = container.get();
 
     if (value !== undefined)
-        socket.set(undefined);
+        container.set(undefined);
 
     return value;
 }
 
 export function setDefaultAt<Value>(
-    socket: Socket<Value>,
+    container: Container<Value>,
     defaultValue: Value,
 ): void {
-    let storedValue = socket.get();
+    let storedValue = container.get();
 
     if (storedValue === undefined)
-        socket.set(defaultValue);
+        container.set(defaultValue);
 }
