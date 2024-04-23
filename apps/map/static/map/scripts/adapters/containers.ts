@@ -1,43 +1,35 @@
 import * as ports from "../core/ports.js";
 
 export class StorageContainer<Value> implements ports.Container<Value> {
-    #value: Value | undefined;
-
-    constructor(value: Value | undefined = undefined) {
-        this.#value = value;
-    }
+    constructor(private value: Value | undefined = undefined) {}
 
     set(newValue: Value | undefined) {
-        this.#value = newValue;
+        this.value = newValue;
     }
 
     get(): Value | undefined {
-        return this.#value;
+        return this.value;
     }
 }
 
 export type StorageHTMLElement = HTMLElement & {value: string}
 
 export class HTMLElementValueContainer implements ports.Container<string> {
-    #inputElement: StorageHTMLElement;
+    constructor(private inputElement: StorageHTMLElement) {}
 
-    constructor(inputElement: StorageHTMLElement) {
-        this.#inputElement = inputElement
-    }
-
-    set(newValue: string | undefined) {
-        this.#inputElement.value = this.#storedValueOf(newValue);
+    set(outerValue: string | undefined) {
+        this.inputElement.value = this._storedValueOf(outerValue);
     }
 
     get(): string | undefined {
-        return this.#inputValueOf(this.#inputElement.value);
+        return this._outerValueOf(this.inputElement.value);
     }
 
-    #storedValueOf(value: string | undefined): string {
-        return value === undefined ? '' : value;
+    private _storedValueOf(outerValue: string | undefined): string {
+        return outerValue === undefined ? '' : outerValue;
     }
 
-    #inputValueOf(storedValue: string): string | undefined {
+    private _outerValueOf(storedValue: string): string | undefined {
         return storedValue === '' ? undefined : storedValue;
     }
 }

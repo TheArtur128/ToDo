@@ -1,9 +1,10 @@
-import * as controllers from "../adapters/controllers.js";
-import * as views from "../views/map.js";
+import * as facade from "../adapters/facade.js";
+import * as controllers from "../controllers.js";
 
 
 const taskListElement = <HTMLDivElement>document.querySelector("#tasks");
 const creationPanelElement = <HTMLDivElement>document.querySelector("#creation-panel");
+const descriptionInputElement = <HTMLTextAreaElement>document.querySelector("#new-task-description");
 
-controllers.drawMap(taskListElement);
-views.initTaskAddingView(creationPanelElement);
+facade.drawMap(taskListElement);
+controllers.initTaskAddingView(creationPanelElement, taskListElement, descriptionInputElement);

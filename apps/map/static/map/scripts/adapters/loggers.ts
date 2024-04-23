@@ -1,7 +1,7 @@
-import * as types from "../core/types.js";
+import * as ports from "../core/ports.js";
 
-export const consoleLogger = {
-    logMapHasNoSurface(map: types.Map): any {
-        console.error(`Surface for map with id = ${map.id} do not exist`);
+export const consoleLogger: ports.Logger = {
+    log(message: string): any {
+        console.error(message);
     },
 };

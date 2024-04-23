@@ -40,5 +40,11 @@ export type RemoteTasks = {
 }
 
 export type Logger = {
-    logMapHasNoSurface(m: Map): any;
+    log(m: string): any;
+}
+
+export type Cursor = {
+    setDefault(): void;
+    setToGrab(): void;
+    setGrabbed(): void;
 }

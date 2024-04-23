@@ -102,6 +102,29 @@ export const maps = {
     },
 }
 
-export const _surfacePositionCoordinateOf = (coordinate: number): string => {
+export const cursor: ports.Cursor = {
+    setDefault(): void {
+        _setGlobalStyleProperty("cursor", '', '');
+    },
+
+    setToGrab(): void {
+        _setGlobalStyleProperty("cursor", "grab", "important");
+    },
+
+    setGrabbed(): void {
+        _setGlobalStyleProperty("cursor", "grabbing", "important");
+    },
+}
+
+function _setGlobalStyleProperty(property: string, value: string | null, priority?: string): void {
+    document.querySelectorAll('*').forEach(element => {
+        if (!(element instanceof HTMLElement))
+            return;
+
+        element.style.setProperty(property, value, priority);
+    })
+}
+
+function _surfacePositionCoordinateOf(coordinate: number): string {
     return `${coordinate}px`;
 }
