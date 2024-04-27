@@ -76,8 +76,8 @@ class opening:
     ) -> ActivationPlace:
         confirmation_page_url = opening._confirmation_page_url_of(endpoint)
 
-        if config.is_dev:
-            send_activation_code = opening.send_activation_code_by.console
+        if config.file_only or config.is_dev:
+            send_activation_code = opening.send_activation_code_by.file
 
         do(send_activation_code)(endpoint, confirmation_page_url)
         _endpoint_repository.save(endpoint)
