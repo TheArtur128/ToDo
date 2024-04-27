@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 from operator import setitem
 from urllib.parse import urljoin
 from typing import Callable, Optional, Iterable, Any
@@ -119,14 +120,17 @@ class opening:
 
             return result_code == 1
 
-        def console(
+        def file(
             endpoint: Endpoint[Any],
             url: ActivationPlace,
         ) -> bool:
-            print(
-                f"{endpoint.port.subject} confirmation for "
+            message = (
+                f"[{datetime.now()}] {endpoint.port.subject} confirmation for "
                 f"\"{endpoint.user_id}\" in {url}: {endpoint.activation_code}"
             )
+
+            with open("confirmations.txt", 'a') as file:
+                file.write(message)
 
 
 @val

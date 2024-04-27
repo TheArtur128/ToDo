@@ -163,6 +163,7 @@ cython_debug/
 test.py
 /static
 *.js
+confirmations.txt
 
 # Custom Redis
 dump.rdb

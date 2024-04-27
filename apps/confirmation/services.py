@@ -26,9 +26,9 @@ class sendings:
         method=adapters.methods.email,
         __call__=adapters.opening.send_activation_code_by.email,
     )
-    console: _Sending[Any] = val(
-        method=adapters.methods.console,
-        __call__=adapters.opening.send_activation_code_by.console,
+    file: _Sending[Any] = val(
+        method=adapters.methods.file,
+        __call__=adapters.opening.send_activation_code_by.file,
     )
 
 
