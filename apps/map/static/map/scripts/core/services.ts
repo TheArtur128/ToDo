@@ -1,15 +1,4 @@
-import { MessageShowing, Container } from "./ports.js";
-
-export function showErrorMessageOnce(
-    errorMessage: string,
-    messageShowing: MessageShowing,
-): void {
-    if (messageShowing.isWasShown(errorMessage))
-        return;
-
-    messageShowing.show(errorMessage);
-    messageShowing.setWasShown(errorMessage);
-}
+import { Container } from "./ports.js";
 
 export function popFrom<Value>(container: Container<Value>): Value | undefined {
     let value = container.get();

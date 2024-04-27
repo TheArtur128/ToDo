@@ -1,14 +1,23 @@
+import * as errors from "./errors";
+
 export type Map = {id: number}
 
 export type Task = {
     id: number,
-    description: string,
+    description: Description,
     x: number,
     y: number,
 }
 
 export type TaskPrototype = {
-    description: string,
+    description: Description,
     x: number,
     y: number,
+}
+
+export class Description {
+    constructor(readonly value: string) {
+        if (value === '')
+            throw new errors.EmptyDescriptionError();
+    }
 }

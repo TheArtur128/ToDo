@@ -1,14 +1,13 @@
 import * as facade from "./adapters/facade.js";
 import * as tools from "./tools.js";
 
-export function initTaskAddingView(
+export function initTaskAddingControllers(
+    taskAdding: ReturnType<typeof facade.taskAddingOf>,
     centerElement: HTMLElement,
-    mapElement: HTMLDivElement,
-    descriptionInputElement: HTMLInputElement | HTMLTextAreaElement,
 ): void {
-    const taskAdding = facade.taskAddingOf(mapElement, descriptionInputElement);
-
-    centerElement.addEventListener("mousedown", taskAdding.prepare);
+    centerElement.addEventListener("mousedown", () => {
+        taskAdding.prepare();
+    });
 
     centerElement.addEventListener("mouseleave", event => {
         taskAdding.start(event.clientX, event.clientY);

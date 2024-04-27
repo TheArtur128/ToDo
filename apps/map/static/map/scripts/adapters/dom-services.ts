@@ -65,7 +65,7 @@ export const tasks = {
             let descriptionSurface = surface.querySelector(query);
 
             if (descriptionSurface instanceof HTMLTextAreaElement)
-                descriptionSurface.value = task.description;
+                descriptionSurface.value = task.description.value;
         }
     },
 

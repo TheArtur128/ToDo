@@ -1,4 +1,6 @@
+import { MapError } from "../core/errors.js";
 import * as ports from "../core/ports.js";
+import { Description } from "../core/types.js";
 
 export class StorageContainer<Value> implements ports.Container<Value> {
     constructor(private value: Value | undefined = undefined) {}
@@ -22,14 +24,32 @@ export class HTMLElementValueContainer implements ports.Container<string> {
     }
 
     get(): string | undefined {
-        return this._outerValueOf(this.inputElement.value);
+        return this.inputElement.value;
     }
 
     private _storedValueOf(outerValue: string | undefined): string {
         return outerValue === undefined ? '' : outerValue;
     }
+}
 
-    private _outerValueOf(storedValue: string): string | undefined {
-        return storedValue === '' ? undefined : storedValue;
+export class DescriptionAdapterContainer implements ports.Container<Description> {
+    constructor(private _valueContainer: ports.Container<string>) {}
+
+    set(description: Description) {
+        this._valueContainer.set(description.value);
+    }
+
+    get(): Description | undefined {
+        const value = this._valueContainer.get();
+
+        if (value === undefined)
+            return undefined;
+
+        try {
+            return new Description(value);
+        }
+        catch (MapError) {
+            return undefined;
+        }
     }
 }

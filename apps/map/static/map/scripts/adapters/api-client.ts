@@ -1,3 +1,4 @@
+import { MapError } from "../core/errors.js";
 import * as types from "../core/types.js";
 
 export const tasks = {
@@ -23,11 +24,16 @@ export const tasks = {
 
         const responseData = await response.json();
 
-        return <types.Task>{
-            id: responseData.id,
-            description: responseData.description,
-            x: responseData.x,
-            y: responseData.y,
+        try {
+            return <types.Task>{
+                id: responseData.id,
+                description: new types.Description(responseData.description),
+                x: responseData.x,
+                y: responseData.y,
+            }
+        }
+        catch (MapError) {
+            return undefined;
         }
     },
 

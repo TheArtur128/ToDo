@@ -4,11 +4,7 @@ export type AsyncIterable<Value> = {
     [Symbol.asyncIterator](): AsyncIterator<Value>;
 }
 
-export type MessageShowing = {
-    show(message: string): any;
-    setWasShown(message: string): any,
-    isWasShown(message: string): boolean;
-}
+export type ShowMessage = (m: string) => any;
 
 export type Drawing<MapSurface, Surface, Value> = {
     drawOn(m: MapSurface, t: Surface): any,
@@ -39,9 +35,7 @@ export type RemoteTasks = {
     createdTaskFrom(p: TaskPrototype, mapId: number): Promise<Task | undefined>,
 }
 
-export type Logger = {
-    log(m: string): any;
-}
+export type Log = (m: string) => any;
 
 export type Cursor = {
     setDefault(): void;
