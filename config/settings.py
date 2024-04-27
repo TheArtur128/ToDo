@@ -1,23 +1,23 @@
-from os import getenv
 from secrets import token_urlsafe
 
 from pathlib import Path
-from dotenv import load_dotenv
+from typenv import Env
 
 
-load_dotenv()
+env = Env()
+env.read_env()
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = getenv("SECRET_KEY", default=token_urlsafe(64))
+SECRET_KEY = env.str("SECRET_KEY", default=token_urlsafe(64))
 
-IS_DEV = bool(int(getenv("IS_DEV", default="1")))
+IS_DEV = env.bool("IS_DEV", default=True)
 
 DEBUG = IS_DEV
 
-PROTOCOL = getenv("PROTOCOL", default="http://")
-DOMAIN = getenv("DOMAIN", default="localhost")
+PROTOCOL = env.str("PROTOCOL", default="http://")
+DOMAIN = env.str("DOMAIN", default="localhost")
 
 HOST = f"{PROTOCOL}{DOMAIN}"
 
@@ -76,11 +76,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": getenv("POSRTGES_NAME", default="todo"),
-        "USER": getenv("POSRTGES_USER", default="todo"),
-        "PASSWORD": getenv("POSRTGES_PASSWORD", default="todo"),
-        "HOST": getenv("POSRTGES_HOST", default="localhost"),
-        "PORT": getenv("POSRTGES_PORT", default="5432"),
+        "NAME": env.str("POSRTGES_NAME", default="todo"),
+        "USER": env.str("POSRTGES_USER", default="todo"),
+        "PASSWORD": env.str("POSRTGES_PASSWORD", default="todo"),
+        "HOST": env.str("POSRTGES_HOST", default="localhost"),
+        "PORT": env.str("POSRTGES_PORT", default="5432"),
     }
 }
 
@@ -136,23 +136,23 @@ STATIC_ROOT = BASE_DIR / "static"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-EMAIL_HOST = getenv("EMAIL_HOST", default=None)
-EMAIL_HOST_USER = getenv("EMAIL_HOST_USER", default=None)
-EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD", default=None)
-EMAIL_PORT = int(getenv("EMAIL_PORT", default=0))
-EMAIL_USE_TLS = bool(int(getenv("EMAIL_USE_TLS", default=False)))
-EMAIL_USE_SSL = bool(int(getenv("EMAIL_USE_SSL", default=False)))
+EMAIL_HOST = env.str("EMAIL_HOST", default=None)
+EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default=None)
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default=None)
+EMAIL_PORT = env.int("EMAIL_PORT", default=0)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
 
-DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL", default=None)
-EMAIL_ADMIN = getenv("EMAIL_ADMIN", default=DEFAULT_FROM_EMAIL)
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default=None)
+EMAIL_ADMIN = env.str("EMAIL_ADMIN", default=DEFAULT_FROM_EMAIL)
 
 
 CONFIRMATION_SESSION_CODE_LENGTH = 64
 CONFIRMATION_ACTIVATION_CODE_LENGTH = 8
 CONFIRMATION_ACTIVITY_MINUTES = 8
 
-REDIS_PASSWORD = getenv("REDIS_PASSWORD", default="todo")
-REDIS_SOCKET = getenv("REDIS_SOCKET", default="localhost:6379")
+REDIS_PASSWORD = env.str("REDIS_PASSWORD", default="todo")
+REDIS_SOCKET = env.str("REDIS_SOCKET", default="localhost:6379")
 
 REDIS_BASIC_LOCATION = f"redis://{REDIS_SOCKET}"
 

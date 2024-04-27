@@ -395,6 +395,20 @@ dev = ["build", "hatch"]
 doc = ["sphinx"]
 
 [[package]]
+name = "typenv"
+version = "0.2.0"
+description = "Typed environment variable parsing for Python"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "typenv-0.2.0-py3-none-any.whl", hash = "sha256:6cd2a00a0ce4ff03f8645f1b6da1f64e60a1f260a732ba7a716c17e3b0946915"},
+    {file = "typenv-0.2.0.tar.gz", hash = "sha256:6fd1e6964fe5bb4a9aefcd28557ee520913b51208d1afff33598fc677bc855fb"},
+]
+
+[package.dependencies]
+python-dotenv = ">=0.10.3"
+
+[[package]]
 name = "typing-extensions"
 version = "4.10.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -419,4 +433,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "7fa1d69e1354128632c8868577f93961dad9cd2b1c3d762bfc7171994b3bbfee"
+content-hash = "03521f58d571359d847d43e4b74cf6cef07545d04aab1829687c71c8aab94669"
