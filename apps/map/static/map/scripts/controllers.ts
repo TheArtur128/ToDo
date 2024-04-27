@@ -1,4 +1,5 @@
 import * as facade from "./adapters/facade.js";
+import * as tools from "./tools.js";
 
 export function initTaskAddingView(
     centerElement: HTMLElement,
@@ -9,19 +10,22 @@ export function initTaskAddingView(
 
     centerElement.addEventListener("mousedown", taskAdding.prepare);
 
-    centerElement.addEventListener("mouseout", event => {
+    centerElement.addEventListener("mouseleave", event => {
         taskAdding.start(event.clientX, event.clientY);
     });
 
-    centerElement.addEventListener("mouseover", taskAdding.stop);
+    centerElement.addEventListener("mouseenter", event => {
+        if (event.target === centerElement)
+            taskAdding.stop();
+    });
 
     document.addEventListener("mousemove", event => {
-        if (event.target !== centerElement)
+        if (!tools.isInDOMOf(centerElement, event.target))
             taskAdding.handle(event.clientX, event.clientY);
     });
 
     document.addEventListener("mouseup", event => {
-        if (event.target === centerElement)
+        if (tools.isInDOMOf(centerElement, event.target))
             taskAdding.cancel();
         else
             taskAdding.complete();
