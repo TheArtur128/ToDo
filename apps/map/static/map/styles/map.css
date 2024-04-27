@@ -64,7 +64,3 @@
 #new-task-description:hover {
   cursor: text;
 }
-
-#new-task-description:active {
-  cursor: grabbing;
-}
