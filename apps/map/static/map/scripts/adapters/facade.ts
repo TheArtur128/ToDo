@@ -13,6 +13,7 @@ export function tasksOf(mapElement: domServices.MapSurface) {
         mapSurfaces: domServices.maps.surfacesOf(mapElement),
         taskSurfaces: domServices.tasks.surfaces,
         drawing: domServices.tasks.drawing,
+        logError: console.error,
     }
 
     return {
@@ -36,7 +37,7 @@ export function taskAddingOf(
         taskPrototypeContainer: new containers.StorageContainer<types.TaskPrototype>(),
         taskPrototypeSurfaceContainer: new containers.StorageContainer<domServices.TaskPrototypeSurface>(),
         getCurrentMapId: parsers.getCurrentMapId,
-        show: alert,
+        show: async (message: string) => await alert(message),
         mapSurfaces: domServices.maps.surfacesOf(mapElement),
         taskPrototypeSurfaces: domServices.taskPrototypes.surfaces,
         taskSurfaces: domServices.tasks.surfaces,

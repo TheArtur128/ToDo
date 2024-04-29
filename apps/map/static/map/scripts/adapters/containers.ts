@@ -35,8 +35,10 @@ export class HTMLElementValueContainer implements ports.Container<string> {
 export class DescriptionAdapterContainer implements ports.Container<Description> {
     constructor(private _valueContainer: ports.Container<string>) {}
 
-    set(description: Description) {
-        this._valueContainer.set(description.value);
+    set(description: Description | undefined) {
+        this._valueContainer.set(
+            description === undefined ? undefined : description.value
+        );
     }
 
     get(): Description | undefined {

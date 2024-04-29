@@ -1,4 +1,4 @@
-import * as errors from "./errors";
+import * as errors from "./errors.js";
 
 export type Map = {id: number}
 

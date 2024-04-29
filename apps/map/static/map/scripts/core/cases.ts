@@ -1,4 +1,3 @@
-import { EmptyDescriptionError } from "./errors.js";
 import * as ports from "./ports.js";
 import * as services from "./services.js";
 import { Task, TaskPrototype, Map, Description } from "./types.js";
@@ -11,31 +10,37 @@ export namespace maps {
         mapSurfaces: ports.MapSurfaces<MapSurface>,
         taskSurfaces: ports.TaskSurfaces<MapSurface, TaskSurface>,
         drawing: ports.Drawing<MapSurface, TaskSurface, Task>,
+        logError: ports.Log,
     }
 
     export async function draw<MapSurface, TaskSurface>(
         adapters: Ports<MapSurface, TaskSurface>,
-    ): Promise<boolean> {
+    ): Promise<void> {
         let map: Map = {id: adapters.getCurrentMapId()};
 
         let mapSurface = adapters.mapSurfaces.mapSurfaceOf(map);
 
         if (mapSurface === undefined) {
             adapters.show("All your tasks could not be displayed.");
-            return false;
+            adapters.logError(`Map surface with id = ${map.id} was not found`);
+            return;
         }
 
-        let taskResults = adapters.remoteTasks.tasksForMapWithId(map.id);
+        let tasks = await adapters.remoteTasks.tasksForMapWithId(map.id);
 
-        let wereTasksLost = false;
+        if (tasks === undefined) {
+            adapters.show("All your tasks could not be displayed.");
+            adapters.logError(`Failed to get remote tasks on map with id = ${map.id}`);
+            return;
+        }
 
-        for await (const taskResult of taskResults) {
-            if (taskResult === undefined) {
-                wereTasksLost = true;
+        let numberOfUndisplayedTasks = 0;
+
+        for await (const task of tasks) {
+            if (task === undefined) {
+                numberOfUndisplayedTasks++;
                 continue;
             }
-
-            let task = taskResult;
 
             let taskSurface = adapters.taskSurfaces.taskSurfaceOn(mapSurface, task.id);
 
@@ -46,15 +51,19 @@ export namespace maps {
 
             taskSurface = adapters.taskSurfaces.getEmpty();
             adapters.drawing.redraw(taskSurface, task);
-            adapters.drawing.drawOn(mapSurface, taskSurface);        
+            adapters.drawing.drawOn(mapSurface, taskSurface);
         }
 
-        if (wereTasksLost) {
+        if (numberOfUndisplayedTasks !== 0) {
             adapters.show("Some of your tasks could not be displayed.");
-            return false;
+            adapters.logError(
+                `Failed to get ${numberOfUndisplayedTasks} remote tasks`
+                + ` from map with id = ${map.id}`
+            );
+            return;
         }
 
-        return true;
+        return;
     }
 }
 
