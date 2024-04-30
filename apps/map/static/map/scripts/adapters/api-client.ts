@@ -75,6 +75,6 @@ export const tasks = {
         if (!(description instanceof types.Description))
             return undefined;
 
-        return <types.Task>{id: id, description: description, x: x, y: y}
+        return new types.Task(id, description, x, y);
     },
 }

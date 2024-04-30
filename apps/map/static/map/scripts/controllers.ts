@@ -30,3 +30,15 @@ export function initTaskAddingControllers(
             taskAdding.complete();
     });
 }
+
+export function initTaskControllers(
+    taskElement: HTMLDivElement,
+    tasks: facade.Tasks,
+): void {
+    const buttonElement = taskElement.querySelector(".task-interaction-mode");
+
+    if (buttonElement instanceof HTMLElement)
+        buttonElement.addEventListener("mouseup", () => {
+            tasks.changeMode(taskElement);
+        })
+}

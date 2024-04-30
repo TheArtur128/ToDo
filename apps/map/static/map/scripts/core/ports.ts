@@ -8,6 +8,11 @@ export type AsyncIterable<Value> = {
     [Symbol.asyncIterator](): AsyncIterator<Value>;
 }
 
+export type Matching<Key, Value> = {
+    matchedWith(key: Key): Value | undefined;
+    match(key: Key, value: Value): any;
+}
+
 export type ShowMessage = (m: string) => any;
 
 export type Drawing<MapSurface, Surface, Value> = {
@@ -43,6 +48,8 @@ export type RemoteTasks = {
 }
 
 export type Log = (m: string) => any;
+
+export type HangControllers<Surface> = (s: Surface) => any;
 
 export type Cursor = {
     setDefault(): void;

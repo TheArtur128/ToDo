@@ -126,7 +126,7 @@ class opening:
         ) -> bool:
             message = (
                 f"[{datetime.now()}] {endpoint.port.subject} confirmation for "
-                f"\"{endpoint.user_id}\" in {url}: {endpoint.activation_code}"
+                f"\"{endpoint.user_id}\" in {url}: {endpoint.activation_code}\n"
             )
 
             with open("confirmations.txt", 'a') as file:

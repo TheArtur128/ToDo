@@ -55,3 +55,19 @@ export class DescriptionAdapterContainer implements ports.Container<Description>
         }
     }
 }
+
+export class MatchingByHTMLElement<Value> implements ports.Matching<HTMLElement, Value> {
+    private _storage: Record<string, Value>;
+
+    constructor() {
+        this._storage = {};
+    }
+
+    matchedWith(element: HTMLElement): Value | undefined {
+        return this._storage[element.id];
+    }
+
+    match(element: HTMLElement, value: Value): void {
+        this._storage[element.id] = value;
+    }
+}

@@ -11,6 +11,8 @@ export namespace maps {
         taskSurfaces: ports.TaskSurfaces<MapSurface, TaskSurface>,
         drawing: ports.Drawing<MapSurface, TaskSurface, Task>,
         logError: ports.Log,
+        tasks: ports.Matching<TaskSurface, Task>,
+        hangControllersOn: ports.HangControllers<TaskSurface>;
     }
 
     export async function draw<MapSurface, TaskSurface>(
@@ -44,14 +46,16 @@ export namespace maps {
 
             let taskSurface = adapters.taskSurfaces.taskSurfaceOn(mapSurface, task.id);
 
-            if (taskSurface !== undefined) {
+            if (taskSurface === undefined) {
+                taskSurface = adapters.taskSurfaces.getEmpty();
                 adapters.drawing.redraw(taskSurface, task);
-                continue;
+                adapters.drawing.drawOn(mapSurface, taskSurface);
             }
+            else
+                adapters.drawing.redraw(taskSurface, task);
 
-            taskSurface = adapters.taskSurfaces.getEmpty();
-            adapters.drawing.redraw(taskSurface, task);
-            adapters.drawing.drawOn(mapSurface, taskSurface);
+            adapters.hangControllersOn(taskSurface);
+            adapters.tasks.match(taskSurface, task);
         }
 
         if (numberOfUndisplayedTasks !== 0) {
@@ -64,6 +68,29 @@ export namespace maps {
         }
 
         return;
+    }
+}
+
+export namespace tasks {
+    export type Ports<MapSurface, TaskSurface> = {
+        tasks: ports.Matching<TaskSurface, Task>,
+        drawing: ports.Drawing<MapSurface, TaskSurface, Task>
+        logError: ports.Log,
+    }
+
+    export function changeMode<MapSurface, TaskSurface>(
+        adapters: Ports<MapSurface, TaskSurface>,
+        taskSurface: TaskSurface,
+    ): void {
+        const task = adapters.tasks.matchedWith(taskSurface);
+
+        if (task === undefined) {
+            adapters.logError("No matching between task and surface");
+            return;
+        }
+
+        task.changeMode();
+        adapters.drawing.redraw(taskSurface, task);
     }
 }
 

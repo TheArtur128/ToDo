@@ -6,6 +6,7 @@ export type TaskSurface = HTMLDivElement;
 export type TaskPrototypeSurface = HTMLDivElement;
 
 export type TaskDescriptionSurface = HTMLTextAreaElement;
+export type InteractionModeSurface = HTMLDivElement;
 
 const _drawingBase = {
     drawOn(mapSurface: MapSurface, surface: HTMLElement) {
@@ -20,12 +21,13 @@ const _drawingBase = {
     },
 }
 
-export const tasks = {
-    _taskDescriptionSurfaceClassName: "task-description",
+export namespace tasks {
+    const _descriptionSurfaceClassName = "task-description";
+    const _interactionModeSurfaceClassName = "task-interaction-mode";
 
-    surfaces: {
+    export const surfaces = {
         taskSurfaceOn(mapSurface: MapSurface, task_id: number): TaskSurface | undefined {
-            let taskSurface = mapSurface.querySelector(`#${tasks._surfaceIdOf(task_id)}`);
+            let taskSurface = mapSurface.querySelector(`#${_surfaceIdOf(task_id)}`);
 
             return taskSurface instanceof HTMLDivElement ? taskSurface : undefined
         },
@@ -33,6 +35,7 @@ export const tasks = {
         getEmpty(): TaskSurface {
             let surface = document.createElement('div');
             surface.appendChild(this._getEmptyTaskDescriptionSurface());
+            surface.appendChild(this._getEmptyInteractionModeSurface());
 
             surface.className = "block";
             surface.style.position = "absolute";
@@ -43,7 +46,7 @@ export const tasks = {
         _getEmptyTaskDescriptionSurface(): TaskDescriptionSurface {
             let descriptionSurface = document.createElement("textarea");
 
-            descriptionSurface.className = tasks._taskDescriptionSurfaceClassName;
+            descriptionSurface.className = _descriptionSurfaceClassName;
             descriptionSurface.disabled = true;
             descriptionSurface.maxLength = 128;
             descriptionSurface.rows = 4;
@@ -51,27 +54,60 @@ export const tasks = {
 
             return descriptionSurface;
         },
-    },
 
-    drawing: <ports.Drawing<MapSurface, TaskSurface, types.Task>>{
+        _getEmptyInteractionModeSurface(): InteractionModeSurface {
+            const interactionModeSurface = document.createElement("div");
+
+            interactionModeSurface.className = _interactionModeSurfaceClassName;
+
+            return interactionModeSurface;
+        },
+    }
+
+    export const drawing: ports.Drawing<MapSurface, TaskSurface, types.Task> = {
         ..._drawingBase,
 
         redraw(surface: TaskSurface, task: types.Task) {
-            surface.id = tasks._surfaceIdOf(task.id);
+            surface.id = _surfaceIdOf(task.id);
             surface.style.left = _surfacePositionCoordinateOf(task.x);
             surface.style.top = _surfacePositionCoordinateOf(task.y);
 
-            let query = `.${tasks._taskDescriptionSurfaceClassName}`;
-            let descriptionSurface = surface.querySelector(query);
+            const descriptionSurface = surface.querySelector(
+                `.${_descriptionSurfaceClassName}`
+            );
+
+            const interactionModeSurface = surface.querySelector(
+                `.${_interactionModeSurfaceClassName}`
+            );
 
             if (descriptionSurface instanceof HTMLTextAreaElement)
                 descriptionSurface.value = task.description.value;
-        }
-    },
 
-    _surfaceIdOf(id: number): string {
+            if (interactionModeSurface instanceof HTMLDivElement)
+                interactionModeSurface.replaceChildren(_imageElementOf(task.mode));
+        }
+    }
+
+    function _surfaceIdOf(id: number): string {
         return `task-${id}`;
-    },
+    }
+
+    function _imageElementOf(mode: types.InteractionMode): HTMLImageElement {
+        const element = document.createElement("img");
+
+        if (mode === types.InteractionMode.editing) {
+            element.src = "/static/map/images/editing-mode.png";
+            element.width = 10;
+            element.height = 10;
+        }
+        else if (mode === types.InteractionMode.moving) {
+            element.src = "/static/map/images/moving-mode.png";
+            element.width = 12;
+            element.height = 12;
+        }
+
+        return element
+    }
 }
 
 export const taskPrototypes = {
