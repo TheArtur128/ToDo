@@ -14,3 +14,16 @@ export function isInDOMOf(
 
     return false;
 }
+
+export function getCookies(): Record<string, string> {
+    const cookies: Record<string, string> = {};
+
+    for (let keyAndValueLine of document.cookie.split(";")) {
+        let [key, value] = keyAndValueLine.split("=");
+        cookies[key] = value;
+    }
+
+    return cookies;
+}
+
+export const cookies = getCookies();

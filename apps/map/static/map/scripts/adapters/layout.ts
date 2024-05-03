@@ -88,6 +88,14 @@ export namespace tasks {
         }
     }
 
+    export function taskSurfaceCursorFor(taskSurface: TaskSurface): LocalCursor | undefined {
+        let query = `.${_descriptionSurfaceClassName}`;
+        const descriptionSurface = taskSurface.querySelector(query);
+
+        if (descriptionSurface instanceof HTMLElement)
+            return new LocalCursor(taskSurface, descriptionSurface);
+    }
+
     function _surfaceIdOf(id: number): string {
         return `task-${id}`;
     }
@@ -138,7 +146,7 @@ export const maps = {
     },
 }
 
-export const cursor: ports.Cursor = {
+export const globalCursor: ports.Cursor = {
     setDefault(): void {
         _setGlobalStyleProperty("cursor", '', '');
     },
@@ -150,6 +158,32 @@ export const cursor: ports.Cursor = {
     setGrabbed(): void {
         _setGlobalStyleProperty("cursor", "grabbing", "important");
     },
+}
+
+export class LocalCursor implements ports.Cursor {
+    private _elements: HTMLElement[];
+
+    constructor(...elements: HTMLElement[]) {
+        this._elements = elements;
+    }
+
+    setDefault(): void {
+        this._elements.forEach(element => {
+            element.style.setProperty("cursor", '', '');
+        });
+    }
+
+    setToGrab(): void {
+        this._elements.forEach(element => {
+            element.style.setProperty("cursor", "grab", "important");
+        });
+    }
+
+    setGrabbed(): void {
+        this._elements.forEach(element => {
+            element.style.setProperty("cursor", "grabbing", "important");
+        });
+    }
 }
 
 function _setGlobalStyleProperty(property: string, value: string | null, priority?: string): void {

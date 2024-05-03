@@ -1,6 +1,6 @@
 import * as ports from "./ports.js";
 import * as services from "./services.js";
-import { Task, TaskPrototype, Map, Description } from "./types.js";
+import { Task, TaskPrototype, Map, Description, InteractionMode, Vector } from "./types.js";
 
 export namespace maps {
     export type Ports<MapSurface, TaskSurface> = {
@@ -45,14 +45,9 @@ export namespace maps {
             }
 
             let taskSurface = adapters.taskSurfaces.taskSurfaceOn(mapSurface, task.id);
-
-            if (taskSurface === undefined) {
-                taskSurface = adapters.taskSurfaces.getEmpty();
-                adapters.drawing.redraw(taskSurface, task);
-                adapters.drawing.drawOn(mapSurface, taskSurface);
-            }
-            else
-                adapters.drawing.redraw(taskSurface, task);
+            taskSurface = services.renderOn(
+                mapSurface, taskSurface, task, adapters.taskSurfaces, adapters.drawing
+            );
 
             adapters.hangControllersOn(taskSurface);
             adapters.tasks.match(taskSurface, task);
@@ -64,10 +59,7 @@ export namespace maps {
                 `Failed to get ${numberOfUndisplayedTasks} remote tasks`
                 + ` from map with id = ${map.id}`
             );
-            return;
         }
-
-        return;
     }
 }
 
@@ -91,6 +83,100 @@ export namespace tasks {
 
         task.changeMode();
         adapters.drawing.redraw(taskSurface, task);
+    }
+}
+
+export namespace taskMoving {
+    export type Ports<MapSurface, TaskSurface> = {
+        referencePointContainer: ports.Container<Vector>,
+        activationContainer: ports.Container<true>,
+        remoteFixationTimeoutContainer: ports.Container<number>,
+        remoteTasks: ports.RemoteTasks,
+        tasks: ports.Matching<TaskSurface, Task>,
+        cursor: ports.Cursor,
+        drawing: ports.Drawing<MapSurface, TaskSurface, Task>,
+    }
+
+    export function prepare<MapSurface, TaskSurface>(
+        adapters: Ports<MapSurface, TaskSurface>,
+        taskSurface: TaskSurface,
+    ) {
+        const task = adapters.tasks.matchedWith(taskSurface);
+
+        if (task?.mode !== InteractionMode.moving)
+            return;
+
+        adapters.cursor.setToGrab();
+    }
+
+    export function cancel<MapSurface, TaskSurface>(
+        adapters: Ports<MapSurface, TaskSurface>,
+        taskSurface: TaskSurface,
+    ) {
+        const task = adapters.tasks.matchedWith(taskSurface);
+
+        if (task?.mode !== InteractionMode.moving)
+            return;
+
+        adapters.cursor.setDefault();
+        adapters.activationContainer.set(undefined);
+    }
+
+    export function start<MapSurface, TaskSurface>(
+        adapters: Ports<MapSurface, TaskSurface>,
+        taskSurface: TaskSurface,
+        x: number,
+        y: number,
+    ) {
+        const task = adapters.tasks.matchedWith(taskSurface);
+
+        if (task?.mode !== InteractionMode.moving)
+            return;
+
+        adapters.referencePointContainer.set(new Vector(x, y));
+        adapters.cursor.setGrabbed();
+
+        adapters.activationContainer.set(true);
+    }
+
+    export function handle<MapSurface, TaskSurface>(
+        adapters: Ports<MapSurface, TaskSurface>,
+        taskSurface: TaskSurface,
+        x: number,
+        y: number,
+    ) {
+        const task = adapters.tasks.matchedWith(taskSurface);
+        const referencePoint = adapters.referencePointContainer.get();
+        const isActive = adapters.activationContainer.get();
+
+        if (!(task?.mode === InteractionMode.moving && isActive && referencePoint !== undefined))
+            return;
+
+        let taskPosition = new Vector(task.x, task.y);
+        const newReferencePoint = new Vector(x, y);
+
+        const taskPositionDifference = (
+            newReferencePoint.of(referencePoint, (v1, v2) => v1 - v2)
+        );
+
+        taskPosition = taskPosition.of(taskPositionDifference, (v1, v2) => v1 + v2);
+
+        task.x = taskPosition.x;
+        task.y = taskPosition.y;
+
+        adapters.referencePointContainer.set(newReferencePoint);
+
+        adapters.drawing.redraw(taskSurface, task);
+
+        const remoteFixationTimeout = adapters.remoteFixationTimeoutContainer.get();
+
+        if (remoteFixationTimeout !== undefined)
+            clearTimeout(remoteFixationTimeout);
+
+        adapters.remoteFixationTimeoutContainer.set(setTimeout(
+            () => adapters.remoteTasks.updatePosition(task),
+            2000,
+        ));
     }
 }
 

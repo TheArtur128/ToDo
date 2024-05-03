@@ -45,6 +45,7 @@ export type RemoteIterable<Value> = Promise<AsyncGenerator<Value | undefined> | 
 export type RemoteTasks = {
     tasksForMapWithId(id: number): RemoteIterable<Task>,
     createdTaskFrom(p: TaskPrototype, mapId: number): Remote<Task>,
+    updatePosition(task: Task): Promise<boolean>,
 }
 
 export type Log = (m: string) => any;
@@ -52,7 +53,7 @@ export type Log = (m: string) => any;
 export type HangControllers<Surface> = (s: Surface) => any;
 
 export type Cursor = {
-    setDefault(): void;
-    setToGrab(): void;
-    setGrabbed(): void;
+    setDefault(): any;
+    setToGrab(): any;
+    setGrabbed(): any;
 }

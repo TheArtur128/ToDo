@@ -1,37 +1,37 @@
 import * as apiClient from "./api-client.js";
 import * as storages from "./storages.js";
-import * as domServices from "./dom-services.js";
+import * as layout from "./layout.js";
 import * as parsers from "./parsers.js";
 import * as cases from "../core/cases.js";
 import * as types from "../core/types.js";
 
-
 export class Tasks {
-    _mapAdapters: cases.maps.Ports<domServices.MapSurface, domServices.TaskSurface>;
-    _taskAdaperts: cases.tasks.Ports<domServices.MapSurface, domServices.TaskSurface>;
+    private _tasks: storages.MatchingByHTMLElement<types.Task>;
+    private _mapAdapters: cases.maps.Ports<layout.MapSurface, layout.TaskSurface>;
+    private _taskAdapters: cases.tasks.Ports<layout.MapSurface, layout.TaskSurface>;
 
     constructor(
-        mapElement: domServices.MapSurface,
-        initTaskControllers: (s: domServices.TaskSurface, tasks: Tasks) => any,
+        mapElement: layout.MapSurface,
+        initTaskControllers: (s: layout.TaskSurface, tasks: Tasks) => any,
     ) {
-        const tasks = new storages.MatchingByHTMLElement<types.Task>();
+        this._tasks = new storages.MatchingByHTMLElement<types.Task>();
 
         this._mapAdapters = {
             getCurrentMapId: parsers.getCurrentMapId,
             remoteTasks: apiClient.tasks,
             show: alert,
-            mapSurfaces: domServices.maps.surfacesOf(mapElement),
-            taskSurfaces: domServices.tasks.surfaces,
-            drawing: domServices.tasks.drawing,
+            mapSurfaces: layout.maps.surfacesOf(mapElement),
+            taskSurfaces: layout.tasks.surfaces,
+            drawing: layout.tasks.drawing,
             logError: console.error,
-            tasks: tasks,
+            tasks: this._tasks,
             hangControllersOn: surface => initTaskControllers(surface, this)
         }
 
-        this._taskAdaperts = {
-            tasks: tasks,
+        this._taskAdapters = {
+            tasks: this._tasks,
             logError: console.error,
-            drawing: domServices.tasks.drawing,
+            drawing: layout.tasks.drawing,
         }
     }
 
@@ -39,36 +39,64 @@ export class Tasks {
         cases.maps.draw(this._mapAdapters)
     }
 
-    changeMode(taskSurface: domServices.TaskSurface) {
-        cases.tasks.changeMode(this._taskAdaperts, taskSurface);
+    changeMode(taskSurface: layout.TaskSurface) {
+        cases.tasks.changeMode(this._taskAdapters, taskSurface);
+    }
+
+    movingFor(taskElement: layout.TaskSurface) {
+        const cursor = layout.tasks.taskSurfaceCursorFor(taskElement);
+
+        if (cursor === undefined)
+            return;
+
+        const adapters: cases.taskMoving.Ports<layout.MapSurface, layout.TaskSurface> = {
+            referencePointContainer: new storages.StorageContainer(),
+            activationContainer: new storages.StorageContainer(),
+            remoteFixationTimeoutContainer: new storages.StorageContainer(),
+            remoteTasks: apiClient.tasks,
+            tasks: this._tasks,
+            cursor: cursor,
+            drawing: layout.tasks.drawing,
+        }
+
+        return {
+            prepare: () => cases.taskMoving.prepare(adapters, taskElement),
+            cancel: () => cases.taskMoving.cancel(adapters, taskElement),
+            start(x: number, y: number) {
+                cases.taskMoving.start(adapters, taskElement, x, y);
+            },
+            handle(x: number, y: number) {
+                cases.taskMoving.handle(adapters, taskElement, x, y);
+            },
+        }
     }
 }
 
 export function taskAddingOf(
-    mapElement: domServices.MapSurface,
+    mapElement: layout.MapSurface,
     descriptionInputElement: storages.StorageHTMLElement,
 ) {
     const adapters: cases.taskAdding.Ports<
-        domServices.MapSurface,
-        domServices.TaskPrototypeSurface,
-        domServices.TaskSurface
+        layout.MapSurface,
+        layout.TaskPrototypeSurface,
+        layout.TaskSurface
     > = {
         stateContainer: new storages.StorageContainer(cases.taskAdding.State.waiting),
         descriptionContainer: new storages.DescriptionAdapterContainer(
             new storages.HTMLElementValueContainer(descriptionInputElement)
         ),
         taskPrototypeContainer: new storages.StorageContainer<types.TaskPrototype>(),
-        taskPrototypeSurfaceContainer: new storages.StorageContainer<domServices.TaskPrototypeSurface>(),
+        taskPrototypeSurfaceContainer: new storages.StorageContainer<layout.TaskPrototypeSurface>(),
         getCurrentMapId: parsers.getCurrentMapId,
         show: async (message: string) => await alert(message),
-        mapSurfaces: domServices.maps.surfacesOf(mapElement),
-        taskPrototypeSurfaces: domServices.taskPrototypes.surfaces,
-        taskSurfaces: domServices.tasks.surfaces,
-        taskPrototypeDrawing: domServices.taskPrototypes.drawing,
-        taskDrawing: domServices.tasks.drawing,
+        mapSurfaces: layout.maps.surfacesOf(mapElement),
+        taskPrototypeSurfaces: layout.taskPrototypes.surfaces,
+        taskSurfaces: layout.tasks.surfaces,
+        taskPrototypeDrawing: layout.taskPrototypes.drawing,
+        taskDrawing: layout.tasks.drawing,
         remoteTasks: apiClient.tasks,
         logError: console.error,
-        cursor: domServices.cursor,
+        cursor: layout.globalCursor,
     };
 
     return {

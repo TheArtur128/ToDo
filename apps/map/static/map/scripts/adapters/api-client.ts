@@ -1,16 +1,34 @@
 import * as ports from "../core/ports.js";
 import * as types from "../core/types.js";
+import * as tools from "../tools.js";
+
+const _urls = {
+    topMapTaskEndpointURLWith(mapId: number): string {
+        return `/api/0.1v/map/top-maps/${mapId}/tasks/`;
+    },
+
+    taskEndpointURLFor(task: types.Task): string {
+        return `/api/0.1v/map/tasks/${task.id}/`
+    }
+}
+
+namespace _headers {
+    export const csrfProtectionHeaders = {"X-Csrftoken": tools.cookies["csrftoken"]}
+
+    export const receivingHeaders = {'Content-Type': 'application/json'}
+    export const dispatchHeaders = {...receivingHeaders, ...csrfProtectionHeaders}
+}
 
 export const tasks = {
     async createdTaskFrom(
         taskPrototype: types.TaskPrototype,
         mapId: number,
     ): ports.Remote<types.Task> {
-        const url = this._topMapTaskEndpointURLWith(mapId);
+        const url = _urls.topMapTaskEndpointURLWith(mapId);
 
         const response = await fetch(url, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: _headers.dispatchHeaders,
           body: JSON.stringify({
                 description: taskPrototype.description,
                 status_code: 1,
@@ -26,7 +44,17 @@ export const tasks = {
     },
 
     tasksForMapWithId(mapId: number): ports.RemoteIterable<types.Task> {
-        return this._tasksFrom(this._topMapTaskEndpointURLWith(mapId));
+        return this._tasksFrom(_urls.topMapTaskEndpointURLWith(mapId));
+    },
+
+    async updatePosition(task: types.Task): Promise<boolean> {
+        const response = await fetch(_urls.taskEndpointURLFor(task), {
+            method: 'PATCH',
+            headers: _headers.dispatchHeaders,
+            body: JSON.stringify({x: task.x, y: task.y})
+        })
+
+        return response.ok;
     },
 
     async _tasksFrom(url: string): ports.RemoteIterable<types.Task> {
@@ -49,10 +77,6 @@ export const tasks = {
             if (tasks !== undefined)
                 yield* tasks;
         }
-    },
-
-    _topMapTaskEndpointURLWith(mapId: number): string {
-        return `/api/0.1v/map/top-maps/${mapId}/tasks/`;
     },
 
     _taskOf(taskData: any): types.Task | undefined {

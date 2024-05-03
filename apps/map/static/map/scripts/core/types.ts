@@ -37,3 +37,15 @@ export class Description {
             throw new errors.EmptyDescriptionError();
     }
 }
+
+export class Vector {
+    constructor(readonly x: number, readonly y: number) {}
+
+    map(operation: (n: number) => number): Vector {
+        return new Vector(operation(this.x), operation(this.y));
+    }
+
+    of(vector: Vector, operation: (a: number, b: number) => number): Vector {
+        return new Vector(operation(this.x, vector.x), operation(this.y, vector.y));
+    }
+}
