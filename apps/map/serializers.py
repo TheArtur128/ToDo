@@ -38,10 +38,10 @@ class TaskSerializer(serializers.ModelSerializer):
         return controllers.tasks.update(
             task,
             request=self._context["request"],
-            description=validated_data["description"],
-            status_code=validated_data["status"],
-            x=validated_data["x"],
-            y=validated_data["y"],
+            description=validated_data.get("description", task.description),
+            status_code=validated_data.get("status", task.status),
+            x=validated_data.get("x", task.x),
+            y=validated_data.get("y", task.y),
         )
 
 
