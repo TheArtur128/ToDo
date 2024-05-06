@@ -4,6 +4,7 @@ import * as layout from "./layout.js";
 import * as parsers from "./parsers.js";
 import * as cases from "../core/cases.js";
 import * as types from "../core/types.js";
+import * as ports from "../core/ports.js";
 
 export class Tasks {
     private _tasks: storages.MatchingByHTMLElement<types.Task>;
@@ -72,39 +73,65 @@ export class Tasks {
     }
 }
 
-export function taskAddingOf(
-    mapElement: layout.MapSurface,
-    descriptionInputElement: storages.StorageHTMLElement,
-) {
-    const adapters: cases.taskAdding.Ports<
+export type TaskAddingStartingControllers = ports.Controllers<layout.Animation>;
+export type TaskAddingContinuationControllers = ports.Controllers<layout.TaskPrototypeSurface>;
+
+export type TaskAddingControllers = {
+    startingControllersOf(t: TaskAdding): TaskAddingStartingControllers,
+    continuationControllersOf(t: TaskAdding): TaskAddingContinuationControllers,
+}
+
+export class TaskAdding {
+    private _readnessAnimation = layout.taskAdding.createReadinessAnimation();
+    private _adapters: cases.taskAdding.Ports<
         layout.MapSurface,
+        layout.Animation,
         layout.TaskPrototypeSurface,
         layout.TaskSurface
-    > = {
-        stateContainer: new storages.StorageContainer(cases.taskAdding.State.waiting),
-        descriptionContainer: new storages.DescriptionAdapterContainer(
-            new storages.HTMLElementValueContainer(descriptionInputElement)
-        ),
-        taskPrototypeContainer: new storages.StorageContainer<types.TaskPrototype>(),
-        taskPrototypeSurfaceContainer: new storages.StorageContainer<layout.TaskPrototypeSurface>(),
-        getCurrentMapId: parsers.getCurrentMapId,
-        show: async (message: string) => await alert(message),
-        mapSurfaces: layout.maps.surfacesOf(mapElement),
-        taskPrototypeSurfaces: layout.taskPrototypes.surfaces,
-        taskSurfaces: layout.tasks.surfaces,
-        taskPrototypeDrawing: layout.taskPrototypes.drawing,
-        taskDrawing: layout.tasks.drawing,
-        remoteTasks: apiClient.tasks,
-        logError: console.error,
-        cursor: layout.globalCursor,
-    };
+    >;
 
-    return {
-        prepare: () => cases.taskAdding.prepare(adapters),
-        start: (x: number, y: number) => cases.taskAdding.start(x, y, adapters),
-        stop: () => cases.taskAdding.stop(adapters),
-        cancel: () => cases.taskAdding.cancel(adapters),
-        handle: (x: number, y: number) => cases.taskAdding.handle(x, y, adapters),
-        complete: () => cases.taskAdding.complete(adapters),
+    constructor(
+        mapElement: layout.MapSurface,
+        descriptionInputElement: storages.StorageHTMLElement,
+        controllers: TaskAddingControllers,
+    ) {
+        this._adapters = {
+            mapSurface: mapElement,
+            descriptionContainer: new storages.DescriptionAdapterContainer(
+                new storages.HTMLElementValueContainer(descriptionInputElement)
+            ),
+            availabilityContainer: new storages.StorageContainer(),
+            readinessAnimation: this._readnessAnimation,
+            readinessAnimationDrawing: new layout.LazyStaticDrawing(),
+            cursor: layout.globalCursor,
+            taskPrototypeSurfaces: layout.taskPrototypes.surfaces,
+            taskPrototypeContainer: new storages.StorageContainer(),
+            taskPrototypeSurfaceContainer: new storages.StorageContainer(),
+            taskPrototypeDrawing: layout.taskPrototypes.drawing,
+            logError: console.error,
+            show: async (m: string) => await alert(m),
+            getCurrentMapId: parsers.getCurrentMapId,
+            remoteTasks: apiClient.tasks,
+            taskSurfaces: layout.tasks.surfaces,
+            taskDrawing: layout.tasks.drawing,
+            startingControllers: controllers.startingControllersOf(this),
+            continuationControllers: controllers.continuationControllersOf(this),
+        };
+    }
+
+    handleAvailability(): void {
+        cases.taskAdding.handleAvailability(this._adapters);
+    }
+
+    start(x: number, y: number): void {
+        cases.taskAdding.start(x, y, this._adapters);
+    }
+
+    handle(x: number, y: number): void {
+        cases.taskAdding.handle(x, y, this._adapters);
+    }
+
+    complete(): void {
+        cases.taskAdding.complete(this._adapters);
     }
 }

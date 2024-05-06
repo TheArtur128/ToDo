@@ -7,8 +7,9 @@ export type TaskPrototypeSurface = HTMLDivElement;
 
 export type TaskDescriptionSurface = HTMLTextAreaElement;
 export type InteractionModeSurface = HTMLDivElement;
+export type Animation = HTMLImageElement;
 
-const _drawingBase = {
+export const staticDrawing: ports.StaticDrawing<MapSurface, HTMLElement> = {
     drawOn(mapSurface: MapSurface, surface: HTMLElement) {
         mapSurface.appendChild(surface);
     },
@@ -19,6 +20,40 @@ const _drawingBase = {
         }
         catch (NotFoundError) {} 
     },
+}
+
+export class LazyStaticDrawing implements ports.StaticDrawing<MapSurface, HTMLElement> {
+    private _drawnSurfacesInDOM: Set<HTMLElement>;
+
+    constructor() {
+        this._drawnSurfacesInDOM = new Set();
+    }
+
+    drawOn(mapSurface: MapSurface, surface: HTMLElement) {
+        if (this._drawnSurfacesInDOM.has(surface)) {
+            surface.hidden = false;
+            return;
+        }
+
+        mapSurface.appendChild(surface);
+        this._drawnSurfacesInDOM.add(surface);
+    }
+
+    eraseFrom(_: any, surface: HTMLElement) {
+        surface.hidden = true;
+    }
+}
+
+export namespace taskAdding {
+    export function createReadinessAnimation(): Animation {
+        const element = document.createElement("img");
+        element.id = "readiness-animation-of-task-adding";
+        element.src = "/static/map/animations/ready-to-add.gif";
+
+        element.addEventListener('dragstart', event => event.preventDefault());
+
+        return element;
+    }
 }
 
 export namespace tasks {
@@ -65,7 +100,7 @@ export namespace tasks {
     }
 
     export const drawing: ports.Drawing<MapSurface, TaskSurface, types.Task> = {
-        ..._drawingBase,
+        ...staticDrawing,
 
         redraw(surface: TaskSurface, task: types.Task) {
             surface.id = _surfaceIdOf(task.id);
@@ -118,8 +153,8 @@ export namespace tasks {
     }
 }
 
-export const taskPrototypes = {
-    surfaces: <ports.TaskPrototypeSurfaces<TaskPrototypeSurface>>{
+export namespace taskPrototypes {
+    export const surfaces: ports.TaskPrototypeSurfaces<TaskPrototypeSurface> = {
         getEmpty(): TaskPrototypeSurface {
             let surface = document.createElement('div');
 
@@ -128,16 +163,16 @@ export const taskPrototypes = {
 
             return surface;
         }
-    },
+    }
 
-    drawing: <ports.Drawing<MapSurface, TaskPrototypeSurface, types.TaskPrototype>>{
-        ..._drawingBase,
+    export const drawing: ports.Drawing<MapSurface, TaskPrototypeSurface, types.TaskPrototype> = {
+        ...staticDrawing,
 
         redraw(surface: TaskPrototypeSurface, taskPrototype: types.TaskPrototype) {
             surface.style.left = _surfacePositionCoordinateOf(taskPrototype.x);
             surface.style.top = _surfacePositionCoordinateOf(taskPrototype.y);
         },
-    },
+    }
 }
 
 export const maps = {

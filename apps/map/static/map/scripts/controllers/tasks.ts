@@ -1,37 +1,7 @@
-import * as facade from "./adapters/facade.js";
-import * as tools from "./tools.js";
+import * as facade from "../adapters/facade.js";
+import * as tools from "../tools.js";
 
-export function initTaskAddingControllers(
-    taskAdding: ReturnType<typeof facade.taskAddingOf>,
-    centerElement: HTMLElement,
-): void {
-    centerElement.addEventListener("mousedown", () => {
-        taskAdding.prepare();
-    });
-
-    centerElement.addEventListener("mouseleave", event => {
-        taskAdding.start(event.clientX, event.clientY);
-    });
-
-    centerElement.addEventListener("mouseenter", event => {
-        if (event.target === centerElement)
-            taskAdding.stop();
-    });
-
-    document.addEventListener("mousemove", event => {
-        if (!tools.isInDOMOf(centerElement, event.target))
-            taskAdding.handle(event.clientX, event.clientY);
-    });
-
-    document.addEventListener("mouseup", event => {
-        if (tools.isInDOMOf(centerElement, event.target))
-            taskAdding.cancel();
-        else
-            taskAdding.complete();
-    });
-}
-
-export function initTaskModeChangingControllers(
+export function initModeChangingControllers(
     taskElement: HTMLDivElement,
     tasks: facade.Tasks,
 ): void {
@@ -43,7 +13,7 @@ export function initTaskModeChangingControllers(
         })
 }
 
-export function initTaskMovingControllers(
+export function initMovingControllers(
     taskElement: HTMLDivElement,
     tasks: facade.Tasks,
 ): void {
@@ -75,10 +45,10 @@ export function initTaskMovingControllers(
     });
 }
 
-export function initAllTaskControllers(
+export function initAllControllers(
     taskElement: HTMLDivElement,
     tasks: facade.Tasks,
 ) {
-    initTaskModeChangingControllers(taskElement, tasks);
-    initTaskMovingControllers(taskElement, tasks);
+    initModeChangingControllers(taskElement, tasks);
+    initMovingControllers(taskElement, tasks);
 }

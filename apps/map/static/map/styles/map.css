@@ -10,7 +10,7 @@
   height: 88px;
   width: auto;
   padding: 5px;
-  position: absolute;
+  position: fixed;
   bottom: 0px;
   border-bottom-left-radius: 0px;
   border-bottom-right-radius: 0px;
@@ -67,4 +67,14 @@
 
 .task-interaction-mode:active {
   background-color: #fcdc60;
+}
+
+#readiness-animation-of-task-adding {
+  position: fixed;
+  bottom: 66px;
+  left: 50%;
+  transform: translate(-50%);
+  width: 200px;
+  height: 200px;
+  user-select: none;
 }

@@ -15,6 +15,11 @@ export type Matching<Key, Value> = {
 
 export type ShowMessage = (m: string) => any;
 
+export type StaticDrawing<MapSurface, Surface> = {
+    drawOn(m: MapSurface, t: Surface): any,
+    eraseFrom(m: MapSurface, s: Surface): any
+}
+
 export type Drawing<MapSurface, Surface, Value> = {
     drawOn(m: MapSurface, t: Surface): any,
     eraseFrom(m: MapSurface, s: Surface): any
@@ -50,7 +55,14 @@ export type RemoteTasks = {
 
 export type Log = (m: string) => any;
 
+export type Show = (m: string) => any;
+
 export type HangControllers<Surface> = (s: Surface) => any;
+
+export type Controllers<Surface> = {
+    hangOn: HangControllers<Surface>,
+    removeFrom: (s: Surface) => any,
+}
 
 export type Cursor = {
     setDefault(): any;

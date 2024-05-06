@@ -181,134 +181,83 @@ export namespace taskMoving {
 }
 
 export namespace taskAdding {
-    export enum State { waiting, prepared, active, inCompleting, inPanic }
-
-    export type Ports<MapSurface, TaskPrototypeSurface, TaskSurface> = {
-        stateContainer: ports.Container<State>,
+    export type Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface> = {
+        mapSurface: MapSurface,
         descriptionContainer: ports.Container<Description>,
+        availabilityContainer: ports.Container<boolean>,
+        readinessAnimation: ReadinessAnimation,
+        readinessAnimationDrawing: ports.StaticDrawing<MapSurface, ReadinessAnimation>,
+        taskPrototypeSurfaces: ports.TaskPrototypeSurfaces<TaskPrototypeSurface>,
         taskPrototypeContainer: ports.Container<TaskPrototype>,
         taskPrototypeSurfaceContainer: ports.Container<TaskPrototypeSurface>,
-        getCurrentMapId: () => number,
-        show: ports.ShowMessage,
-        mapSurfaces: ports.MapSurfaces<MapSurface>,
-        taskPrototypeSurfaces: ports.TaskPrototypeSurfaces<TaskPrototypeSurface>,
-        taskSurfaces: ports.TaskSurfaces<MapSurface, TaskSurface>,
         taskPrototypeDrawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
-        taskDrawing: ports.Drawing<MapSurface, TaskSurface, Task>,
-        remoteTasks: ports.RemoteTasks,
         logError: ports.Log,
+        show: ports.Show,
+        continuationControllers: ports.Controllers<TaskPrototypeSurface>,
+        getCurrentMapId: () => number,
+        remoteTasks: ports.RemoteTasks,
+        taskSurfaces: ports.TaskSurfaces<MapSurface, TaskSurface>,
+        taskDrawing: ports.Drawing<MapSurface, TaskSurface, Task>,
         cursor: ports.Cursor,
+        startingControllers: ports.Controllers<ReadinessAnimation>,
     }
 
-    function _panic<MapSurface, TaskPrototypeSurface, TaskSurface>(
-        adapters: taskAdding.Ports<MapSurface, TaskPrototypeSurface, TaskSurface>
+    export function handleAvailability<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
+        adapters: taskAdding.Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>
     ): void {
-        adapters.stateContainer.set(State.inPanic);
+        const available = adapters.descriptionContainer.get() !== undefined;
+        let availableInPast = adapters.availabilityContainer.get();
 
-        adapters.cursor.setDefault();
-        adapters.show("Your task could not be added");
+        if (availableInPast === undefined)
+            availableInPast = false;
+
+        adapters.availabilityContainer.set(available);
+
+        if (available && !availableInPast) {
+            adapters.readinessAnimationDrawing.drawOn(
+                adapters.mapSurface,
+                adapters.readinessAnimation,
+            );
+            adapters.startingControllers.hangOn(adapters.readinessAnimation);
+        }
+        else if (!available && availableInPast) {
+            adapters.readinessAnimationDrawing.eraseFrom(
+                adapters.mapSurface,
+                adapters.readinessAnimation,
+            )
+            adapters.startingControllers.removeFrom(adapters.readinessAnimation);
+        }
     }
 
-    export function prepare<MapSurface, TaskPrototypeSurface, TaskSurface>(
-        adapters: taskAdding.Ports<MapSurface, TaskPrototypeSurface, TaskSurface>
-    ): void {
-        const description = adapters.descriptionContainer.get();
-
-        if (adapters.stateContainer.get() !== State.waiting || description === undefined)
-            return;
-
-        adapters.cursor.setGrabbed();
-        adapters.stateContainer.set(State.prepared);
-    }
-
-    export function start<MapSurface, TaskPrototypeSurface, TaskSurface>(
+    export function start<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
         x: number,
         y: number,
-        adapters: taskAdding.Ports<MapSurface, TaskPrototypeSurface, TaskSurface>
+        adapters: taskAdding.Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>
     ): void {
-        if (adapters.stateContainer.get() !== State.prepared)
-            return;
-
-        let description = services.popFrom(adapters.descriptionContainer);
+        const description = services.popFrom(adapters.descriptionContainer);
 
         if (description === undefined)
             return;
 
-        let map: Map = {id: adapters.getCurrentMapId()};
-        let taskPrototype: TaskPrototype = {description: description, x: x, y: y};
-
-        let mapSurface = adapters.mapSurfaces.mapSurfaceOf(map);
-
-        if (mapSurface === undefined) {
-            adapters.logError("Map surface does not exist");
-            _panic(adapters);
-            return;
-        }
-
-        let taskPrototypeSurface = adapters.taskPrototypeSurfaces.getEmpty();
+        const taskPrototype: TaskPrototype = {description: description, x: x, y: y};
+        const taskPrototypeSurface = adapters.taskPrototypeSurfaces.getEmpty();
 
         adapters.taskPrototypeContainer.set(taskPrototype)
         adapters.taskPrototypeSurfaceContainer.set(taskPrototypeSurface);
 
         adapters.taskPrototypeDrawing.redraw(taskPrototypeSurface, taskPrototype);
-        adapters.taskPrototypeDrawing.drawOn(mapSurface, taskPrototypeSurface);
+        adapters.taskPrototypeDrawing.drawOn(adapters.mapSurface, taskPrototypeSurface);
 
-        adapters.stateContainer.set(State.active);
-
-        return;
+        adapters.continuationControllers.hangOn(taskPrototypeSurface);
     }
 
-    export function stop<MapSurface, TaskPrototypeSurface, TaskSurface>(
-        adapters: taskAdding.Ports<MapSurface, TaskPrototypeSurface, TaskSurface>
-    ): void {
-        if (adapters.stateContainer.get() !== State.active)
-            return;
-
-        let taskPrototype = services.popFrom(adapters.taskPrototypeContainer);
-        let taskPrototypeSurface = services.popFrom(adapters.taskPrototypeSurfaceContainer);
-        
-        services.setDefaultAt(adapters.descriptionContainer, taskPrototype?.description);
-
-        if (taskPrototypeSurface === undefined) {
-            adapters.logError("Task prototype surface does not exist");
-            _panic(adapters);
-            return;
-        }
-
-        let map: Map = {id: adapters.getCurrentMapId()};
-        let mapSurface = adapters.mapSurfaces.mapSurfaceOf(map);
-
-        if (mapSurface === undefined) {
-            adapters.logError(`Surface for map with id = ${map.id} do not exist`);
-            _panic(adapters);
-            return;
-        }
-
-        adapters.taskPrototypeDrawing.eraseFrom(mapSurface, taskPrototypeSurface);
-
-        adapters.stateContainer.set(State.prepared);
-    }
-
-    export function cancel<MapSurface, TaskPrototypeSurface, TaskSurface>(
-        adapters: taskAdding.Ports<MapSurface, TaskPrototypeSurface, TaskSurface>
-    ): void {
-        if (adapters.stateContainer.get() !== State.prepared)
-            return;
-
-        adapters.cursor.setDefault();
-        adapters.stateContainer.set(State.waiting);
-    }
-
-    export function handle<MapSurface, TaskPrototypeSurface, TaskSurface>(
+    export function handle<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
         x: number,
         y: number,
-        adapters: taskAdding.Ports<MapSurface, TaskPrototypeSurface, TaskSurface>
+        adapters: taskAdding.Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>
     ): void {
-        if (adapters.stateContainer.get() !== State.active)
-            return;
-
         let taskPrototype = adapters.taskPrototypeContainer.get();
-        let taskPrototypeSurface = adapters.taskPrototypeSurfaceContainer.get();
+        const taskPrototypeSurface = adapters.taskPrototypeSurfaceContainer.get();
 
         if (taskPrototype === undefined)
             adapters.logError("Task prototype does not exist");
@@ -317,7 +266,7 @@ export namespace taskAdding {
             adapters.logError("Task prototype surface does not exist");
 
         if (taskPrototype === undefined || taskPrototypeSurface === undefined) {
-            _panic(adapters);
+            adapters.show("Adding your task was aborted");
             return;
         }
 
@@ -327,63 +276,41 @@ export namespace taskAdding {
         adapters.taskPrototypeDrawing.redraw(taskPrototypeSurface, taskPrototype);
     }
 
-    export async function complete<MapSurface, TaskPrototypeSurface, TaskSurface>(
-        adapters: taskAdding.Ports<MapSurface, TaskPrototypeSurface, TaskSurface>
+    export async function complete<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
+        adapters: taskAdding.Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>
     ): Promise<void> {
-        if (adapters.stateContainer.get() !== State.active)
-            return;
-
-        let taskPrototype = adapters.taskPrototypeContainer.get();
-        let taskPrototypeSurface = adapters.taskPrototypeSurfaceContainer.get();
+        const taskPrototype = adapters.taskPrototypeContainer.get();
+        const taskPrototypeSurface = adapters.taskPrototypeSurfaceContainer.get();
 
         if (taskPrototype === undefined)
             adapters.logError("Task prototype does not exist");
 
         if (taskPrototypeSurface === undefined)
             adapters.logError("Task prototype surface does not exist");
+        else
+            adapters.continuationControllers.removeFrom(taskPrototypeSurface);
 
         if (taskPrototype === undefined || taskPrototypeSurface === undefined) {
-            _panic(adapters);
+            adapters.show("Failed to add your task");
             return;
         }
 
-        let map: Map = {id: adapters.getCurrentMapId()};
-        let mapSurface = adapters.mapSurfaces.mapSurfaceOf(map);
+        adapters.taskPrototypeDrawing.eraseFrom(adapters.mapSurface, taskPrototypeSurface);
 
-        if (mapSurface === undefined) {
-            adapters.logError("Map surface does not exist");
-            _panic(adapters);
-            return;
-        }
-
-        adapters.taskPrototypeDrawing.eraseFrom(mapSurface, taskPrototypeSurface);
-
-        let task = await adapters.remoteTasks.createdTaskFrom(taskPrototype, map.id);
+        const mapId = adapters.getCurrentMapId();
+        const task = await adapters.remoteTasks.createdTaskFrom(taskPrototype, mapId);
 
         if (task === undefined) {
-            adapters.logError(`A remote task on the map with id = ${map.id} could not be created`);
-            _panic(adapters);
+            adapters.logError(`A remote task on the map with id = ${mapId} could not be created`);
+            adapters.show("Try adding your task later");
             return;
         }
 
-        let taskSurface = adapters.taskSurfaces.getEmpty();
+        const taskSurface = adapters.taskSurfaces.getEmpty();
         adapters.taskDrawing.redraw(taskSurface, task);
-        adapters.taskDrawing.drawOn(mapSurface, taskSurface);
-
-        adapters.stateContainer.set(State.inCompleting);
+        adapters.taskDrawing.drawOn(adapters.mapSurface, taskSurface);
 
         adapters.cursor.setToGrab();
-
-        setTimeout(() => _finishCompletion(adapters), 3000);
-    }
-
-    function _finishCompletion<MapSurface, TaskPrototypeSurface, TaskSurface>(
-        adapters: taskAdding.Ports<MapSurface, TaskPrototypeSurface, TaskSurface>
-    ): void {
-        if (adapters.stateContainer.get() !== State.inCompleting)
-            return;
-
-        adapters.cursor.setDefault();
-        adapters.stateContainer.set(State.waiting);
+        setTimeout(() => adapters.cursor.setDefault(), 1000);
     }
 }

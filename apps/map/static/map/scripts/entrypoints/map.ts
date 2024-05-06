@@ -1,11 +1,16 @@
 import * as facade from "../adapters/facade.js";
-import * as controllers from "../controllers.js";
+import * as taskControllers from "../controllers/tasks.js";
+import * as taskAddingControllers from "../controllers/task-adding.js";
 
 const taskListElement = <HTMLDivElement>document.querySelector("#tasks");
-const creationPanelElement = <HTMLDivElement>document.querySelector("#creation-panel");
 const descriptionInputElement = <HTMLTextAreaElement>document.querySelector("#new-task-description");
 
-new facade.Tasks(taskListElement, controllers.initAllTaskControllers).draw();
+new facade.Tasks(taskListElement, taskControllers.initAllControllers).draw();
 
-const tasksAdding = facade.taskAddingOf(taskListElement, descriptionInputElement);
-controllers.initTaskAddingControllers(tasksAdding, creationPanelElement);
+const tasksAdding = new facade.TaskAdding(
+    taskListElement,
+    descriptionInputElement,
+    taskAddingControllers.dynamicTaskAddingControllers
+);
+
+taskAddingControllers.initAvailabilityControllers(tasksAdding, descriptionInputElement);

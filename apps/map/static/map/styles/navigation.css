@@ -7,7 +7,7 @@ div {
   border-radius: 40px;
   top: 5px;
   height: 75px;
-  position: absolute;
+  position: fixed;
   right: 5px;
   width: 78px;
 }
