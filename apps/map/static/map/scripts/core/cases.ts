@@ -175,7 +175,7 @@ export namespace taskMoving {
 
         adapters.remoteFixationTimeoutContainer.set(setTimeout(
             () => adapters.remoteTasks.updatePosition(task),
-            2000,
+            600,
         ));
     }
 }
@@ -198,8 +198,9 @@ export namespace taskAdding {
         remoteTasks: ports.RemoteTasks,
         taskSurfaces: ports.TaskSurfaces<MapSurface, TaskSurface>,
         taskDrawing: ports.Drawing<MapSurface, TaskSurface, Task>,
-        cursor: ports.Cursor,
         startingControllers: ports.Controllers<ReadinessAnimation>,
+        hangControllersOn: ports.HangControllers<TaskSurface>,
+        tasks: ports.Matching<TaskSurface, Task>,
     }
 
     export function handleAvailability<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
@@ -224,7 +225,7 @@ export namespace taskAdding {
             adapters.readinessAnimationDrawing.eraseFrom(
                 adapters.mapSurface,
                 adapters.readinessAnimation,
-            )
+            );
             adapters.startingControllers.removeFrom(adapters.readinessAnimation);
         }
     }
@@ -239,10 +240,14 @@ export namespace taskAdding {
         if (description === undefined)
             return;
 
+        adapters.availabilityContainer.set(false);
+        adapters.readinessAnimationDrawing.eraseFrom(adapters.mapSurface, adapters.readinessAnimation);
+        adapters.startingControllers.removeFrom(adapters.readinessAnimation);
+
         const taskPrototype: TaskPrototype = {description: description, x: x, y: y};
         const taskPrototypeSurface = adapters.taskPrototypeSurfaces.getEmpty();
 
-        adapters.taskPrototypeContainer.set(taskPrototype)
+        adapters.taskPrototypeContainer.set(taskPrototype);
         adapters.taskPrototypeSurfaceContainer.set(taskPrototypeSurface);
 
         adapters.taskPrototypeDrawing.redraw(taskPrototypeSurface, taskPrototype);
@@ -270,10 +275,15 @@ export namespace taskAdding {
             return;
         }
 
-        taskPrototype = {...taskPrototype, x: x, y: y};
-        adapters.taskPrototypeContainer.set(taskPrototype);
+        taskPrototype.x = x;
+        taskPrototype.y = y;
 
-        adapters.taskPrototypeDrawing.redraw(taskPrototypeSurface, taskPrototype);
+        const size = adapters.taskPrototypeSurfaces.sizeOf(taskPrototypeSurface);
+
+        adapters.taskPrototypeDrawing.redraw(
+            taskPrototypeSurface,
+            {...taskPrototype, x: x - size.x / 2, y: y - size.y / 2},
+        );
     }
 
     export async function complete<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
@@ -295,10 +305,22 @@ export namespace taskAdding {
             return;
         }
 
-        adapters.taskPrototypeDrawing.eraseFrom(adapters.mapSurface, taskPrototypeSurface);
+        const taskSurface = adapters.taskSurfaces.getEmpty();
+        const size = adapters.taskSurfaces.sizeOf(taskSurface);
+
+        const taskPrototypeToCreateTask = {
+            ...taskPrototype,
+            x: taskPrototype.x - size.x / 2,
+            y: taskPrototype.y - size.y / 2,
+        }
 
         const mapId = adapters.getCurrentMapId();
-        const task = await adapters.remoteTasks.createdTaskFrom(taskPrototype, mapId);
+
+        const task = await adapters.remoteTasks.createdTaskFrom(
+            taskPrototypeToCreateTask, mapId
+        );
+
+        adapters.taskPrototypeDrawing.eraseFrom(adapters.mapSurface, taskPrototypeSurface);
 
         if (task === undefined) {
             adapters.logError(`A remote task on the map with id = ${mapId} could not be created`);
@@ -306,11 +328,10 @@ export namespace taskAdding {
             return;
         }
 
-        const taskSurface = adapters.taskSurfaces.getEmpty();
         adapters.taskDrawing.redraw(taskSurface, task);
         adapters.taskDrawing.drawOn(adapters.mapSurface, taskSurface);
 
-        adapters.cursor.setToGrab();
-        setTimeout(() => adapters.cursor.setDefault(), 1000);
+        adapters.hangControllersOn(taskSurface);
+        adapters.tasks.match(taskSurface, task);
     }
 }

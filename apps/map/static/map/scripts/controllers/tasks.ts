@@ -3,22 +3,22 @@ import * as tools from "../tools.js";
 
 export function initModeChangingControllers(
     taskElement: HTMLDivElement,
-    tasks: facade.Tasks,
+    facade: facade.Facade,
 ): void {
     const buttonElement = taskElement.querySelector(".task-interaction-mode");
 
     if (buttonElement instanceof HTMLElement)
         buttonElement.addEventListener("mouseup", () => {
-            tasks.changeMode(taskElement);
+            facade.tasks.changeMode(taskElement);
         })
 }
 
 export function initMovingControllers(
     taskElement: HTMLDivElement,
-    tasks: facade.Tasks,
+    facade: facade.Facade,
 ): void {
     const buttonElement = taskElement.querySelector(".task-interaction-mode");
-    const moving = tasks.movingFor(taskElement);
+    const moving = facade.taskMovingFor(taskElement);
 
     if (!(moving !== undefined && buttonElement instanceof HTMLElement))
         return;
@@ -47,8 +47,8 @@ export function initMovingControllers(
 
 export function initAllControllers(
     taskElement: HTMLDivElement,
-    tasks: facade.Tasks,
+    facade: facade.Facade,
 ) {
-    initModeChangingControllers(taskElement, tasks);
-    initMovingControllers(taskElement, tasks);
+    initModeChangingControllers(taskElement, facade);
+    initMovingControllers(taskElement, facade);
 }

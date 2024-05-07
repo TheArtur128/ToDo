@@ -1,18 +1,18 @@
 import * as facade from "../adapters/facade.js";
 
 export function initAvailabilityControllers(
-    taskAdding: facade.TaskAdding,
+    facade: facade.Facade,
     activatingElement: HTMLElement,
 ): void {
     activatingElement.addEventListener("input", () => {
-        taskAdding.handleAvailability();
+        facade.taskAdding.handleAvailability();
     });
 }
 
-export const dynamicTaskAddingControllers: facade.TaskAddingControllers = {
-    startingControllersOf(taskAdding: facade.TaskAdding): facade.TaskAddingStartingControllers {
+export const dynamicControllers: facade.TaskAddingControllers = {
+    startingControllersOf(facade: facade.Facade): facade.TaskAddingStartingControllers {
         const start = (event: PointerEvent) => {
-            taskAdding.start(event.clientX, event.clientY);
+            facade.taskAdding.start(event.clientX, event.clientY);
         }
 
         return {
@@ -26,20 +26,20 @@ export const dynamicTaskAddingControllers: facade.TaskAddingControllers = {
         }
     },
 
-    continuationControllersOf(
-        taskAdding: facade.TaskAdding,
-    ): facade.TaskAddingContinuationControllers {
-        const handle = (event: PointerEvent) => taskAdding.handle(event.clientX, event.clientY);
-        const complete = () => taskAdding.complete();
+    continuationControllersOf(facade: facade.Facade): facade.TaskAddingContinuationControllers {
+        const handle = (event: PointerEvent) => {
+            facade.taskAdding.handle(event.clientX, event.clientY);
+        }
+        const complete = () => facade.taskAdding.complete();
 
         return {
             hangOn(activatingElement: HTMLElement): void {
-                activatingElement.addEventListener("pointermove", handle);
+                document.addEventListener("pointermove", handle);
                 activatingElement.addEventListener("pointerup", complete);
             },
 
             removeFrom(activatingElement: HTMLElement): void {
-                activatingElement.removeEventListener("pointermove", handle);
+                document.removeEventListener("pointermove", handle);
                 activatingElement.removeEventListener("pointerup", complete);
             },
         }

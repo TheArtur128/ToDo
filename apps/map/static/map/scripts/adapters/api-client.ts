@@ -13,7 +13,7 @@ const _urls = {
 }
 
 namespace _headers {
-    export const csrfProtectionHeaders = {"X-Csrftoken": tools.cookies["csrftoken"]}
+    export const csrfProtectionHeaders = {"X-Csrftoken": tools.originalCookies["csrftoken"]}
 
     export const receivingHeaders = {'Content-Type': 'application/json'}
     export const dispatchHeaders = {...receivingHeaders, ...csrfProtectionHeaders}
@@ -30,10 +30,9 @@ export const tasks = {
           method: 'POST',
           headers: _headers.dispatchHeaders,
           body: JSON.stringify({
-                description: taskPrototype.description,
-                status_code: 1,
-                x: taskPrototype.x,
-                y: taskPrototype.y,
+                description: taskPrototype.description.value,
+                x: Math.round(taskPrototype.x),
+                y: Math.round(taskPrototype.y),
             })
         })
 
@@ -51,7 +50,7 @@ export const tasks = {
         const response = await fetch(_urls.taskEndpointURLFor(task), {
             method: 'PATCH',
             headers: _headers.dispatchHeaders,
-            body: JSON.stringify({x: task.x, y: task.y})
+            body: JSON.stringify({x: Math.round(task.x), y: Math.round(task.y)})
         })
 
         return response.ok;

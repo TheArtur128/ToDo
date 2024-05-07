@@ -77,4 +77,15 @@
   width: 200px;
   height: 200px;
   user-select: none;
+  cursor: grab;
+}
+
+.task-prototype {
+  position: absolute;
+  border-radius: 100px;
+  width: 30px;
+  height: 30px;
+  background-color: #2b293b;
+  border: solid 3px #8c78ff;
+  cursor: grabbing;
 }

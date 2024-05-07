@@ -44,6 +44,14 @@ export class LazyStaticDrawing implements ports.StaticDrawing<MapSurface, HTMLEl
     }
 }
 
+const _baseSurfaces = {
+    sizeOf(element: HTMLElement): types.Vector {
+        const rect = element.getBoundingClientRect()
+
+        return new types.Vector(rect.width, rect.height);
+    }
+}
+
 export namespace taskAdding {
     export function createReadinessAnimation(): Animation {
         const element = document.createElement("img");
@@ -61,6 +69,10 @@ export namespace tasks {
     const _interactionModeSurfaceClassName = "task-interaction-mode";
 
     export const surfaces = {
+        sizeOf(_: any): types.Vector {
+            return new types.Vector(255, 124);
+        },
+
         taskSurfaceOn(mapSurface: MapSurface, task_id: number): TaskSurface | undefined {
             let taskSurface = mapSurface.querySelector(`#${_surfaceIdOf(task_id)}`);
 
@@ -104,8 +116,8 @@ export namespace tasks {
 
         redraw(surface: TaskSurface, task: types.Task) {
             surface.id = _surfaceIdOf(task.id);
-            surface.style.left = _surfacePositionCoordinateOf(task.x);
-            surface.style.top = _surfacePositionCoordinateOf(task.y);
+            surface.style.left = _styleCoordinateOf(task.x);
+            surface.style.top = _styleCoordinateOf(task.y);
 
             const descriptionSurface = surface.querySelector(
                 `.${_descriptionSurfaceClassName}`
@@ -155,22 +167,22 @@ export namespace tasks {
 
 export namespace taskPrototypes {
     export const surfaces: ports.TaskPrototypeSurfaces<TaskPrototypeSurface> = {
-        getEmpty(): TaskPrototypeSurface {
-            let surface = document.createElement('div');
+        ..._baseSurfaces,
 
+        getEmpty(): TaskPrototypeSurface {
+            const surface = document.createElement('div');
             surface.className = "task-prototype";
-            surface.style.position = "absolute";
 
             return surface;
-        }
+        },
     }
 
     export const drawing: ports.Drawing<MapSurface, TaskPrototypeSurface, types.TaskPrototype> = {
         ...staticDrawing,
 
         redraw(surface: TaskPrototypeSurface, taskPrototype: types.TaskPrototype) {
-            surface.style.left = _surfacePositionCoordinateOf(taskPrototype.x);
-            surface.style.top = _surfacePositionCoordinateOf(taskPrototype.y);
+            surface.style.left = _styleCoordinateOf(taskPrototype.x);
+            surface.style.top = _styleCoordinateOf(taskPrototype.y);
         },
     }
 }
@@ -230,6 +242,6 @@ function _setGlobalStyleProperty(property: string, value: string | null, priorit
     })
 }
 
-function _surfacePositionCoordinateOf(coordinate: number): string {
+function _styleCoordinateOf(coordinate: number): string {
     return `${coordinate}px`;
 }

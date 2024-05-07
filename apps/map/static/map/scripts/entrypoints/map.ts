@@ -5,12 +5,12 @@ import * as taskAddingControllers from "../controllers/task-adding.js";
 const taskListElement = <HTMLDivElement>document.querySelector("#tasks");
 const descriptionInputElement = <HTMLTextAreaElement>document.querySelector("#new-task-description");
 
-new facade.Tasks(taskListElement, taskControllers.initAllControllers).draw();
-
-const tasksAdding = new facade.TaskAdding(
+const facade_ = new facade.Facade(
+    taskControllers.initAllControllers,
     taskListElement,
     descriptionInputElement,
-    taskAddingControllers.dynamicTaskAddingControllers
+    taskAddingControllers.dynamicControllers,
 );
 
-taskAddingControllers.initAvailabilityControllers(tasksAdding, descriptionInputElement);
+facade_.taskGroups.draw();
+taskAddingControllers.initAvailabilityControllers(facade_, descriptionInputElement);

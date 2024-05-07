@@ -1,4 +1,4 @@
-import { Task, TaskPrototype, Map } from "./types.js";
+import { Task, TaskPrototype, Map, Vector } from "./types.js";
 
 export type Iterable<Value> = {
     [Symbol.iterator](): Iterator<Value>;
@@ -33,10 +33,12 @@ export type MapSurfaces<MapSurface> = {
 export type TaskSurfaces<MapSurface, TaskSurface> = {
     taskSurfaceOn(s: MapSurface, task_id: number): TaskSurface | undefined,
     getEmpty(): TaskSurface,
+    sizeOf(s: TaskSurface): Vector,
 }
 
 export type TaskPrototypeSurfaces<TaskPrototypeSurface> = {
     getEmpty(): TaskPrototypeSurface,
+    sizeOf(s: TaskPrototypeSurface): Vector,
 }
 
 export type Container<Value> = {

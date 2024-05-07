@@ -18,7 +18,7 @@ export function isInDOMOf(
 export function getCookies(): Record<string, string> {
     const cookies: Record<string, string> = {};
 
-    for (let keyAndValueLine of document.cookie.split(";")) {
+    for (let keyAndValueLine of document.cookie.replaceAll(' ', '').split(";")) {
         let [key, value] = keyAndValueLine.split("=");
         cookies[key] = value;
     }
@@ -26,4 +26,4 @@ export function getCookies(): Record<string, string> {
     return cookies;
 }
 
-export const cookies = getCookies();
+export const originalCookies = getCookies();
