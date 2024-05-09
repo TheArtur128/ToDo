@@ -13,6 +13,18 @@ export function initModeChangingControllers(
         })
 }
 
+export function initDescriptionChangingControllers(
+    taskElement: HTMLDivElement,
+    facade: facade.Facade,
+): void {
+    const descriptionInputElement = taskElement.querySelector(".task-description");
+
+    if (descriptionInputElement instanceof HTMLElement)
+        descriptionInputElement.addEventListener("input", () => {
+            facade.tasks.changeDescription(taskElement);
+        })
+}
+
 export function initMovingControllers(
     taskElement: HTMLDivElement,
     facade: facade.Facade,
@@ -50,5 +62,6 @@ export function initAllControllers(
     facade: facade.Facade,
 ) {
     initModeChangingControllers(taskElement, facade);
+    initDescriptionChangingControllers(taskElement, facade);
     initMovingControllers(taskElement, facade);
 }

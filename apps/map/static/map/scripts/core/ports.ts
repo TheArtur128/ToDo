@@ -53,6 +53,7 @@ export type RemoteTasks = {
     tasksForMapWithId(id: number): RemoteIterable<Task>,
     createdTaskFrom(p: TaskPrototype, mapId: number): Remote<Task>,
     updatePosition(task: Task): Promise<boolean>,
+    updateDescription(task: Task): Promise<boolean>,
 }
 
 export type Log = (m: string) => any;

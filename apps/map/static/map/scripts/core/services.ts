@@ -36,3 +36,16 @@ export function renderOn<MapSurface, Surface, Value>(
 
     return surface;
 }
+
+export function updateTimeout(timeoutContainer: Container<number>, milliseconds: number, callback: () => any) {
+    const timeout = timeoutContainer.get();
+
+    if (timeout !== undefined)
+        clearTimeout(timeout);
+
+    timeoutContainer.set(setTimeout(callback, milliseconds));
+}
+
+export function updateRemoteFixationTimeout(timeoutContainer: Container<number>, callback: () => any) {
+    updateTimeout(timeoutContainer, 600, callback);
+}

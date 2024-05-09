@@ -94,7 +94,6 @@ export namespace tasks {
             let descriptionSurface = document.createElement("textarea");
 
             descriptionSurface.className = _descriptionSurfaceClassName;
-            descriptionSurface.disabled = true;
             descriptionSurface.maxLength = 128;
             descriptionSurface.rows = 4;
             descriptionSurface.cols = 32;
@@ -103,11 +102,12 @@ export namespace tasks {
         },
 
         _getEmptyInteractionModeSurface(): InteractionModeSurface {
-            const interactionModeSurface = document.createElement("div");
+            const surface = document.createElement("div");
+            surface.className = _interactionModeSurfaceClassName;
 
-            interactionModeSurface.className = _interactionModeSurfaceClassName;
+            surface.appendChild(document.createElement("img"));
 
-            return interactionModeSurface;
+            return surface;
         },
     }
 
@@ -128,10 +128,10 @@ export namespace tasks {
             );
 
             if (descriptionSurface instanceof HTMLTextAreaElement)
-                descriptionSurface.value = task.description.value;
+                _redrawDescriptionSurface(descriptionSurface, task);
 
             if (interactionModeSurface instanceof HTMLDivElement)
-                interactionModeSurface.replaceChildren(_imageElementOf(task.mode));
+                _redrawInteractionModeSurface(interactionModeSurface, task);
         }
     }
 
@@ -147,21 +147,33 @@ export namespace tasks {
         return `task-${id}`;
     }
 
-    function _imageElementOf(mode: types.InteractionMode): HTMLImageElement {
-        const element = document.createElement("img");
+    function _redrawDescriptionSurface(
+        descriptionSurface: HTMLTextAreaElement,
+        task: types.Task,
+    ): void {
+        descriptionSurface.value = task.description.value;
+        descriptionSurface.disabled = task.mode !== types.InteractionMode.editing;
+    }
 
-        if (mode === types.InteractionMode.editing) {
-            element.src = "/static/map/images/editing-mode.png";
-            element.width = 10;
-            element.height = 10;
-        }
-        else if (mode === types.InteractionMode.moving) {
-            element.src = "/static/map/images/moving-mode.png";
-            element.width = 12;
-            element.height = 12;
-        }
+    function _redrawInteractionModeSurface(
+        interactionModeSurface: InteractionModeSurface,
+        task: types.Task,
+    ): void {
+        const imageElement = interactionModeSurface.querySelector("img");
 
-        return element
+        if (imageElement === null)
+            return;
+
+        if (task.mode === types.InteractionMode.editing) {
+            imageElement.src = "/static/map/images/editing-mode.png";
+            imageElement.width = 10;
+            imageElement.height = 10;
+        }
+        else if (task.mode === types.InteractionMode.moving) {
+            imageElement.src = "/static/map/images/moving-mode.png";
+            imageElement.width = 12;
+            imageElement.height = 12;
+        }
     }
 }
 

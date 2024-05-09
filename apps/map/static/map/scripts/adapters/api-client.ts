@@ -56,6 +56,16 @@ export const tasks = {
         return response.ok;
     },
 
+    async updateDescription(task: types.Task): Promise<boolean> {
+        const response = await fetch(_urls.taskEndpointURLFor(task), {
+            method: 'PATCH',
+            headers: _headers.dispatchHeaders,
+            body: JSON.stringify({description: task.description.value})
+        })
+
+        return response.ok;
+    },
+
     async _tasksFrom(url: string): ports.RemoteIterable<types.Task> {
         const response = await fetch(url);
         const responseData = await response.json();

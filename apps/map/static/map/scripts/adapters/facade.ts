@@ -76,16 +76,39 @@ function _taskGroupsOf(
 }
 
 function _tasksOf(tasks: _Tasks) {
-    const adapters: cases.tasks.Ports<layout.MapSurface, layout.TaskSurface> = {
+    const adapterBase = {
         tasks: tasks,
         logError: console.error,
         drawing: layout.tasks.drawing,
+        descriptionUpdatingTimeout: new storages.StorageContainer<number>,
+        remoteTasks: apiClient.tasks,
+        
+    }
+
+    const adaptersOf = (
+        taskSurface: layout.TaskSurface,
+    ): cases.tasks.Ports<layout.MapSurface, layout.TaskSurface> => {
+        const descriptionElement = taskSurface.querySelector(".task-description");
+
+        if (!(descriptionElement instanceof HTMLTextAreaElement))
+            throw new Error("No description element");
+
+        return {
+            ...adapterBase,
+            descriptionContainer: new storages.DescriptionAdapterContainer(
+                new storages.HTMLElementValueContainer(descriptionElement)
+            ),
+        }
     }
 
     return {
         changeMode(taskSurface: layout.TaskSurface) {
-            cases.tasks.changeMode(adapters, taskSurface);
-        }
+            cases.tasks.changeMode(adaptersOf(taskSurface), taskSurface);
+        },
+
+        changeDescription(taskSurface: layout.TaskSurface) {
+            cases.tasks.changeDescription(adaptersOf(taskSurface), taskSurface);
+        },
     }
 }
 

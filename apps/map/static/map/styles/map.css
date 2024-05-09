@@ -30,7 +30,6 @@
 }
 
 .task-description {
-  user-select: none;
   resize: none;
   overflow: hidden;
   width: 233px;

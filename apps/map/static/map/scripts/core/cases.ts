@@ -68,6 +68,9 @@ export namespace tasks {
         tasks: ports.Matching<TaskSurface, Task>,
         drawing: ports.Drawing<MapSurface, TaskSurface, Task>
         logError: ports.Log,
+        descriptionContainer: ports.Container<Description>,
+        descriptionUpdatingTimeout: ports.Container<number>,
+        remoteTasks: ports.RemoteTasks,
     }
 
     export function changeMode<MapSurface, TaskSurface>(
@@ -83,6 +86,30 @@ export namespace tasks {
 
         task.changeMode();
         adapters.drawing.redraw(taskSurface, task);
+    }
+
+    export function changeDescription<MapSurface, TaskSurface>(
+        adapters: Ports<MapSurface, TaskSurface>,
+        taskSurface: TaskSurface,
+    ): void {
+        const task = adapters.tasks.matchedWith(taskSurface);
+
+        if (task === undefined) {
+            adapters.logError("No matching between task and surface");
+            return;
+        }
+
+        const newDescription = adapters.descriptionContainer.get();
+
+        if (newDescription === undefined || task.description.value === newDescription.value)
+            return;
+
+        task.description = newDescription;
+        adapters.drawing.redraw(taskSurface, task);
+
+        services.updateRemoteFixationTimeout(adapters.descriptionUpdatingTimeout, () => {
+            adapters.remoteTasks.updateDescription(task);
+        });
     }
 }
 
@@ -168,15 +195,9 @@ export namespace taskMoving {
 
         adapters.drawing.redraw(taskSurface, task);
 
-        const remoteFixationTimeout = adapters.remoteFixationTimeoutContainer.get();
-
-        if (remoteFixationTimeout !== undefined)
-            clearTimeout(remoteFixationTimeout);
-
-        adapters.remoteFixationTimeoutContainer.set(setTimeout(
-            () => adapters.remoteTasks.updatePosition(task),
-            600,
-        ));
+        services.updateRemoteFixationTimeout(adapters.remoteFixationTimeoutContainer, () => {
+            adapters.remoteTasks.updatePosition(task)
+        });
     }
 }
 
