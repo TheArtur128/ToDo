@@ -1,66 +1,90 @@
-import * as ports from "./ports.js";
-import * as services from "./services.js";
-import { Task, TaskPrototype, Map, Description, InteractionMode, Vector } from "./types.js";
+import * as types from "./types.js";
+import * as controllers from "./ports/controllers.js";
+import * as messages from "./ports/messages.js";
+import * as remoting from "./ports/remoting.js";
+import * as repos from "./ports/repos.js";
+import * as timeouts from "./ports/timeouts.js";
+import * as views from "./ports/views.js";
+import { bad, ok } from "../fp.js";
 
-export namespace maps {
-    export type Ports<MapSurface, TaskSurface> = {
-        getCurrentMapId: () => number,
-        remoteTasks: ports.RemoteTasks,
-        show: ports.ShowMessage,
-        mapSurfaces: ports.MapSurfaces<MapSurface>,
-        taskSurfaces: ports.TaskSurfaces<MapSurface, TaskSurface>,
-        drawing: ports.Drawing<MapSurface, TaskSurface, Task>,
-        logError: ports.Log,
-        tasks: ports.Matching<TaskSurface, Task>,
-        hangControllersOn: ports.HangControllers<TaskSurface>;
+export async function drawnMapOf<RootView, MapView, TaskView>(
+    rootView: RootView,
+    mapDrawing: views.StaticDrawing<RootView, MapView>,
+    getCurrentMapId: () => number,
+    mapViewContainer: repos.Container<MapView>,
+    mapViews: views.RootViews<MapView, TaskView, types.Task>,
+    remoteTasks: remoting.RemoteTasks,
+    notifications: messages.Notifications,
+    taskViews: views.Views<TaskView>,
+    taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
+    errorLogs: messages.Logs,
+    taskMatching: repos.Matching<TaskView, types.Task>,
+    withControllers: controllers.WithControllers<TaskView>,
+) {
+    const map: types.Map = {id: getCurrentMapId()};
+
+    let mapView = repos.valueOf(mapViewContainer);
+
+    if (mapView === undefined) {
+        mapView = mapViews.emptyView;
+        rootView = mapDrawing.withDrawn(mapView, rootView);
+        mapViewContainer = repos.with_(mapView, mapViewContainer);
     }
 
-    export async function draw<MapSurface, TaskSurface>(
-        adapters: Ports<MapSurface, TaskSurface>,
-    ): Promise<void> {
-        let map: Map = {id: adapters.getCurrentMapId()};
+    const tasks = await remoteTasks.tasksOn(map);
 
-        let mapSurface = adapters.mapSurfaces.mapSurfaceOf(map);
+    if (tasks === undefined) {
+        notifications = notifications.with(
+            "All your tasks could not be displayed."
+        );
+        errorLogs = errorLogs.with(
+            `Failed to get remote tasks on map with id = ${map.id}`
+        );
 
-        if (mapSurface === undefined) {
-            adapters.show("All your tasks could not be displayed.");
-            adapters.logError(`Map surface with id = ${map.id} was not found`);
-            return;
-        }
-
-        let tasks = await adapters.remoteTasks.tasksForMapWithId(map.id);
-
-        if (tasks === undefined) {
-            adapters.show("All your tasks could not be displayed.");
-            adapters.logError(`Failed to get remote tasks on map with id = ${map.id}`);
-            return;
-        }
-
-        let numberOfUndisplayedTasks = 0;
-
-        for await (const task of tasks) {
-            if (task === undefined) {
-                numberOfUndisplayedTasks++;
-                continue;
-            }
-
-            let taskSurface = adapters.taskSurfaces.taskSurfaceOn(mapSurface, task.id);
-            taskSurface = services.renderOn(
-                mapSurface, taskSurface, task, adapters.taskSurfaces, adapters.drawing
-            );
-
-            adapters.hangControllersOn(taskSurface);
-            adapters.tasks.match(taskSurface, task);
-        }
-
-        if (numberOfUndisplayedTasks !== 0) {
-            adapters.show("Some of your tasks could not be displayed.");
-            adapters.logError(
-                `Failed to get ${numberOfUndisplayedTasks} remote tasks`
-                + ` from map with id = ${map.id}`
-            );
-        }
+        return bad({notifications: notifications, errorLogs: errorLogs});
     }
+
+    let numberOfUndisplayedTasks = 0;
+
+    for await (const task of tasks) {
+        if (task === undefined) {
+            numberOfUndisplayedTasks++;
+            continue;
+        }
+
+        let taskView = mapViews.foundSubviewOn(mapView, task);
+
+        if (taskView === undefined) {
+            taskView = taskDrawing.redrawnBy(task, taskViews.emptyView);
+            mapView = taskDrawing.withDrawn(taskView, mapView);
+        }
+        else {
+            taskView = taskDrawing.redrawnBy(task, taskView);
+        }
+
+        taskMatching = taskMatching.withPair(withControllers(taskView), task);
+    }
+
+    let asResult = ok;
+
+    if (numberOfUndisplayedTasks !== 0) {
+        notifications = notifications.with(
+            "Some of your tasks could not be displayed."
+        );
+        errorLogs = errorLogs.with(
+            `Failed to get ${numberOfUndisplayedTasks} remote tasks from map with id = ${map.id}`
+        );
+
+        asResult = bad;
+    }
+
+    return asResult({
+        rootView: rootView,
+        mapViewContainer: mapViewContainer,
+        taskMatching: taskMatching,
+        notifications: notifications,
+        errorLogs: errorLogs,
+    });
 }
 
 export namespace tasks {

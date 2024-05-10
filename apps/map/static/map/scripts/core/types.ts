@@ -1,5 +1,13 @@
 import * as errors from "./errors.js";
 
+abstract class _ValueObject<Value> {
+    constructor(readonly value: Value) {}
+
+    mappedBy(tranformed: (value: Value) => Value): typeof this {
+        return this.constructor(tranformed(this.value));
+    }
+}
+
 export type Map = { id: number }
 
 export enum InteractionMode { moving, editing }
@@ -17,11 +25,13 @@ export class Task {
         private _mode: InteractionMode = InteractionMode.moving,
     ) {}
 
-    changeMode(): void {
-        this._mode++;
+    withChangedMode(): Task {
+        let changedMode = this._mode++;
 
         if (InteractionMode[this._mode] === undefined)
-            this._mode = InteractionMode.moving;
+            changedMode = InteractionMode.moving;
+
+        return { ...this, _mode: changedMode };
     }
 }
 
@@ -31,8 +41,10 @@ export type TaskPrototype = {
     y: number,
 }
 
-export class Description {
-    constructor(readonly value: string) {
+export class Description extends _ValueObject<string> {
+    constructor(value: string) {
+        super(value);
+
         if (value === '')
             throw new errors.EmptyDescriptionError();
     }
