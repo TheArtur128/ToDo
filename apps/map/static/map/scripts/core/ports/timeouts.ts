@@ -1,24 +1,19 @@
-import { Container, valueOf, with_ } from "./repos.ts";
+import { Maybe, Dirty, dirty } from "../../fp.js";
+import { Container } from "./repos.js";
 
-type TimeoutId = number;
+export type Waiting = number;
+export type TimeoutId = number;
+export type Timeout = Maybe<TimeoutId>;
 
-export function withUpdatedTimeoutIn(
-    timeoutContainer: Container<TimeoutId>,
-    milliseconds: number,
+export function updated(
+    timeout: Timeout,
+    waiting: Waiting,
     callback: () => any,
-): Container<TimeoutId> {
-    const timeout = valueOf(timeoutContainer);
-
+): Dirty<TimeoutId> {
     if (timeout !== undefined)
         clearTimeout(timeout);
 
-    const newTimeoutId = setTimeout(callback, milliseconds);
-    return with_(newTimeoutId, timeoutContainer);
+    const timeoutId = setTimeout(callback, waiting);
+    return dirty(timeoutId);
 }
 
-export function withUpdatedRemoteFixationTimeoutIn(
-    timeoutContainer: Container<number>,
-    callback: () => any,
-): Container<TimeoutId> {
-    return withUpdatedTimeoutIn(timeoutContainer, 600, callback);
-}

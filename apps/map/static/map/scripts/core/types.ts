@@ -1,4 +1,5 @@
 import * as errors from "./errors.js";
+import { Maybe } from "../fp.js";
 
 abstract class _ValueObject<Value> {
     constructor(readonly value: Value) {}
@@ -6,13 +7,28 @@ abstract class _ValueObject<Value> {
     mappedBy(tranformed: (value: Value) => Value): typeof this {
         return this.constructor(tranformed(this.value));
     }
+
+    static of<Value>(value: Value): Maybe<typeof this> {
+        try {
+            return this.constructor(value);
+        }
+        catch (MapError) {
+            return undefined;
+        }
+    }
+}
+
+abstract class _Entity {
+    with(props: Partial<typeof this>): typeof this {
+        return { ...this, ...props};
+    }
 }
 
 export type Map = { id: number }
 
 export enum InteractionMode { moving, editing }
 
-export class Task {
+export class Task extends _Entity {
     get mode() {
         return this._mode;
     }
@@ -23,7 +39,9 @@ export class Task {
         public x: number,
         public y: number,
         private _mode: InteractionMode = InteractionMode.moving,
-    ) {}
+    ) {
+        super();
+    }
 
     withChangedMode(): Task {
         let changedMode = this._mode++;

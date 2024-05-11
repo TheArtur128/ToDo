@@ -14,26 +14,15 @@ export type Matching<Key, Value> = {
 }
 
 export type Container<Value> = {
-    _with(value: Maybe<Value>): Container<Value>,
-    _get(): Maybe<Value>,
-}
-
-export function valueOf<Value>(container: Container<Value>): Maybe<Value> {
-    return container._get();
-}
-
-export function with_<Value>(
-    value: Maybe<Value>,
-    container: Container<Value>,
-): Container<Value> {
-    return container._with(value);
+    readonly value: Maybe<Value>,
+    with(value: Maybe<Value>): Container<Value>,
 }
 
 export function mapped<Value>(
     container: Container<Value>,
     transformed: (v: Maybe<Value>) => Maybe<Value>
 ): Container<Value> {
-    return with_(transformed(valueOf(container)), container);
+    return container.with(transformed(container.value));
 }
 
 export function withDefault<Value>(
@@ -44,10 +33,10 @@ export function withDefault<Value>(
 }
 
 export function popFrom<Value>(container: Container<Value>): [Maybe<Value>, Container<Value>] {
-    const value = valueOf(container);
+    const value = container.value;
 
     if (value !== undefined)
-        container = with_(undefined, container);
+        container = container.with(value);
 
     return [value, container];
 }

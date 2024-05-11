@@ -1,21 +1,23 @@
 import * as types from "./types.js";
 import * as controllers from "./ports/controllers.js";
 import * as messages from "./ports/messages.js";
-import * as remoting from "./ports/remoting.js";
+import * as remoteRepos from "./ports/remote-repos.js";
 import * as repos from "./ports/repos.js";
 import * as timeouts from "./ports/timeouts.js";
 import * as views from "./ports/views.js";
-import { bad, ok } from "../fp.js";
+import { bad, ok, valueOf } from "../fp.js";
+
+const waitingForFix: timeouts.Waiting = 600;
 
 export async function drawnMapOf<RootView, MapView, TaskView>(
     rootView: RootView,
     mapDrawing: views.StaticDrawing<RootView, MapView>,
     getCurrentMapId: () => number,
     mapViewContainer: repos.Container<MapView>,
-    mapViews: views.RootViews<MapView, TaskView, types.Task>,
-    remoteTasks: remoting.RemoteTasks,
+    mapViews: views.Views<MapView>,
+    remoteTasks: remoteRepos.RemoteTasks,
     notifications: messages.Notifications,
-    taskViews: views.Views<TaskView>,
+    taskViews: views.Subviews<MapView, TaskView, types.Task>,
     taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
     errorLogs: messages.Logs,
     taskMatching: repos.Matching<TaskView, types.Task>,
@@ -23,12 +25,12 @@ export async function drawnMapOf<RootView, MapView, TaskView>(
 ) {
     const map: types.Map = {id: getCurrentMapId()};
 
-    let mapView = repos.valueOf(mapViewContainer);
+    let mapView = mapViewContainer.value;
 
     if (mapView === undefined) {
         mapView = mapViews.emptyView;
         rootView = mapDrawing.withDrawn(mapView, rootView);
-        mapViewContainer = repos.with_(mapView, mapViewContainer);
+        mapViewContainer = mapViewContainer.with(mapView);
     }
 
     const tasks = await remoteTasks.tasksOn(map);
@@ -52,14 +54,14 @@ export async function drawnMapOf<RootView, MapView, TaskView>(
             continue;
         }
 
-        let taskView = mapViews.foundSubviewOn(mapView, task);
+        let taskView = taskViews.foundViewOn(mapView, task);
 
         if (taskView === undefined) {
-            taskView = taskDrawing.redrawnBy(task, taskViews.emptyView);
+            taskView = taskDrawing.redrawnBy(task, taskViews.emptyView).value;
             mapView = taskDrawing.withDrawn(taskView, mapView);
         }
         else {
-            taskView = taskDrawing.redrawnBy(task, taskView);
+            taskView = taskDrawing.redrawnBy(task, taskView).value;
         }
 
         taskMatching = taskMatching.withPair(withControllers(taskView), task);
@@ -87,168 +89,219 @@ export async function drawnMapOf<RootView, MapView, TaskView>(
     });
 }
 
-export namespace tasks {
-    export type Ports<MapSurface, TaskSurface> = {
-        tasks: ports.Matching<TaskSurface, Task>,
-        drawing: ports.Drawing<MapSurface, TaskSurface, Task>
-        logError: ports.Log,
-        descriptionContainer: ports.Container<Description>,
-        descriptionUpdatingTimeout: ports.Container<number>,
-        remoteTasks: ports.RemoteTasks,
+export function changedTaskModeOf<MapView, TaskView>(
+    taskView: TaskView,
+    taskMatching: repos.Matching<TaskView, types.Task>,
+    errorLogs: messages.Logs,
+    drawing: views.Drawing<MapView, TaskView, types.Task>
+) {
+    let task = taskMatching.matchedWith(taskView);
+
+    if (task === undefined) {
+        errorLogs = errorLogs.with("No matching between task and surface");
+        return bad({errorLogs: errorLogs});
     }
 
-    export function changeMode<MapSurface, TaskSurface>(
-        adapters: Ports<MapSurface, TaskSurface>,
-        taskSurface: TaskSurface,
-    ): void {
-        const task = adapters.tasks.matchedWith(taskSurface);
+    task = task.withChangedMode();
+    taskView = drawing.redrawnBy(task, taskView).value;
 
-        if (task === undefined) {
-            adapters.logError("No matching between task and surface");
-            return;
-        }
+    return ok({taskMatching: taskMatching.withPair(taskView, task)});
+}
 
-        task.changeMode();
-        adapters.drawing.redraw(taskSurface, task);
-    }
+export function changeTaskDescription<MapView, TaskView>(
+    taskMatching: repos.Matching<TaskView, types.Task>,
+    drawing: views.Drawing<MapView, TaskView, types.Task>,
+    errorLogs: messages.Logs,
+    timeout: timeouts.Timeout,
+    remoteTasks: remoteRepos.RemoteTasks,
+    taskView: TaskView,
+    descriptionValue: string,
+) {
+    let task = taskMatching.matchedWith(taskView);
 
-    export function changeDescription<MapSurface, TaskSurface>(
-        adapters: Ports<MapSurface, TaskSurface>,
-        taskSurface: TaskSurface,
-    ): void {
-        const task = adapters.tasks.matchedWith(taskSurface);
-
-        if (task === undefined) {
-            adapters.logError("No matching between task and surface");
-            return;
-        }
-
-        const newDescription = adapters.descriptionContainer.get();
-
-        if (newDescription === undefined || task.description.value === newDescription.value)
-            return;
-
-        task.description = newDescription;
-        adapters.drawing.redraw(taskSurface, task);
-
-        services.updateRemoteFixationTimeout(adapters.descriptionUpdatingTimeout, () => {
-            adapters.remoteTasks.updateDescription(task);
+    if (task === undefined) {
+        return bad({
+            errorLogs: errorLogs.with("No matching between task and surface"),
         });
+    }
+
+    const newDescription = descriptionContainer.value;
+
+    if (newDescription === undefined || task.description.value === newDescription.value)
+        return ok();
+
+    task = task.with({description: newDescription});
+    taskView = drawing.redrawnBy(task, taskView).value;
+
+    taskMatching = taskMatching.withPair(taskView, task);
+
+    const timeoutId = valueOf(timeouts.updated(timeout, waitingForFix, async () => {
+        const updatedTask = await remoteTasks.withUpToDateDescription(task);
+
+        if (updatedTask !== undefined)
+            return ok();
+
+        const errorLog = "The remote task description could not be updated";
+        return bad({errorLogs: errorLogs.with(errorLog)});
+    }));
+
+    return ok({taskMatching: taskMatching, timeoutId: timeoutId});
+}
+
+export function preparedTaskMovingOf<TaskView>(
+    taskMatching: repos.Matching<TaskView, types.Task>,
+    cursor: views.Cursor,
+    taskView: TaskView,
+) {
+    const task = taskMatching.matchedWith(taskView);
+
+    const isMoving = task?.mode === types.InteractionMode.moving;
+    return isMoving ? ok({cursor: cursor.toGrab()}) : bad();
+}
+
+export function startedTaskMovingOf<TaskView>(
+    taskMatching: repos.Matching<TaskView, types.Task>,
+    cursor: views.Cursor,
+    taskView: TaskView,
+    x: number,
+    y: number,
+) {
+    const task = taskMatching.matchedWith(taskView);
+
+    if (task?.mode !== types.InteractionMode.moving)
+        return bad();
+
+    return ok({
+        referencePoint: new types.Vector(x, y),
+        cursor: cursor.asGrabbed(),
+    })
+}
+
+export function canceledTaskMovingOf<TaskView>(
+    taskMatching: repos.Matching<TaskView, types.Task>,
+    cursor: views.Cursor,
+    taskView: TaskView,
+) {
+    const task = taskMatching.matchedWith(taskView);
+
+    if (task?.mode === types.InteractionMode.moving)
+        return bad();
+
+    return ok({cursor: cursor.asDefault()});
+}
+
+export function movedTaskOf<MapView, TaskView>(
+    errorLogs: messages.Logs,
+    referencePoint: types.Vector,
+    fixationTimeout: timeouts.Timeout,
+    remoteTasks: remoteRepos.RemoteTasks,
+    taskMatching: repos.Matching<TaskView, types.Task>,
+    drawing: views.Drawing<MapView, TaskView, types.Task>,
+    taskView: TaskView,
+    x: number,
+    y: number,
+) {
+    let task = taskMatching.matchedWith(taskView);
+
+    if (task?.mode !== types.InteractionMode.moving)
+        return;
+
+    let taskPosition = new types.Vector(task.x, task.y);
+    const newReferencePoint = new types.Vector(x, y);
+
+    const taskPositionDifference = (
+        newReferencePoint.of(referencePoint, (v1, v2) => v1 - v2)
+    );
+    taskPosition = taskPosition.of(taskPositionDifference, (v1, v2) => v1 + v2);
+
+    task = task.with({x: taskPosition.x, y: taskPosition.y});
+    taskView = drawing.redrawnBy(task, taskView).value;
+
+    taskMatching = taskMatching.withPair(taskView, task);
+
+    fixationTimeout = valueOf(timeouts.updated(fixationTimeout, waitingForFix, async () => {
+        const updatedTask = await remoteTasks.withUpToDatePosition(task);
+
+        if (updatedTask !== undefined)
+            return;
+
+        const errorLog = "The remote task position could not be updated";
+        return {errorLogs: errorLogs.with(errorLog)};
+    }));
+
+    return {
+        taskMatching: taskMatching,
+        fixationTimeout: fixationTimeout,
     }
 }
 
-export namespace taskMoving {
-    export type Ports<MapSurface, TaskSurface> = {
-        referencePointContainer: ports.Container<Vector>,
-        activationContainer: ports.Container<true>,
-        remoteFixationTimeoutContainer: ports.Container<number>,
-        remoteTasks: ports.RemoteTasks,
-        tasks: ports.Matching<TaskSurface, Task>,
-        cursor: ports.Cursor,
-        drawing: ports.Drawing<MapSurface, TaskSurface, Task>,
-    }
+export function taskAddingAvailabilityOf<MapView, ReadinessAnimation, TaskPrototypeView, TaskView>(
+    mapView: MapView,
+    descriptionContainer: repos.Container<types.Description>,
+    readinessAnimation: ReadinessAnimation,
+    readinessAnimationDrawing: views.StaticDrawing<MapView, ReadinessAnimation>,
+    taskPrototypeViews: views.Views<TaskPrototypeView>,
+    taskPrototype: types.TaskPrototype,
+    taskPrototypeView: TaskPrototypeView,
+    taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
+    errorLogs: messages.Logs,
+    notifications: messages.Notifications,
+    continuationControllers: controllers.Controllers<TaskPrototypeView>,
+    getCurrentMapId: () => number,
+    remoteTasks: remoteRepos.RemoteTasks,
+    taskViews: views.Views<TaskView>,
+    taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
+    startingControllers: controllers.Controllers<ReadinessAnimation>,
+    hangControllersOn: controllers.WithControllers<TaskView>,
+    taskMatching: repos.Matching<TaskView, types.Task>,
+): void {
+    const available = adapters.descriptionContainer.get() !== undefined;
+    let availableInPast = adapters.availabilityContainer.get();
 
-    export function prepare<MapSurface, TaskSurface>(
-        adapters: Ports<MapSurface, TaskSurface>,
-        taskSurface: TaskSurface,
-    ) {
-        const task = adapters.tasks.matchedWith(taskSurface);
+    if (availableInPast === undefined)
+        availableInPast = false;
 
-        if (task?.mode !== InteractionMode.moving)
-            return;
+    adapters.availabilityContainer.set(available);
 
-        adapters.cursor.setToGrab();
-    }
-
-    export function cancel<MapSurface, TaskSurface>(
-        adapters: Ports<MapSurface, TaskSurface>,
-        taskSurface: TaskSurface,
-    ) {
-        const task = adapters.tasks.matchedWith(taskSurface);
-
-        if (task?.mode !== InteractionMode.moving)
-            return;
-
-        adapters.cursor.setDefault();
-        adapters.activationContainer.set(undefined);
-    }
-
-    export function start<MapSurface, TaskSurface>(
-        adapters: Ports<MapSurface, TaskSurface>,
-        taskSurface: TaskSurface,
-        x: number,
-        y: number,
-    ) {
-        const task = adapters.tasks.matchedWith(taskSurface);
-
-        if (task?.mode !== InteractionMode.moving)
-            return;
-
-        adapters.referencePointContainer.set(new Vector(x, y));
-        adapters.cursor.setGrabbed();
-
-        adapters.activationContainer.set(true);
-    }
-
-    export function handle<MapSurface, TaskSurface>(
-        adapters: Ports<MapSurface, TaskSurface>,
-        taskSurface: TaskSurface,
-        x: number,
-        y: number,
-    ) {
-        const task = adapters.tasks.matchedWith(taskSurface);
-        const referencePoint = adapters.referencePointContainer.get();
-        const isActive = adapters.activationContainer.get();
-
-        if (!(task?.mode === InteractionMode.moving && isActive && referencePoint !== undefined))
-            return;
-
-        let taskPosition = new Vector(task.x, task.y);
-        const newReferencePoint = new Vector(x, y);
-
-        const taskPositionDifference = (
-            newReferencePoint.of(referencePoint, (v1, v2) => v1 - v2)
+    if (available && !availableInPast) {
+        adapters.readinessAnimationDrawing.drawOn(
+            adapters.mapSurface,
+            adapters.readinessAnimation,
         );
-
-        taskPosition = taskPosition.of(taskPositionDifference, (v1, v2) => v1 + v2);
-
-        task.x = taskPosition.x;
-        task.y = taskPosition.y;
-
-        adapters.referencePointContainer.set(newReferencePoint);
-
-        adapters.drawing.redraw(taskSurface, task);
-
-        services.updateRemoteFixationTimeout(adapters.remoteFixationTimeoutContainer, () => {
-            adapters.remoteTasks.updatePosition(task)
-        });
+        adapters.startingControllers.hangOn(adapters.readinessAnimation);
+    }
+    else if (!available && availableInPast) {
+        adapters.readinessAnimationDrawing.eraseFrom(
+            adapters.mapSurface,
+            adapters.readinessAnimation,
+        );
+        adapters.startingControllers.removeFrom(adapters.readinessAnimation);
     }
 }
+
+// export type Ports<MapView, ReadinessAnimation, TaskPrototypeView, TaskView> = {
+//     mapView: MapView,
+//     descriptionContainer: repos.Container<types.Description>,
+//     readinessAnimation: ReadinessAnimation,
+//     readinessAnimationDrawing: views.StaticDrawing<MapView, ReadinessAnimation>,
+//     taskPrototypeViews: views.Views<TaskPrototypeView>,
+//     taskPrototype: types.TaskPrototype,
+//     taskPrototypeView: TaskPrototypeView,
+//     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
+//     errorLogs: messages.Logs,
+//     notifications: messages.Notifications,
+//     continuationControllers: controllers.Controllers<TaskPrototypeView>,
+//     getCurrentMapId: () => number,
+//     remoteTasks: remoteRepos.RemoteTasks,
+//     taskViews: views.Views<TaskView>,
+//     taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
+//     startingControllers: controllers.Controllers<ReadinessAnimation>,
+//     hangControllersOn: controllers.WithControllers<TaskView>,
+//     taskMatching: repos.Matching<TaskView, types.Task>,
+// }
 
 export namespace taskAdding {
-    export type Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface> = {
-        mapSurface: MapSurface,
-        descriptionContainer: ports.Container<Description>,
-        availabilityContainer: ports.Container<boolean>,
-        readinessAnimation: ReadinessAnimation,
-        readinessAnimationDrawing: ports.StaticDrawing<MapSurface, ReadinessAnimation>,
-        taskPrototypeSurfaces: ports.TaskPrototypeSurfaces<TaskPrototypeSurface>,
-        taskPrototypeContainer: ports.Container<TaskPrototype>,
-        taskPrototypeSurfaceContainer: ports.Container<TaskPrototypeSurface>,
-        taskPrototypeDrawing: ports.Drawing<MapSurface, TaskPrototypeSurface, TaskPrototype>,
-        logError: ports.Log,
-        show: ports.Show,
-        continuationControllers: ports.Controllers<TaskPrototypeSurface>,
-        getCurrentMapId: () => number,
-        remoteTasks: ports.RemoteTasks,
-        taskSurfaces: ports.TaskSurfaces<MapSurface, TaskSurface>,
-        taskDrawing: ports.Drawing<MapSurface, TaskSurface, Task>,
-        startingControllers: ports.Controllers<ReadinessAnimation>,
-        hangControllersOn: ports.HangControllers<TaskSurface>,
-        tasks: ports.Matching<TaskSurface, Task>,
-    }
-
-    export function handleAvailability<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
+    export function handleAvailability<MapView, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
         adapters: taskAdding.Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>
     ): void {
         const available = adapters.descriptionContainer.get() !== undefined;

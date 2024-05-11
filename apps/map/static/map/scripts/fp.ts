@@ -16,23 +16,33 @@ export function on<Determinant, Rigth, Left=undefined>(
     return (value: any) => value === determinant ? right : left
 }
 
-export class Ok<Value> {
+class _Context<Value> {
     constructor(readonly value: Value) {}
 }
 
-export class Bad<Value> {
-    constructor(readonly value: Value) {}
-}
-
-export function ok<Value>(value: Value): Ok<Value> {
-    return new Ok(value)
-}
-
-export function bad<Value>(value: Value): Bad<Value> {
-    return new Bad(value)
-}
-
+export class Ok<Value> extends _Context<Value> {}
+export class Bad<Value> extends _Context<Value> {}
 export type Result<Value> = Ok<Value> | Bad<Value>
+
+export class Dirty<Value> extends _Context<Value> {}
+
+export function ok<Value>(value?: undefined): Ok<undefined>
+export function ok<Value>(value?: Value): Ok<Value>
+export function ok<Value>(value?: Maybe<Value>): Ok<Maybe<Value>> {
+    return new Ok(value);
+}
+
+export function bad<Value>(value?: undefined): Bad<undefined>
+export function bad<Value>(value?: Value): Bad<Value>
+export function bad<Value>(value?: Maybe<Value>): Bad<Maybe<Value>> {
+    return new Bad(value);
+}
+
+export function dirty<Value>(value?: undefined): Ok<undefined>
+export function dirty<Value>(value?: Value): Ok<Value>
+export function dirty<Value>(value?: Maybe<Value>): Ok<Maybe<Value>> {
+    return new Dirty(value);
+}
 
 export function toMapOk<Value>(
     transformed: (value: Value) => Result<Value>
@@ -48,4 +58,8 @@ export function toMapBad<Value>(
     return (result: Result<Value>) => {
         return result instanceof Bad ? transformed(result.value) : result;
     }
+}
+
+export function valueOf<Value>(container: {readonly value: Value}): Value {
+    return container.value;
 }
