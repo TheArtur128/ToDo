@@ -1,5 +1,4 @@
-import { Maybe, Dirty, dirty } from "../../fp.js";
-import { Container } from "./repos.js";
+import { Maybe, Impure } from "../../fp.js";
 
 export type Waiting = number;
 export type TimeoutId = number;
@@ -9,11 +8,10 @@ export function updated(
     timeout: Timeout,
     waiting: Waiting,
     callback: () => any,
-): Dirty<TimeoutId> {
+): Impure<TimeoutId> {
     if (timeout !== undefined)
         clearTimeout(timeout);
 
     const timeoutId = setTimeout(callback, waiting);
-    return dirty(timeoutId);
+    return timeoutId;
 }
-

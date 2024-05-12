@@ -8,11 +8,10 @@ abstract class _ValueObject<Value> {
         return this.constructor(tranformed(this.value));
     }
 
-    static of<Value>(value: Value): Maybe<typeof this> {
+    static of<T extends _ValueObject<any>, Value>(this: { new(value: Value): T }, value: Value): Maybe<T> {
         try {
-            return this.constructor(value);
-        }
-        catch (MapError) {
+            return new this(value);
+        } catch (InvariantError) {
             return undefined;
         }
     }

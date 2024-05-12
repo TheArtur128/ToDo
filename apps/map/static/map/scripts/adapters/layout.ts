@@ -1,59 +1,66 @@
-import * as ports from "../core/ports.js";
+import * as views from "../core/ports/views.js";
 import * as types from "../core/types.js";
+import { Maybe, Dirty } from "../fp.js";
 
-export type MapSurface = HTMLDivElement;
-export type TaskSurface = HTMLDivElement;
-export type TaskPrototypeSurface = HTMLDivElement;
+export type View = HTMLElement;
+export type MapView = HTMLDivElement;
+export type TaskView = HTMLDivElement;
+export type TaskPrototypeView = HTMLDivElement;
 
-export type TaskDescriptionSurface = HTMLTextAreaElement;
-export type InteractionModeSurface = HTMLDivElement;
+export type TaskDescriptionView = HTMLTextAreaElement;
+export type InteractionModeView = HTMLDivElement;
 export type Animation = HTMLImageElement;
 
-export const staticDrawing: ports.StaticDrawing<MapSurface, HTMLElement> = {
-    drawOn(mapSurface: MapSurface, surface: HTMLElement) {
-        mapSurface.appendChild(surface);
+export const staticDrawing = {
+    withDrawn<RootView extends View>(view: View, rootView: RootView): RootView {
+        rootView.appendChild(view);
+        return rootView;
     },
 
-    eraseFrom(mapSurface: MapSurface, surface: HTMLElement) {
+    withErased<RootView extends View>(view: View, rootView: RootView): RootView {
         try {
-            mapSurface.removeChild(surface);
+            rootView.removeChild(view);
         }
-        catch (NotFoundError) {} 
+        catch (NotFoundError) {}
+
+        return rootView;
     },
 }
 
-export class LazyStaticDrawing implements ports.StaticDrawing<MapSurface, HTMLElement> {
-    private _drawnSurfacesInDOM: Set<HTMLElement>;
+export class LazyStaticDrawing implements views.StaticDrawing<MapView, HTMLElement> {
+    private _drawnViewsInDOM: Set<HTMLElement>;
 
     constructor() {
-        this._drawnSurfacesInDOM = new Set();
+        this._drawnViewsInDOM = new Set();
     }
 
-    drawOn(mapSurface: MapSurface, surface: HTMLElement) {
-        if (this._drawnSurfacesInDOM.has(surface)) {
-            surface.hidden = false;
-            return;
+    withDrawn<RootView extends View>(view: View, rootView: RootView): Dirty<RootView> {
+        if (this._drawnViewsInDOM.has(view))
+            view.hidden = false;
+        else {
+            rootView.appendChild(view);
+            this._drawnViewsInDOM.add(view);
         }
 
-        mapSurface.appendChild(surface);
-        this._drawnSurfacesInDOM.add(surface);
+        return rootView;
     }
 
-    eraseFrom(_: any, surface: HTMLElement) {
-        surface.hidden = true;
+    withErased<RootView extends View>(view: View, rootView: RootView): Dirty<RootView> {
+        view.hidden = true;
+        return rootView;
     }
 }
 
-const _baseSurfaces = {
-    sizeOf(element: HTMLElement): types.Vector {
-        const rect = element.getBoundingClientRect()
+const _baseVisibleViews = {
+    sizeOf(view: View): types.Vector {
+        const rect = view.getBoundingClientRect()
 
         return new types.Vector(rect.width, rect.height);
     }
 }
 
 export namespace taskAdding {
-    export function createReadinessAnimation(): Animation {
+    export function createReadinessAnimation(): Dirty<Animation> {
         const element = document.createElement("img");
         element.id = "readiness-animation-of-task-adding";
         element.src = "/static/map/animations/ready-to-add.gif";
@@ -65,183 +72,216 @@ export namespace taskAdding {
 }
 
 export namespace tasks {
-    const _descriptionSurfaceClassName = "task-description";
-    const _interactionModeSurfaceClassName = "task-interaction-mode";
+    const _descriptionViewClassName = "task-description";
+    const _interactionModeViewClassName = "task-interaction-mode";
 
-    export const surfaces = {
+    export const views = {
         sizeOf(_: any): types.Vector {
             return new types.Vector(255, 124);
         },
 
-        taskSurfaceOn(mapSurface: MapSurface, task_id: number): TaskSurface | undefined {
-            let taskSurface = mapSurface.querySelector(`#${_surfaceIdOf(task_id)}`);
+        foundViewOn(mapView: MapView, task: types.Task): Dirty<Maybe<TaskView>> {
+            const view = mapView.querySelector(`#${_viewIdOf(task.id)}`);
 
-            return taskSurface instanceof HTMLDivElement ? taskSurface : undefined
+            return view instanceof HTMLDivElement ? view : undefined
         },
 
-        getEmpty(): TaskSurface {
-            let surface = document.createElement('div');
-            surface.appendChild(this._getEmptyTaskDescriptionSurface());
-            surface.appendChild(this._getEmptyInteractionModeSurface());
+        get emptyView(): TaskView {
+            let view = document.createElement('div');
+            view.appendChild(this._getEmptyTaskDescriptionView());
+            view.appendChild(this._getEmptyInteractionModeView());
 
-            surface.className = "block";
-            surface.style.position = "absolute";
+            view.className = "block";
+            view.style.position = "absolute";
 
-            return surface;
+            return view;
         },
 
-        _getEmptyTaskDescriptionSurface(): TaskDescriptionSurface {
-            let descriptionSurface = document.createElement("textarea");
+        _getEmptyTaskDescriptionView(): TaskDescriptionView {
+            let descriptionView = document.createElement("textarea");
 
-            descriptionSurface.className = _descriptionSurfaceClassName;
-            descriptionSurface.maxLength = 128;
-            descriptionSurface.rows = 4;
-            descriptionSurface.cols = 32;
+            descriptionView.className = _descriptionViewClassName;
+            descriptionView.maxLength = 128;
+            descriptionView.rows = 4;
+            descriptionView.cols = 32;
 
-            return descriptionSurface;
+            return descriptionView;
         },
 
-        _getEmptyInteractionModeSurface(): InteractionModeSurface {
-            const surface = document.createElement("div");
-            surface.className = _interactionModeSurfaceClassName;
+        _getEmptyInteractionModeView(): InteractionModeView {
+            const view = document.createElement("div");
+            view.className = _interactionModeViewClassName;
 
-            surface.appendChild(document.createElement("img"));
+            view.appendChild(document.createElement("img"));
 
-            return surface;
+            return view;
         },
     }
 
-    export const drawing: ports.Drawing<MapSurface, TaskSurface, types.Task> = {
+    export const drawing = {
         ...staticDrawing,
 
-        redraw(surface: TaskSurface, task: types.Task) {
-            surface.id = _surfaceIdOf(task.id);
-            surface.style.left = _styleCoordinateOf(task.x);
-            surface.style.top = _styleCoordinateOf(task.y);
+        redrawnBy(task: types.Task, view: TaskView): Dirty<TaskView> {
+            view.id = _viewIdOf(task.id);
+            view.style.left = _inStyleUnits(task.x);
+            view.style.top = _inStyleUnits(task.y);
 
-            const descriptionSurface = surface.querySelector(
-                `.${_descriptionSurfaceClassName}`
+            const descriptionView = view.querySelector(
+                `.${_descriptionViewClassName}`
             );
 
-            const interactionModeSurface = surface.querySelector(
-                `.${_interactionModeSurfaceClassName}`
+            const interactionModeView = view.querySelector(
+                `.${_interactionModeViewClassName}`
             );
 
-            if (descriptionSurface instanceof HTMLTextAreaElement)
-                _redrawDescriptionSurface(descriptionSurface, task);
+            if (descriptionView instanceof HTMLTextAreaElement)
+                this._redrawDescriptionView(descriptionView, task);
 
-            if (interactionModeSurface instanceof HTMLDivElement)
-                _redrawInteractionModeSurface(interactionModeSurface, task);
+            if (interactionModeView instanceof HTMLDivElement)
+                this._redrawInteractionModeView(interactionModeView, task);
+
+            return view;
+        },
+
+        _redrawDescriptionView(
+            descriptionView: HTMLTextAreaElement,
+            task: types.Task,
+        ): void {
+            descriptionView.value = task.description.value;
+            descriptionView.disabled = task.mode !== types.InteractionMode.editing;
+        },
+
+        _redrawInteractionModeView(
+            interactionModeView: InteractionModeView,
+            task: types.Task,
+        ): void {
+            const imageElement = interactionModeView.querySelector("img");
+
+            if (imageElement === null)
+                return;
+
+            if (task.mode === types.InteractionMode.editing) {
+                imageElement.src = "/static/map/images/editing-mode.png";
+                imageElement.width = 10;
+                imageElement.height = 10;
+            }
+            else if (task.mode === types.InteractionMode.moving) {
+                imageElement.src = "/static/map/images/moving-mode.png";
+                imageElement.width = 12;
+                imageElement.height = 12;
+            }
         }
     }
 
-    export function taskSurfaceCursorFor(taskSurface: TaskSurface): LocalCursor | undefined {
-        let query = `.${_descriptionSurfaceClassName}`;
-        const descriptionSurface = taskSurface.querySelector(query);
+    export function cursorFor(taskView: TaskView): Dirty<Maybe<LocalCursor>> {
+        let query = `.${_descriptionViewClassName}`;
+        const descriptionView = taskView.querySelector(query);
 
-        if (descriptionSurface instanceof HTMLElement)
-            return new LocalCursor(taskSurface, descriptionSurface);
+        if (descriptionView instanceof HTMLElement)
+            return new LocalCursor(taskView, descriptionView);
     }
 
-    function _surfaceIdOf(id: number): string {
+    function _viewIdOf(id: number): string {
         return `task-${id}`;
-    }
-
-    function _redrawDescriptionSurface(
-        descriptionSurface: HTMLTextAreaElement,
-        task: types.Task,
-    ): void {
-        descriptionSurface.value = task.description.value;
-        descriptionSurface.disabled = task.mode !== types.InteractionMode.editing;
-    }
-
-    function _redrawInteractionModeSurface(
-        interactionModeSurface: InteractionModeSurface,
-        task: types.Task,
-    ): void {
-        const imageElement = interactionModeSurface.querySelector("img");
-
-        if (imageElement === null)
-            return;
-
-        if (task.mode === types.InteractionMode.editing) {
-            imageElement.src = "/static/map/images/editing-mode.png";
-            imageElement.width = 10;
-            imageElement.height = 10;
-        }
-        else if (task.mode === types.InteractionMode.moving) {
-            imageElement.src = "/static/map/images/moving-mode.png";
-            imageElement.width = 12;
-            imageElement.height = 12;
-        }
     }
 }
 
 export namespace taskPrototypes {
-    export const surfaces: ports.TaskPrototypeSurfaces<TaskPrototypeSurface> = {
-        ..._baseSurfaces,
+    export const views: views.Views<TaskPrototypeView> = {
+        ..._baseVisibleViews,
 
-        getEmpty(): TaskPrototypeSurface {
-            const surface = document.createElement('div');
-            surface.className = "task-prototype";
+        get emptyView(): TaskPrototypeView {
+            const view = document.createElement('div');
+            view.className = "task-prototype";
 
-            return surface;
+            return view;
         },
     }
 
-    export const drawing: ports.Drawing<MapSurface, TaskPrototypeSurface, types.TaskPrototype> = {
+    export const drawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype> = {
         ...staticDrawing,
 
-        redraw(surface: TaskPrototypeSurface, taskPrototype: types.TaskPrototype) {
-            surface.style.left = _styleCoordinateOf(taskPrototype.x);
-            surface.style.top = _styleCoordinateOf(taskPrototype.y);
+        redrawnBy(
+            taskPrototype: types.TaskPrototype,
+            view: TaskPrototypeView,
+        ): Dirty<TaskPrototypeView> {
+            view.style.left = _inStyleUnits(taskPrototype.x);
+            view.style.top = _inStyleUnits(taskPrototype.y);
+
+            return view;
         },
     }
 }
 
-export const maps = {
-    surfacesOf(mapSurface: MapSurface): ports.MapSurfaces<MapSurface> {
-        return {mapSurfaceOf: _ => mapSurface};
-    },
+export namespace maps {
+    export const views: views.Views<MapView> = {
+        ..._baseVisibleViews,
+
+        get emptyView(): MapView {
+            const view = document.createElement('div');
+            view.id = "tasks";
+
+            return view;
+        },
+    }
+
+    export const drawing = {
+        ...staticDrawing,
+
+        withDrawn<RootView extends View>(view: MapView, rootView: RootView): RootView {
+            rootView.insertBefore(view, rootView.firstChild);
+            return rootView;
+        },
+
+        redrawnBy(_: types.Map, view: MapView): MapView {
+            return view;
+        }
+    }
 }
 
-export const globalCursor: ports.Cursor = {
-    setDefault(): void {
+export const globalCursor: views.Cursor = {
+    asDefault(): Dirty<typeof this> {
         _setGlobalStyleProperty("cursor", '', '');
+        return this;
     },
 
-    setToGrab(): void {
+    toGrab(): Dirty<typeof this> {
         _setGlobalStyleProperty("cursor", "grab", "important");
+        return this;
     },
 
-    setGrabbed(): void {
+    asGrabbed(): Dirty<typeof this> {
         _setGlobalStyleProperty("cursor", "grabbing", "important");
+        return this;
     },
 }
 
-export class LocalCursor implements ports.Cursor {
+export class LocalCursor implements views.Cursor {
     private _elements: HTMLElement[];
 
     constructor(...elements: HTMLElement[]) {
         this._elements = elements;
     }
 
-    setDefault(): void {
+    asDefault(): Dirty<typeof this> {
         this._elements.forEach(element => {
             element.style.setProperty("cursor", '', '');
         });
+        return this;
     }
 
-    setToGrab(): void {
+    toGrab(): Dirty<typeof this> {
         this._elements.forEach(element => {
             element.style.setProperty("cursor", "grab", "important");
         });
+        return this;
     }
 
-    setGrabbed(): void {
+    asGrabbed(): Dirty<typeof this> {
         this._elements.forEach(element => {
             element.style.setProperty("cursor", "grabbing", "important");
         });
+        return this;
     }
 }
 
@@ -254,6 +294,6 @@ function _setGlobalStyleProperty(property: string, value: string | null, priorit
     })
 }
 
-function _styleCoordinateOf(coordinate: number): string {
+function _inStyleUnits(coordinate: number): string {
     return `${coordinate}px`;
 }

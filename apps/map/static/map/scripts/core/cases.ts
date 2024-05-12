@@ -5,45 +5,46 @@ import * as remoteRepos from "./ports/remote-repos.js";
 import * as repos from "./ports/repos.js";
 import * as timeouts from "./ports/timeouts.js";
 import * as views from "./ports/views.js";
-import { bad, ok, valueOf } from "../fp.js";
+import { Maybe, bad, ok } from "../fp.js";
 
 const waitingForFix: timeouts.Waiting = 600;
 
-export async function drawnMapOf<RootView, MapView, TaskView>(
-    rootView: RootView,
-    mapDrawing: views.StaticDrawing<RootView, MapView>,
-    getCurrentMapId: () => number,
-    mapViewContainer: repos.Container<MapView>,
+export async function drawnMapOf<MapRootView, MapView, TaskView>(
+    mapRootView: MapRootView,
+    mapView: Maybe<MapView>,
     mapViews: views.Views<MapView>,
+    mapDrawing: views.Drawing<MapRootView, MapView, types.Map>,
     remoteTasks: remoteRepos.RemoteTasks,
-    notifications: messages.Notifications,
     taskViews: views.Subviews<MapView, TaskView, types.Task>,
     taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
+    taskControllers: controllers.Controllers<TaskView>,
+    taskMatching: repos.MatchingBy<TaskView, types.Task>,
+    notifications: messages.Notifications,
     errorLogs: messages.Logs,
-    taskMatching: repos.Matching<TaskView, types.Task>,
-    withControllers: controllers.WithControllers<TaskView>,
+    mapId: number,
 ) {
-    const map: types.Map = {id: getCurrentMapId()};
+    const map: types.Map = {id: mapId};
 
-    let mapView = mapViewContainer.value;
-
-    if (mapView === undefined) {
-        mapView = mapViews.emptyView;
-        rootView = mapDrawing.withDrawn(mapView, rootView);
-        mapViewContainer = mapViewContainer.with(mapView);
+    if (mapView !== undefined)
+        mapView = mapDrawing.redrawnBy(map, mapView);
+    else {
+        mapView = mapDrawing.redrawnBy(map, mapViews.emptyView);
+        mapRootView =  mapDrawing.withDrawn(mapView, mapRootView);
     }
 
     const tasks = await remoteTasks.tasksOn(map);
 
     if (tasks === undefined) {
-        notifications = notifications.with(
-            "All your tasks could not be displayed."
-        );
-        errorLogs = errorLogs.with(
-            `Failed to get remote tasks on map with id = ${map.id}`
-        );
-
-        return bad({notifications: notifications, errorLogs: errorLogs});
+        return bad({
+            mapRootView: mapRootView,
+            mapView: mapView,
+            notifications: notifications.with(
+                "All your tasks could not be displayed."
+            ),
+            errorLogs: errorLogs.with(
+                `Failed to get remote tasks on map with id = ${map.id}`
+            ),
+        });
     }
 
     let numberOfUndisplayedTasks = 0;
@@ -57,14 +58,15 @@ export async function drawnMapOf<RootView, MapView, TaskView>(
         let taskView = taskViews.foundViewOn(mapView, task);
 
         if (taskView === undefined) {
-            taskView = taskDrawing.redrawnBy(task, taskViews.emptyView).value;
+            taskView = taskDrawing.redrawnBy(task, taskViews.emptyView);
             mapView = taskDrawing.withDrawn(taskView, mapView);
         }
         else {
-            taskView = taskDrawing.redrawnBy(task, taskView).value;
+            taskView = taskDrawing.redrawnBy(task, taskView);
         }
 
-        taskMatching = taskMatching.withPair(withControllers(taskView), task);
+        taskControllers = taskControllers.for(taskView);
+        taskMatching = taskMatching.withPair(taskView, task);
     }
 
     let asResult = ok;
@@ -81,9 +83,10 @@ export async function drawnMapOf<RootView, MapView, TaskView>(
     }
 
     return asResult({
-        rootView: rootView,
-        mapViewContainer: mapViewContainer,
+        mapRootView: mapRootView,
+        mapView: mapView,
         taskMatching: taskMatching,
+        taskControllers: taskControllers,
         notifications: notifications,
         errorLogs: errorLogs,
     });
@@ -91,7 +94,8 @@ export async function drawnMapOf<RootView, MapView, TaskView>(
 
 export function changedTaskModeOf<MapView, TaskView>(
     taskView: TaskView,
-    taskMatching: repos.Matching<TaskView, types.Task>,
+    taskControllers: controllers.Controllers<TaskView>,
+    taskMatching: repos.MatchingBy<TaskView, types.Task>,
     errorLogs: messages.Logs,
     drawing: views.Drawing<MapView, TaskView, types.Task>
 ) {
@@ -103,18 +107,23 @@ export function changedTaskModeOf<MapView, TaskView>(
     }
 
     task = task.withChangedMode();
-    taskView = drawing.redrawnBy(task, taskView).value;
 
-    return ok({taskMatching: taskMatching.withPair(taskView, task)});
+    taskView = drawing.redrawnBy(task, taskView);
+    taskControllers = taskControllers.updatedFor(taskView);
+
+    taskMatching = taskMatching.withPair(taskView, task);
+
+    return ok({taskMatching: taskMatching, taskControllers: taskControllers});
 }
 
 export function changeTaskDescription<MapView, TaskView>(
-    taskMatching: repos.Matching<TaskView, types.Task>,
+    taskMatching: repos.MatchingBy<TaskView, types.Task>,
     drawing: views.Drawing<MapView, TaskView, types.Task>,
     errorLogs: messages.Logs,
-    timeout: timeouts.Timeout,
+    fixationTimeout: timeouts.Timeout,
     remoteTasks: remoteRepos.RemoteTasks,
     taskView: TaskView,
+    taskControllers: controllers.Controllers<TaskView>,
     descriptionValue: string,
 ) {
     let task = taskMatching.matchedWith(taskView);
@@ -125,17 +134,18 @@ export function changeTaskDescription<MapView, TaskView>(
         });
     }
 
-    const newDescription = descriptionContainer.value;
+    const newDescription = types.Description.of(descriptionValue);
 
     if (newDescription === undefined || task.description.value === newDescription.value)
         return ok();
 
     task = task.with({description: newDescription});
-    taskView = drawing.redrawnBy(task, taskView).value;
+    taskView = drawing.redrawnBy(task, taskView);
+    taskControllers = taskControllers.updatedFor(taskView);
 
     taskMatching = taskMatching.withPair(taskView, task);
 
-    const timeoutId = valueOf(timeouts.updated(timeout, waitingForFix, async () => {
+    fixationTimeout = timeouts.updated(fixationTimeout, waitingForFix, async () => {
         const updatedTask = await remoteTasks.withUpToDateDescription(task);
 
         if (updatedTask !== undefined)
@@ -143,13 +153,17 @@ export function changeTaskDescription<MapView, TaskView>(
 
         const errorLog = "The remote task description could not be updated";
         return bad({errorLogs: errorLogs.with(errorLog)});
-    }));
+    });
 
-    return ok({taskMatching: taskMatching, timeoutId: timeoutId});
+    return ok({
+        taskMatching: taskMatching,
+        taskControllers: taskControllers,
+        fixationTimeout: fixationTimeout,
+    });
 }
 
 export function preparedTaskMovingOf<TaskView>(
-    taskMatching: repos.Matching<TaskView, types.Task>,
+    taskMatching: repos.MatchingBy<TaskView, types.Task>,
     cursor: views.Cursor,
     taskView: TaskView,
 ) {
@@ -160,7 +174,7 @@ export function preparedTaskMovingOf<TaskView>(
 }
 
 export function startedTaskMovingOf<TaskView>(
-    taskMatching: repos.Matching<TaskView, types.Task>,
+    taskMatching: repos.MatchingBy<TaskView, types.Task>,
     cursor: views.Cursor,
     taskView: TaskView,
     x: number,
@@ -178,7 +192,7 @@ export function startedTaskMovingOf<TaskView>(
 }
 
 export function canceledTaskMovingOf<TaskView>(
-    taskMatching: repos.Matching<TaskView, types.Task>,
+    taskMatching: repos.MatchingBy<TaskView, types.Task>,
     cursor: views.Cursor,
     taskView: TaskView,
 ) {
@@ -195,9 +209,10 @@ export function movedTaskOf<MapView, TaskView>(
     referencePoint: types.Vector,
     fixationTimeout: timeouts.Timeout,
     remoteTasks: remoteRepos.RemoteTasks,
-    taskMatching: repos.Matching<TaskView, types.Task>,
+    taskMatching: repos.MatchingBy<TaskView, types.Task>,
     drawing: views.Drawing<MapView, TaskView, types.Task>,
     taskView: TaskView,
+    taskControllers: controllers.Controllers<TaskView>,
     x: number,
     y: number,
 ) {
@@ -215,11 +230,12 @@ export function movedTaskOf<MapView, TaskView>(
     taskPosition = taskPosition.of(taskPositionDifference, (v1, v2) => v1 + v2);
 
     task = task.with({x: taskPosition.x, y: taskPosition.y});
-    taskView = drawing.redrawnBy(task, taskView).value;
+    taskView = drawing.redrawnBy(task, taskView);
+    taskControllers = taskControllers.updatedFor(taskView);
 
     taskMatching = taskMatching.withPair(taskView, task);
 
-    fixationTimeout = valueOf(timeouts.updated(fixationTimeout, waitingForFix, async () => {
+    fixationTimeout = timeouts.updated(fixationTimeout, waitingForFix, async () => {
         const updatedTask = await remoteTasks.withUpToDatePosition(task);
 
         if (updatedTask !== undefined)
@@ -227,209 +243,156 @@ export function movedTaskOf<MapView, TaskView>(
 
         const errorLog = "The remote task position could not be updated";
         return {errorLogs: errorLogs.with(errorLog)};
-    }));
+    });
 
     return {
         taskMatching: taskMatching,
+        taskControllers: taskControllers,
         fixationTimeout: fixationTimeout,
     }
 }
 
-export function taskAddingAvailabilityOf<MapView, ReadinessAnimation, TaskPrototypeView, TaskView>(
+export function taskAddingAvailabilityOf<MapView, ReadinessAnimation>(
+    availableInPast: boolean,
     mapView: MapView,
-    descriptionContainer: repos.Container<types.Description>,
+    descriptionValue: string,
+    readinessAnimation: ReadinessAnimation,
+    readinessAnimationDrawing: views.StaticDrawing<MapView, ReadinessAnimation>,
+    startingControllers: controllers.Controllers<ReadinessAnimation>,
+) {
+    const description = types.Description.of(descriptionValue);
+    const available = description !== undefined;
+
+    if (available && !availableInPast) {
+        mapView = readinessAnimationDrawing.withDrawn(readinessAnimation, mapView);
+        startingControllers = startingControllers.for(readinessAnimation);
+    }
+    else if (!available && availableInPast) {
+        mapView = readinessAnimationDrawing.withErased(readinessAnimation, mapView);
+        startingControllers = startingControllers.notFor(readinessAnimation);
+    }
+
+    return {
+        availableInPast: available,
+        mapView: mapView,
+        startingControllers:startingControllers,
+    }
+}
+
+export function startedTaskAddingOf<MapView, ReadinessAnimation, TaskPrototypeView>(
+    mapView: MapView,
     readinessAnimation: ReadinessAnimation,
     readinessAnimationDrawing: views.StaticDrawing<MapView, ReadinessAnimation>,
     taskPrototypeViews: views.Views<TaskPrototypeView>,
+    taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
+    continuationControllers: controllers.Controllers<TaskPrototypeView>,
+    startingControllers: controllers.Controllers<ReadinessAnimation>,
+    descriptionValue: string,
+    x: number,
+    y: number,
+) {
+    const description = types.Description.of(descriptionValue);
+
+    if (description === undefined)
+        return;
+
+    mapView = readinessAnimationDrawing.withErased(readinessAnimation, mapView);
+    startingControllers = startingControllers.notFor(readinessAnimation);
+
+    const taskPrototype: types.TaskPrototype = {description: description, x: x, y: y};
+    const taskPrototypeView = taskPrototypeDrawing.redrawnBy(
+        taskPrototype,
+        taskPrototypeViews.emptyView
+    );
+
+    continuationControllers = continuationControllers.for(taskPrototypeView);
+    mapView = taskPrototypeDrawing.withDrawn(taskPrototypeView, mapView);
+
+    return {
+        availableInPast: false,
+        mapView: mapView,
+        continuationControllers: continuationControllers,
+        taskPrototype: taskPrototype,
+        taskPrototypeView: taskPrototypeView,
+    }
+}
+
+export function continuedTaskAddingOf<MapView, TaskPrototypeView>(
+    taskPrototypeViews: views.Views<TaskPrototypeView>,
+    taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
+    taskPrototype: types.TaskPrototype,
+    taskPrototypeView: TaskPrototypeView,
+    continuationControllers: controllers.Controllers<TaskPrototypeView>,
+    x: number,
+    y: number,
+) {
+    taskPrototype = {...taskPrototype, x: x, y: y};
+
+    const size = taskPrototypeViews.sizeOf(taskPrototypeView);
+
+    taskPrototypeView = taskPrototypeDrawing.redrawnBy(
+        {...taskPrototype, x: x - size.x / 2, y: y - size.y / 2},
+        taskPrototypeView,
+    );
+    continuationControllers = continuationControllers.updatedFor(taskPrototypeView);
+
+    return {
+        taskPrototype: taskPrototype,
+        taskPrototypeView: taskPrototypeView,
+        continuationControllers: continuationControllers,
+    }
+}
+
+export async function completedTaskAddingOf<RootView, MapView, TaskPrototypeView, TaskView>(
+    mapView: MapView,
+    mapDrawing: views.Drawing<RootView, MapView, types.Map>,
     taskPrototype: types.TaskPrototype,
     taskPrototypeView: TaskPrototypeView,
     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
     errorLogs: messages.Logs,
     notifications: messages.Notifications,
-    continuationControllers: controllers.Controllers<TaskPrototypeView>,
-    getCurrentMapId: () => number,
     remoteTasks: remoteRepos.RemoteTasks,
     taskViews: views.Views<TaskView>,
     taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
-    startingControllers: controllers.Controllers<ReadinessAnimation>,
-    hangControllersOn: controllers.WithControllers<TaskView>,
-    taskMatching: repos.Matching<TaskView, types.Task>,
-): void {
-    const available = adapters.descriptionContainer.get() !== undefined;
-    let availableInPast = adapters.availabilityContainer.get();
+    taskControllers: controllers.Controllers<TaskView>,
+    taskMatching: repos.MatchingBy<TaskView, types.Task>,
+    mapId: number,
+) {
+    let taskView = taskViews.emptyView;
+    const size = taskViews.sizeOf(taskView);
 
-    if (availableInPast === undefined)
-        availableInPast = false;
-
-    adapters.availabilityContainer.set(available);
-
-    if (available && !availableInPast) {
-        adapters.readinessAnimationDrawing.drawOn(
-            adapters.mapSurface,
-            adapters.readinessAnimation,
-        );
-        adapters.startingControllers.hangOn(adapters.readinessAnimation);
-    }
-    else if (!available && availableInPast) {
-        adapters.readinessAnimationDrawing.eraseFrom(
-            adapters.mapSurface,
-            adapters.readinessAnimation,
-        );
-        adapters.startingControllers.removeFrom(adapters.readinessAnimation);
-    }
-}
-
-// export type Ports<MapView, ReadinessAnimation, TaskPrototypeView, TaskView> = {
-//     mapView: MapView,
-//     descriptionContainer: repos.Container<types.Description>,
-//     readinessAnimation: ReadinessAnimation,
-//     readinessAnimationDrawing: views.StaticDrawing<MapView, ReadinessAnimation>,
-//     taskPrototypeViews: views.Views<TaskPrototypeView>,
-//     taskPrototype: types.TaskPrototype,
-//     taskPrototypeView: TaskPrototypeView,
-//     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
-//     errorLogs: messages.Logs,
-//     notifications: messages.Notifications,
-//     continuationControllers: controllers.Controllers<TaskPrototypeView>,
-//     getCurrentMapId: () => number,
-//     remoteTasks: remoteRepos.RemoteTasks,
-//     taskViews: views.Views<TaskView>,
-//     taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
-//     startingControllers: controllers.Controllers<ReadinessAnimation>,
-//     hangControllersOn: controllers.WithControllers<TaskView>,
-//     taskMatching: repos.Matching<TaskView, types.Task>,
-// }
-
-export namespace taskAdding {
-    export function handleAvailability<MapView, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
-        adapters: taskAdding.Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>
-    ): void {
-        const available = adapters.descriptionContainer.get() !== undefined;
-        let availableInPast = adapters.availabilityContainer.get();
-
-        if (availableInPast === undefined)
-            availableInPast = false;
-
-        adapters.availabilityContainer.set(available);
-
-        if (available && !availableInPast) {
-            adapters.readinessAnimationDrawing.drawOn(
-                adapters.mapSurface,
-                adapters.readinessAnimation,
-            );
-            adapters.startingControllers.hangOn(adapters.readinessAnimation);
-        }
-        else if (!available && availableInPast) {
-            adapters.readinessAnimationDrawing.eraseFrom(
-                adapters.mapSurface,
-                adapters.readinessAnimation,
-            );
-            adapters.startingControllers.removeFrom(adapters.readinessAnimation);
-        }
+    const taskPrototypeToCreateTask = {
+        ...taskPrototype,
+        x: taskPrototype.x - size.x / 2,
+        y: taskPrototype.y - size.y / 2,
     }
 
-    export function start<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
-        x: number,
-        y: number,
-        adapters: taskAdding.Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>
-    ): void {
-        const description = services.popFrom(adapters.descriptionContainer);
+    const map: types.Map = {id: mapId};
+    mapView = mapDrawing.redrawnBy(map, mapView);
 
-        if (description === undefined)
-            return;
+    const task = await remoteTasks.createdTaskFrom(taskPrototypeToCreateTask, map);
 
-        adapters.availabilityContainer.set(false);
-        adapters.readinessAnimationDrawing.eraseFrom(adapters.mapSurface, adapters.readinessAnimation);
-        adapters.startingControllers.removeFrom(adapters.readinessAnimation);
+    mapView = taskPrototypeDrawing.withErased(taskPrototypeView, mapView);
 
-        const taskPrototype: TaskPrototype = {description: description, x: x, y: y};
-        const taskPrototypeSurface = adapters.taskPrototypeSurfaces.getEmpty();
+    if (task === undefined) {
+        const log = `A remote task on the map with id = ${mapId} could not be created`;
 
-        adapters.taskPrototypeContainer.set(taskPrototype);
-        adapters.taskPrototypeSurfaceContainer.set(taskPrototypeSurface);
-
-        adapters.taskPrototypeDrawing.redraw(taskPrototypeSurface, taskPrototype);
-        adapters.taskPrototypeDrawing.drawOn(adapters.mapSurface, taskPrototypeSurface);
-
-        adapters.continuationControllers.hangOn(taskPrototypeSurface);
+        return bad({
+            errorLogs: errorLogs.with(log),
+            notifications: notifications.with("Try adding your task later"),
+        });
     }
 
-    export function handle<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
-        x: number,
-        y: number,
-        adapters: taskAdding.Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>
-    ): void {
-        let taskPrototype = adapters.taskPrototypeContainer.get();
-        const taskPrototypeSurface = adapters.taskPrototypeSurfaceContainer.get();
+    taskView = taskDrawing.redrawnBy(task, taskView);
+    mapView = taskDrawing.withDrawn(taskView, mapView);
 
-        if (taskPrototype === undefined)
-            adapters.logError("Task prototype does not exist");
+    taskControllers = taskControllers.for(taskView);
+    taskMatching = taskMatching.withPair(taskView, task);
 
-        if (taskPrototypeSurface === undefined)
-            adapters.logError("Task prototype surface does not exist");
-
-        if (taskPrototype === undefined || taskPrototypeSurface === undefined) {
-            adapters.show("Adding your task was aborted");
-            return;
-        }
-
-        taskPrototype.x = x;
-        taskPrototype.y = y;
-
-        const size = adapters.taskPrototypeSurfaces.sizeOf(taskPrototypeSurface);
-
-        adapters.taskPrototypeDrawing.redraw(
-            taskPrototypeSurface,
-            {...taskPrototype, x: x - size.x / 2, y: y - size.y / 2},
-        );
-    }
-
-    export async function complete<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>(
-        adapters: taskAdding.Ports<MapSurface, ReadinessAnimation, TaskPrototypeSurface, TaskSurface>
-    ): Promise<void> {
-        const taskPrototype = adapters.taskPrototypeContainer.get();
-        const taskPrototypeSurface = adapters.taskPrototypeSurfaceContainer.get();
-
-        if (taskPrototype === undefined)
-            adapters.logError("Task prototype does not exist");
-
-        if (taskPrototypeSurface === undefined)
-            adapters.logError("Task prototype surface does not exist");
-        else
-            adapters.continuationControllers.removeFrom(taskPrototypeSurface);
-
-        if (taskPrototype === undefined || taskPrototypeSurface === undefined) {
-            adapters.show("Failed to add your task");
-            return;
-        }
-
-        const taskSurface = adapters.taskSurfaces.getEmpty();
-        const size = adapters.taskSurfaces.sizeOf(taskSurface);
-
-        const taskPrototypeToCreateTask = {
-            ...taskPrototype,
-            x: taskPrototype.x - size.x / 2,
-            y: taskPrototype.y - size.y / 2,
-        }
-
-        const mapId = adapters.getCurrentMapId();
-
-        const task = await adapters.remoteTasks.createdTaskFrom(
-            taskPrototypeToCreateTask, mapId
-        );
-
-        adapters.taskPrototypeDrawing.eraseFrom(adapters.mapSurface, taskPrototypeSurface);
-
-        if (task === undefined) {
-            adapters.logError(`A remote task on the map with id = ${mapId} could not be created`);
-            adapters.show("Try adding your task later");
-            return;
-        }
-
-        adapters.taskDrawing.redraw(taskSurface, task);
-        adapters.taskDrawing.drawOn(adapters.mapSurface, taskSurface);
-
-        adapters.hangControllersOn(taskSurface);
-        adapters.tasks.match(taskSurface, task);
-    }
+    return ok({
+        taskMatching: taskMatching,
+        mapView: mapView,
+        taskView: taskView,
+        taskControllers: taskControllers,
+    })
 }

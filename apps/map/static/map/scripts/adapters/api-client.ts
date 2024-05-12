@@ -1,4 +1,4 @@
-import * as ports from "../core/ports.js";
+import * as remoteRepos from "../core/ports/remote-repos.js";
 import * as types from "../core/types.js";
 import * as tools from "../tools.js";
 
@@ -22,9 +22,9 @@ namespace _headers {
 export const tasks = {
     async createdTaskFrom(
         taskPrototype: types.TaskPrototype,
-        mapId: number,
-    ): ports.Remote<types.Task> {
-        const url = _urls.topMapTaskEndpointURLWith(mapId);
+        map: types.Map,
+    ): remoteRepos.Remote<types.Task> {
+        const url = _urls.topMapTaskEndpointURLWith(map.id);
 
         const response = await fetch(url, {
           method: 'POST',
@@ -42,31 +42,31 @@ export const tasks = {
         return this._taskOf(await response.json());
     },
 
-    tasksForMapWithId(mapId: number): ports.RemoteIterable<types.Task> {
-        return this._tasksFrom(_urls.topMapTaskEndpointURLWith(mapId));
+    tasksOn(map: types.Map): remoteRepos.RemoteIterable<types.Task> {
+        return this._tasksFrom(_urls.topMapTaskEndpointURLWith(map.id));
     },
 
-    async updatePosition(task: types.Task): Promise<boolean> {
+    async withUpToDatePosition(task: types.Task): remoteRepos.Remote<types.Task> {
         const response = await fetch(_urls.taskEndpointURLFor(task), {
             method: 'PATCH',
             headers: _headers.dispatchHeaders,
             body: JSON.stringify({x: Math.round(task.x), y: Math.round(task.y)})
         })
 
-        return response.ok;
+        return response.ok ? task : undefined;
     },
 
-    async updateDescription(task: types.Task): Promise<boolean> {
+    async withUpToDateDescription(task: types.Task): remoteRepos.Remote<types.Task> {
         const response = await fetch(_urls.taskEndpointURLFor(task), {
             method: 'PATCH',
             headers: _headers.dispatchHeaders,
             body: JSON.stringify({description: task.description.value})
         })
 
-        return response.ok;
+        return response.ok ? task : undefined;
     },
 
-    async _tasksFrom(url: string): ports.RemoteIterable<types.Task> {
+    async _tasksFrom(url: string): remoteRepos.RemoteIterable<types.Task> {
         const response = await fetch(url);
         const responseData = await response.json();
 

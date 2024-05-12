@@ -24,7 +24,7 @@ export class Ok<Value> extends _Context<Value> {}
 export class Bad<Value> extends _Context<Value> {}
 export type Result<Value> = Ok<Value> | Bad<Value>
 
-export class Dirty<Value> extends _Context<Value> {}
+export type Dirty<Value> = Value;
 
 export function ok<Value>(value?: undefined): Ok<undefined>
 export function ok<Value>(value?: Value): Ok<Value>
@@ -36,12 +36,6 @@ export function bad<Value>(value?: undefined): Bad<undefined>
 export function bad<Value>(value?: Value): Bad<Value>
 export function bad<Value>(value?: Maybe<Value>): Bad<Maybe<Value>> {
     return new Bad(value);
-}
-
-export function dirty<Value>(value?: undefined): Ok<undefined>
-export function dirty<Value>(value?: Value): Ok<Value>
-export function dirty<Value>(value?: Maybe<Value>): Ok<Maybe<Value>> {
-    return new Dirty(value);
 }
 
 export function toMapOk<Value>(

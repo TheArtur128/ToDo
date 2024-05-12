@@ -1,6 +1,5 @@
-export type WithControllers<View> = (view: View) => View;
-
 export type Controllers<View> = {
-    withControllers: WithControllers<View>,
-    withoutControllers(view: View): View,
+    for(view: View): Controllers<View>,
+    updatedFor(view: View): Controllers<View>,
+    notFor(view: View): Controllers<View>,
 }

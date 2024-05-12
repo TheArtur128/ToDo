@@ -1,192 +1,161 @@
 import * as apiClient from "./api-client.js";
-import * as storages from "./storages.js";
+import * as repos from "./repos.js";
 import * as layout from "./layout.js";
 import * as parsers from "./parsers.js";
+import * as messages from "./messages.js";
 import * as cases from "../core/cases.js";
 import * as types from "../core/types.js";
-import * as ports from "../core/ports.js";
+import * as controllers from "../core/ports/controllers.js";
+import { Maybe } from "../fp.js";
 
-export type InitTaskControllers = (s: layout.TaskSurface, facade: Facade) => any;
-type _ShorterInitTaskControllers = (s: layout.TaskSurface) => any;
+export type TaskControllers = controllers.Controllers<layout.TaskView>;
 
-type _Tasks = storages.MatchingByHTMLElement<types.Task>;
-
-export type TaskAddingControllers = {
-    startingControllersOf(f: Facade): TaskAddingStartingControllers,
-    continuationControllersOf(f: Facade): TaskAddingContinuationControllers,
+export function createEmptyTasks() {
+    return new repos.MatchingByHTMLElement();
 }
 
-export class Facade{
-    private _taskGroup: storages.MatchingByHTMLElement<types.Task>;
-
-    readonly taskGroups: ReturnType<typeof _taskGroupsOf>;
-    readonly tasks: ReturnType<typeof _tasksOf>;
-    readonly taskAdding: ReturnType<typeof _taskAddingOf>;
-
-    constructor(
-        initTaskControllers: InitTaskControllers,
-        mapElement: layout.MapSurface,
-        descriptionInputElement: storages.StorageHTMLElement,
-        taskAddingControllers: TaskAddingControllers,
-    ) {
-        const shorterInitTaskControllers: _ShorterInitTaskControllers = (
-            (s) => initTaskControllers(s, this)
-        );
-        this._taskGroup = new storages.MatchingByHTMLElement();
-
-        this.taskGroups = _taskGroupsOf(mapElement, this._taskGroup, shorterInitTaskControllers);
-        this.tasks = _tasksOf(this._taskGroup);
-        this.taskAdding = _taskAddingOf(
-            this._taskGroup,
-            mapElement,
-            descriptionInputElement,
-            {
-                initTaskControllers: shorterInitTaskControllers,
-                startingControllers: taskAddingControllers.startingControllersOf(this),
-                continuationControllers: taskAddingControllers.continuationControllersOf(this),
-            },
-        );
-    }
-
-    taskMovingFor(taskElement: layout.TaskSurface) {
-        return _taskMovingOf(this._taskGroup, taskElement);
-    }
-}
-
-function _taskGroupsOf(
-    mapElement: layout.MapSurface,
-    tasks: _Tasks,
-    initTaskControllers: _ShorterInitTaskControllers,
+export async function drawnMapOf<RootView, MapView, TaskView>(
+    mapView?: Maybe<MapView>,
+    mapId: number,
+    taskControllers: TaskControllers,
+    tasks: repos.MatchingByHTMLElement,
 ) {
-    const adapters: cases.maps.Ports<layout.MapSurface, layout.TaskSurface> = {
-        getCurrentMapId: parsers.getCurrentMapId,
-        remoteTasks: apiClient.tasks,
-        show: alert,
-        mapSurfaces: layout.maps.surfacesOf(mapElement),
-        taskSurfaces: layout.tasks.surfaces,
-        drawing: layout.tasks.drawing,
-        logError: console.error,
-        tasks: tasks,
-        hangControllersOn: initTaskControllers,
-    }
-
-    return {
-        draw: () => cases.maps.draw(adapters),
-    }
+    return cases.drawnMapOf(
+        mapView,
+        layout.maps.views,
+        layout.maps.drawing,
+        apiClient.tasks,
+        layout.tasks.views,
+        layout.tasks.drawing,
+        taskControllers,
+        tasks,
+        messages.alertNotifications,
+        messages.consoleErrorLogs,
+        parsers.getCurrentMapId(),
+    );
 }
 
-function _tasksOf(tasks: _Tasks) {
-    const adapterBase = {
-        tasks: tasks,
-        logError: console.error,
-        drawing: layout.tasks.drawing,
-        descriptionUpdatingTimeout: new storages.StorageContainer<number>,
-        remoteTasks: apiClient.tasks,
-        
-    }
+// export function changedTaskModeOf<MapView, TaskView>(
+//     taskView: TaskView,
+//     taskControllers: controllers.Controllers<TaskView>,
+//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     errorLogs: messages.Logs,
+//     drawing: views.Drawing<MapView, TaskView, types.Task>
 
-    const adaptersOf = (
-        taskSurface: layout.TaskSurface,
-    ): cases.tasks.Ports<layout.MapSurface, layout.TaskSurface> => {
-        const descriptionElement = taskSurface.querySelector(".task-description");
+// export function changeTaskDescription<MapView, TaskView>(
+//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     drawing: views.Drawing<MapView, TaskView, types.Task>,
+//     errorLogs: messages.Logs,
+//     fixationTimeout: timeouts.Timeout,
+//     remoteTasks: remoteRepos.RemoteTasks,
+//     taskView: TaskView,
+//     taskControllers: controllers.Controllers<TaskView>,
+//     descriptionValue: string,
+// ) {
+//     let task = taskMatching.matchedWith(taskView);
 
-        if (!(descriptionElement instanceof HTMLTextAreaElement))
-            throw new Error("No description element");
+//     if (task === undefined) {
+//         return bad({
+//             errorLogs: errorLogs.with("No matching between task and surface"),
+//         });
+//     }
 
-        return {
-            ...adapterBase,
-            descriptionContainer: new storages.DescriptionAdapterContainer(
-                new storages.HTMLElementValueContainer(descriptionElement)
-            ),
-        }
-    }
+//     const newDescription = types.Description.of(descriptionValue);
 
-    return {
-        changeMode(taskSurface: layout.TaskSurface) {
-            cases.tasks.changeMode(adaptersOf(taskSurface), taskSurface);
-        },
+//     if (newDescription === undefined || task.description.value === newDescription.value)
+//         return ok();
 
-        changeDescription(taskSurface: layout.TaskSurface) {
-            cases.tasks.changeDescription(adaptersOf(taskSurface), taskSurface);
-        },
-    }
-}
+//     task = task.with({description: newDescription});
+//     taskView = drawing.redrawnBy(task, taskView);
+//     taskControllers = taskControllers.updatedFor(taskView);
 
-function _taskMovingOf(
-    tasks: _Tasks,
-    taskElement: layout.TaskSurface,
-) {
-    const cursor = layout.tasks.taskSurfaceCursorFor(taskElement);
+//     taskMatching = taskMatching.withPair(taskView, task);
 
-    if (cursor === undefined)
-        return;
+//     fixationTimeout = timeouts.updated(fixationTimeout, waitingForFix, async () => {
+//         const updatedTask = await remoteTasks.withUpToDateDescription(task);
 
-    const adapters: cases.taskMoving.Ports<layout.MapSurface, layout.TaskSurface> = {
-        referencePointContainer: new storages.StorageContainer(),
-        activationContainer: new storages.StorageContainer(),
-        remoteFixationTimeoutContainer: new storages.StorageContainer(),
-        remoteTasks: apiClient.tasks,
-        tasks: tasks,
-        cursor: cursor,
-        drawing: layout.tasks.drawing,
-    }
+//         if (updatedTask !== undefined)
+//             return ok();
 
-    return {
-        prepare: () => cases.taskMoving.prepare(adapters, taskElement),
-        cancel: () => cases.taskMoving.cancel(adapters, taskElement),
-        start: (x: number, y: number) => cases.taskMoving.start(adapters, taskElement, x, y),
-        handle: (x: number, y: number) => cases.taskMoving.handle(adapters, taskElement, x, y),
-    }
-}
+//         const errorLog = "The remote task description could not be updated";
+//         return bad({errorLogs: errorLogs.with(errorLog)});
+//     });
 
-export type TaskAddingStartingControllers = ports.Controllers<layout.Animation>;
-export type TaskAddingContinuationControllers = ports.Controllers<layout.TaskPrototypeSurface>;
+//     return ok({
+//         taskMatching: taskMatching,
+//         taskControllers: taskControllers,
+//         fixationTimeout: fixationTimeout,
+//     });
 
-type _TaskAddingController = {
-    initTaskControllers: _ShorterInitTaskControllers;
-    startingControllers: TaskAddingStartingControllers,
-    continuationControllers: TaskAddingContinuationControllers,
-}
+// export function preparedTaskMovingOf<TaskView>(
+//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     cursor: views.Cursor,
+//     taskView: TaskView,
 
-function _taskAddingOf(
-    tasks: _Tasks,
-    mapElement: layout.MapSurface,
-    descriptionInputElement: storages.StorageHTMLElement,
-    controllers: _TaskAddingController,
-) {
-    const adapters: cases.taskAdding.Ports<
-        layout.MapSurface,
-        layout.Animation,
-        layout.TaskPrototypeSurface,
-        layout.TaskSurface
-    > = {
-        mapSurface: mapElement,
-        descriptionContainer: new storages.DescriptionAdapterContainer(
-            new storages.HTMLElementValueContainer(descriptionInputElement)
-        ),
-        availabilityContainer: new storages.StorageContainer(),
-        readinessAnimation: layout.taskAdding.createReadinessAnimation(),
-        readinessAnimationDrawing: new layout.LazyStaticDrawing(),
-        taskPrototypeSurfaces: layout.taskPrototypes.surfaces,
-        taskPrototypeContainer: new storages.StorageContainer(),
-        taskPrototypeSurfaceContainer: new storages.StorageContainer(),
-        taskPrototypeDrawing: layout.taskPrototypes.drawing,
-        logError: console.error,
-        show: async (m: string) => await alert(m),
-        getCurrentMapId: parsers.getCurrentMapId,
-        remoteTasks: apiClient.tasks,
-        taskSurfaces: layout.tasks.surfaces,
-        taskDrawing: layout.tasks.drawing,
-        startingControllers: controllers.startingControllers,
-        continuationControllers: controllers.continuationControllers,
-        tasks: tasks,
-        hangControllersOn: controllers.initTaskControllers,
-    }
+// export function startedTaskMovingOf<TaskView>(
+//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     cursor: views.Cursor,
+//     taskView: TaskView,
+//     x: number,
+//     y: number,
 
-    return {
-        handleAvailability: () => cases.taskAdding.handleAvailability(adapters),
-        start: (x: number, y: number) => cases.taskAdding.start(x, y, adapters),
-        handle: (x: number, y: number) => cases.taskAdding.handle(x, y, adapters),
-        complete: () => cases.taskAdding.complete(adapters),
-    }
-}
+// export function canceledTaskMovingOf<TaskView>(
+//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     cursor: views.Cursor,
+//     taskView: TaskView,
+
+// export function movedTaskOf<MapView, TaskView>(
+//     errorLogs: messages.Logs,
+//     referencePoint: types.Vector,
+//     fixationTimeout: timeouts.Timeout,
+//     remoteTasks: remoteRepos.RemoteTasks,
+//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     drawing: views.Drawing<MapView, TaskView, types.Task>,
+//     taskView: TaskView,
+//     taskControllers: controllers.Controllers<TaskView>,
+//     x: number,
+//     y: number,
+
+// export function taskAddingAvailabilityOf<MapView, ReadinessAnimation>(
+//     availableInPast: boolean,
+//     mapView: MapView,
+//     descriptionValue: string,
+//     readinessAnimation: ReadinessAnimation,
+//     readinessAnimationDrawing: views.StaticDrawing<MapView, ReadinessAnimation>,
+//     startingControllers: controllers.Controllers<ReadinessAnimation>,
+
+// export function startedTaskAddingOf<MapView, ReadinessAnimation, TaskPrototypeView>(
+//     mapView: MapView,
+//     readinessAnimation: ReadinessAnimation,
+//     readinessAnimationDrawing: views.StaticDrawing<MapView, ReadinessAnimation>,
+//     taskPrototypeViews: views.Views<TaskPrototypeView>,
+//     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
+//     continuationControllers: controllers.Controllers<TaskPrototypeView>,
+//     startingControllers: controllers.Controllers<ReadinessAnimation>,
+//     descriptionValue: string,
+//     x: number,
+//     y: number,
+
+// export function continuedTaskAddingOf<MapView, TaskPrototypeView>(
+//     taskPrototypeViews: views.Views<TaskPrototypeView>,
+//     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
+//     taskPrototype: types.TaskPrototype,
+//     taskPrototypeView: TaskPrototypeView,
+//     continuationControllers: controllers.Controllers<TaskPrototypeView>,
+//     x: number,
+//     y: number,
+
+// export async function completedTaskAddingOf<RootView, MapView, TaskPrototypeView, TaskView>(
+//     mapView: MapView,
+//     mapDrawing: views.Drawing<RootView, MapView, types.Map>,
+//     taskPrototype: types.TaskPrototype,
+//     taskPrototypeView: TaskPrototypeView,
+//     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
+//     errorLogs: messages.Logs,
+//     notifications: messages.Notifications,
+//     remoteTasks: remoteRepos.RemoteTasks,
+//     taskViews: views.Views<TaskView>,
+//     taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
+//     taskControllers: controllers.Controllers<TaskView>,
+//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     mapId: number,
