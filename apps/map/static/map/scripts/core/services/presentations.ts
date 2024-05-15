@@ -20,7 +20,7 @@ export function updatedPresentationOf<RootView, View, Entity>(
     entityMatching: EntityMatching<View, Entity>,
     controllerMatching: ControllerMatching<View, Entity>,
 ): EntityPresentation<View, Entity> {
-    view = drawing.redrawnBy(entity, view);
+    drawing.redrawBy(entity, view);
 
     return [
         entityMatching.matchingBetween(view, entity),

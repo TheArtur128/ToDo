@@ -1,5 +1,5 @@
 export type Milliseconds = number;
 
 export type Timeout = {
-    executingIn(milliseconds: Milliseconds, callback: () => any): Timeout,
+    executeIn(milliseconds: Milliseconds, callback: () => any): any,
 }

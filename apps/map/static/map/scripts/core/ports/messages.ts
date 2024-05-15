@@ -1,7 +1,2 @@
-export type Notifications = {
-    with(message: string): Notifications;
-}
-
-export type Logs = {
-    with(message: string): Logs;
-}
+export type Log = (message: string) => void;
+export type Notify = (message: string) => void;

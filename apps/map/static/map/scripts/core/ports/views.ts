@@ -1,19 +1,19 @@
 import * as types from "../types.js";
-import { Maybe, Dirty } from "../../fp";
+import { Maybe } from "../../fp";
 
 export type StaticDrawing<RootView, View> = {
-    withDrawn(view: View, rootView: RootView): Dirty<RootView>,
-    withErased(view: View, rootView: RootView): Dirty<RootView>,
+    drawOn(rootView: RootView, view: View): void,
+    eraseFrom(rootView: RootView, view: View): void,
 }
 
 export type Drawing<RootView, View, Value> = (
     StaticDrawing<RootView, View> & {
-        redrawnBy(value: Value, view: View): Dirty<View>,
+        redrawBy(value: Value, view: View): void,
     }
 )
 
 export type Views<View> = {
-    readonly emptyView: View,
+    createEmptyView(): View,
     sizeOf(view: View): types.Vector,
 }
 
@@ -22,7 +22,7 @@ export type Subviews<RootView, View, Value> = Views<View> & {
 }
 
 export type Cursor = {
-    asDefault(): Cursor;
-    toGrab(): Cursor;
-    asGrabbed(): Cursor;
+    setDefault(): void;
+    setToGrab(): void;
+    setGrabbed(): void;
 }
