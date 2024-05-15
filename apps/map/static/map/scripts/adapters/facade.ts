@@ -8,143 +8,118 @@ import * as types from "../core/types.js";
 import * as controllers from "../core/ports/controllers.js";
 import { Maybe } from "../fp.js";
 
-export type TaskControllers = controllers.Controllers<layout.TaskView>;
-
-export function createEmptyTasks() {
-    return new repos.MatchingByHTMLElement();
+export type Map = {
+    readonly mapElement: layout.MapView,
+    readonly tasks: repos.MatchingByHTMLElement<types.Task>,
+    
 }
 
-export async function drawnMapOf<RootView, MapView, TaskView>(
-    mapView?: Maybe<MapView>,
+export async function drawMap(
+    rootElement: layout.View,
+
+    mapViews: views.Views<MapView>,
+    mapDrawing: views.Drawing<MapRootView, MapView, types.Map>,
+    remoteTasks: remoteRepos.RemoteTasks,
+    taskViews: views.Subviews<MapView, TaskView, types.Task>,
+    taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
+    taskMatching: EntityMatching<TaskView, types.Task>,
+    taskControllerMatching: ControllerMatching<TaskView, types.Task>,
+    notifications: messages.Notifications,
+    errorLogs: messages.Logs,
     mapId: number,
-    taskControllers: TaskControllers,
-    tasks: repos.MatchingByHTMLElement,
 ) {
-    return cases.drawnMapOf(
-        mapView,
-        layout.maps.views,
-        layout.maps.drawing,
-        apiClient.tasks,
-        layout.tasks.views,
-        layout.tasks.drawing,
-        taskControllers,
-        tasks,
-        messages.alertNotifications,
-        messages.consoleErrorLogs,
-        parsers.getCurrentMapId(),
-    );
+    cases.drawnMapOf(rootElement, )
 }
 
+// export async function drawnMapOf<MapRootView, MapView, TaskView>(
+//     mapRootView: MapRootView,
+//     mapView: Maybe<MapView>,
+//     mapViews: views.Views<MapView>,
+//     mapDrawing: views.Drawing<MapRootView, MapView, types.Map>,
+//     remoteTasks: remoteRepos.RemoteTasks,
+//     taskViews: views.Subviews<MapView, TaskView, types.Task>,
+//     taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
+//     taskMatching: EntityMatching<TaskView, types.Task>,
+//     taskControllerMatching: ControllerMatching<TaskView, types.Task>,
+//     notifications: messages.Notifications,
+//     errorLogs: messages.Logs,
+//     mapId: number,
+// ) {
 // export function changedTaskModeOf<MapView, TaskView>(
 //     taskView: TaskView,
-//     taskControllers: controllers.Controllers<TaskView>,
-//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     taskControllerMatching: ControllerMatching<TaskView, types.Task>,
+//     taskMatching: EntityMatching<TaskView, types.Task>,
 //     errorLogs: messages.Logs,
 //     drawing: views.Drawing<MapView, TaskView, types.Task>
-
-// export function changeTaskDescription<MapView, TaskView>(
-//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+// ) 
+// export function changedTaskDescriptionOf<MapView, TaskView>(
+//     taskMatching: EntityMatching<TaskView, types.Task>,
+//     taskControllerMatching: ControllerMatching<TaskView, types.Task>,
 //     drawing: views.Drawing<MapView, TaskView, types.Task>,
 //     errorLogs: messages.Logs,
 //     fixationTimeout: timeouts.Timeout,
 //     remoteTasks: remoteRepos.RemoteTasks,
 //     taskView: TaskView,
-//     taskControllers: controllers.Controllers<TaskView>,
 //     descriptionValue: string,
-// ) {
-//     let task = taskMatching.matchedWith(taskView);
-
-//     if (task === undefined) {
-//         return bad({
-//             errorLogs: errorLogs.with("No matching between task and surface"),
-//         });
-//     }
-
-//     const newDescription = types.Description.of(descriptionValue);
-
-//     if (newDescription === undefined || task.description.value === newDescription.value)
-//         return ok();
-
-//     task = task.with({description: newDescription});
-//     taskView = drawing.redrawnBy(task, taskView);
-//     taskControllers = taskControllers.updatedFor(taskView);
-
-//     taskMatching = taskMatching.withPair(taskView, task);
-
-//     fixationTimeout = timeouts.updated(fixationTimeout, waitingForFix, async () => {
-//         const updatedTask = await remoteTasks.withUpToDateDescription(task);
-
-//         if (updatedTask !== undefined)
-//             return ok();
-
-//         const errorLog = "The remote task description could not be updated";
-//         return bad({errorLogs: errorLogs.with(errorLog)});
-//     });
-
-//     return ok({
-//         taskMatching: taskMatching,
-//         taskControllers: taskControllers,
-//         fixationTimeout: fixationTimeout,
-//     });
-
+// ) 
 // export function preparedTaskMovingOf<TaskView>(
-//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     taskMatching: EntityMatching<TaskView, types.Task>,
 //     cursor: views.Cursor,
 //     taskView: TaskView,
-
+// ) 
 // export function startedTaskMovingOf<TaskView>(
-//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     taskMatching: EntityMatching<TaskView, types.Task>,
 //     cursor: views.Cursor,
 //     taskView: TaskView,
 //     x: number,
 //     y: number,
-
+// ) 
 // export function canceledTaskMovingOf<TaskView>(
-//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     taskMatching: EntityMatching<TaskView, types.Task>,
 //     cursor: views.Cursor,
 //     taskView: TaskView,
-
+// ) 
 // export function movedTaskOf<MapView, TaskView>(
 //     errorLogs: messages.Logs,
 //     referencePoint: types.Vector,
 //     fixationTimeout: timeouts.Timeout,
 //     remoteTasks: remoteRepos.RemoteTasks,
-//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     taskMatching: EntityMatching<TaskView, types.Task>,
 //     drawing: views.Drawing<MapView, TaskView, types.Task>,
 //     taskView: TaskView,
-//     taskControllers: controllers.Controllers<TaskView>,
+//     taskControllerMatching: ControllerMatching<TaskView, types.Task>,
 //     x: number,
 //     y: number,
-
+// ) 
 // export function taskAddingAvailabilityOf<MapView, ReadinessAnimation>(
 //     availableInPast: boolean,
 //     mapView: MapView,
 //     descriptionValue: string,
 //     readinessAnimation: ReadinessAnimation,
 //     readinessAnimationDrawing: views.StaticDrawing<MapView, ReadinessAnimation>,
-//     startingControllers: controllers.Controllers<ReadinessAnimation>,
-
+//     startingControllers: controllers.StaticControllers<ReadinessAnimation>,
+// ) 
 // export function startedTaskAddingOf<MapView, ReadinessAnimation, TaskPrototypeView>(
 //     mapView: MapView,
 //     readinessAnimation: ReadinessAnimation,
 //     readinessAnimationDrawing: views.StaticDrawing<MapView, ReadinessAnimation>,
 //     taskPrototypeViews: views.Views<TaskPrototypeView>,
 //     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
-//     continuationControllers: controllers.Controllers<TaskPrototypeView>,
-//     startingControllers: controllers.Controllers<ReadinessAnimation>,
+//     continuationControllers: controllers.Controllers<TaskPrototypeView, types.TaskPrototype>,
+//     startingControllers: controllers.StaticControllers<ReadinessAnimation>,
 //     descriptionValue: string,
 //     x: number,
 //     y: number,
-
+// ) 
 // export function continuedTaskAddingOf<MapView, TaskPrototypeView>(
-//     taskPrototypeViews: views.Views<TaskPrototypeView>,
-//     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
 //     taskPrototype: types.TaskPrototype,
 //     taskPrototypeView: TaskPrototypeView,
-//     continuationControllers: controllers.Controllers<TaskPrototypeView>,
+//     continuationControllers: controllers.Controllers<TaskPrototypeView, types.TaskPrototype>,
+//     taskPrototypeViews: views.Views<TaskPrototypeView>,
+//     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype>,
 //     x: number,
 //     y: number,
-
+// ) 
 // export async function completedTaskAddingOf<RootView, MapView, TaskPrototypeView, TaskView>(
 //     mapView: MapView,
 //     mapDrawing: views.Drawing<RootView, MapView, types.Map>,
@@ -156,6 +131,7 @@ export async function drawnMapOf<RootView, MapView, TaskView>(
 //     remoteTasks: remoteRepos.RemoteTasks,
 //     taskViews: views.Views<TaskView>,
 //     taskDrawing: views.Drawing<MapView, TaskView, types.Task>,
-//     taskControllers: controllers.Controllers<TaskView>,
-//     taskMatching: repos.MatchingBy<TaskView, types.Task>,
+//     taskControllerMatching: ControllerMatching<TaskView, types.Task>,
+//     taskMatching: EntityMatching<TaskView, types.Task>,
 //     mapId: number,
+// ) 
