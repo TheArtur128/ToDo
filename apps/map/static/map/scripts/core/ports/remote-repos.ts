@@ -1,8 +1,8 @@
-import { Maybe, Dirty } from "../../fp.js";
+import { Maybe } from "../../sugar.js";
 import * as types from "../types.js";
 
-export type Remote<Value> = Dirty<Promise<Maybe<Value>>>
-export type RemoteIterable<Value> = Dirty<Promise<Maybe<AsyncGenerator<Maybe<Value>>>>>
+export type Remote<Value> = Promise<Maybe<Value>>
+export type RemoteIterable<Value> = Promise<Maybe<AsyncGenerator<Maybe<Value>>>>
 
 export type RemoteTasks = {
     tasksOn(map: types.Map): RemoteIterable<types.Task>,

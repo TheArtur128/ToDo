@@ -1,5 +1,5 @@
 import * as errors from "./errors.js";
-import { Maybe } from "../fp.js";
+import { Maybe } from "../sugar.js";
 
 abstract class _ValueObject<Value> {
     constructor(readonly value: Value) {}
@@ -17,17 +17,11 @@ abstract class _ValueObject<Value> {
     }
 }
 
-abstract class _Entity {
-    with(props: Partial<typeof this>): typeof this {
-        return { ...this, ...props};
-    }
-}
-
 export type Map = { id: number }
 
 export enum InteractionMode { moving, editing }
 
-export class Task extends _Entity {
+export class Task {
     get mode() {
         return this._mode;
     }
@@ -38,17 +32,13 @@ export class Task extends _Entity {
         public x: number,
         public y: number,
         private _mode: InteractionMode = InteractionMode.moving,
-    ) {
-        super();
-    }
+    ) {}
 
-    withChangedMode(): Task {
-        let changedMode = this._mode++;
+    changeMode(): void {
+        this._mode++;
 
         if (InteractionMode[this._mode] === undefined)
-            changedMode = InteractionMode.moving;
-
-        return { ...this, _mode: changedMode };
+            this._mode = InteractionMode.moving;
     }
 }
 

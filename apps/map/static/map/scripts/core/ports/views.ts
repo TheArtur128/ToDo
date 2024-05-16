@@ -1,5 +1,5 @@
 import * as types from "../types.js";
-import { Maybe } from "../../fp";
+import { Maybe } from "../../sugar.js";
 
 export type StaticDrawing<RootView, View> = {
     drawOn(rootView: RootView, view: View): void,
