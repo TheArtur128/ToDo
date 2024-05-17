@@ -1,4 +1,4 @@
-import * as types from "../types.js";
+import * as domain from "../domain.js";
 import { Maybe } from "../../sugar.js";
 
 export type StaticDrawing<RootView, View> = {
@@ -14,7 +14,7 @@ export type Drawing<RootView, View, Value> = (
 
 export type Views<View> = {
     createEmptyView(): View,
-    sizeOf(view: View): types.Vector,
+    sizeOf(view: View): domain.Vector,
 }
 
 export type Subviews<RootView, View, Value> = Views<View> & {

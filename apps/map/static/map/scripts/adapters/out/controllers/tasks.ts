@@ -1,5 +1,5 @@
-import * as facade from "../adapters/facade.js";
-import * as tools from "../tools.js";
+import * as facade from "../facade.js";
+import * as tools from "../../../tools.js";
 
 export function initModeChangingControllers(
     taskElement: HTMLDivElement,

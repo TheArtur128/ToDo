@@ -1,13 +1,13 @@
-import * as remoteRepos from "../core/ports/remote-repos.js";
-import * as types from "../core/types.js";
-import * as tools from "../tools.js";
+import * as remoteRepos from "../../core/ports/remote-repos.js";
+import * as domain from "../../core/domain.js";
+import * as tools from "../../tools.js";
 
 const _urls = {
     topMapTaskEndpointURLWith(mapId: number): string {
         return `/api/0.1v/map/top-maps/${mapId}/tasks/`;
     },
 
-    taskEndpointURLFor(task: types.Task): string {
+    taskEndpointURLFor(task: domain.Task): string {
         return `/api/0.1v/map/tasks/${task.id}/`
     }
 }
@@ -21,9 +21,9 @@ namespace _headers {
 
 export const tasks = {
     async createdTaskFrom(
-        taskPrototype: types.TaskPrototype,
-        map: types.Map,
-    ): remoteRepos.Remote<types.Task> {
+        taskPrototype: domain.TaskPrototype,
+        map: domain.Map,
+    ): remoteRepos.Remote<domain.Task> {
         const url = _urls.topMapTaskEndpointURLWith(map.id);
 
         const response = await fetch(url, {
@@ -42,11 +42,11 @@ export const tasks = {
         return this._taskOf(await response.json());
     },
 
-    tasksOn(map: types.Map): remoteRepos.RemoteIterable<types.Task> {
+    tasksOn(map: domain.Map): remoteRepos.RemoteIterable<domain.Task> {
         return this._tasksFrom(_urls.topMapTaskEndpointURLWith(map.id));
     },
 
-    async withUpToDatePosition(task: types.Task): remoteRepos.Remote<types.Task> {
+    async withUpToDatePosition(task: domain.Task): remoteRepos.Remote<domain.Task> {
         const response = await fetch(_urls.taskEndpointURLFor(task), {
             method: 'PATCH',
             headers: _headers.dispatchHeaders,
@@ -56,7 +56,7 @@ export const tasks = {
         return response.ok ? task : undefined;
     },
 
-    async withUpToDateDescription(task: types.Task): remoteRepos.Remote<types.Task> {
+    async withUpToDateDescription(task: domain.Task): remoteRepos.Remote<domain.Task> {
         const response = await fetch(_urls.taskEndpointURLFor(task), {
             method: 'PATCH',
             headers: _headers.dispatchHeaders,
@@ -66,7 +66,7 @@ export const tasks = {
         return response.ok ? task : undefined;
     },
 
-    async _tasksFrom(url: string): remoteRepos.RemoteIterable<types.Task> {
+    async _tasksFrom(url: string): remoteRepos.RemoteIterable<domain.Task> {
         const response = await fetch(url);
         const responseData = await response.json();
 
@@ -76,7 +76,7 @@ export const tasks = {
         return this._parsedTasksFrom(responseData?.results, responseData?.next);
     },
 
-    async *_parsedTasksFrom(results: any[], next: any): AsyncGenerator<types.Task | undefined> {
+    async *_parsedTasksFrom(results: any[], next: any): AsyncGenerator<domain.Task | undefined> {
         for (const taskData of results)
             yield this._taskOf(taskData);
 
@@ -88,7 +88,7 @@ export const tasks = {
         }
     },
 
-    _taskOf(taskData: any): types.Task | undefined {
+    _taskOf(taskData: any): domain.Task | undefined {
         const id = taskData?.id;
         let description = taskData?.description;
         const x = taskData?.x;
@@ -99,15 +99,15 @@ export const tasks = {
 
         if (typeof description === "string")
             try {
-                description = new types.Description(description);
+                description = new domain.Description(description);
             }
             catch (MapError) {
                 return undefined;
             }
 
-        if (!(description instanceof types.Description))
+        if (!(description instanceof domain.Description))
             return undefined;
 
-        return new types.Task(id, description, x, y);
+        return new domain.Task(id, description, x, y);
     },
 }

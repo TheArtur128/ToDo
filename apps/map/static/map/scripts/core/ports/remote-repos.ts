@@ -1,12 +1,12 @@
 import { Maybe } from "../../sugar.js";
-import * as types from "../types.js";
+import * as domain from "../domain.js";
 
 export type Remote<Value> = Promise<Maybe<Value>>
 export type RemoteIterable<Value> = Promise<Maybe<AsyncGenerator<Maybe<Value>>>>
 
 export type RemoteTasks = {
-    tasksOn(map: types.Map): RemoteIterable<types.Task>,
-    createdTaskFrom(prototype: types.TaskPrototype, map: types.Map): Remote<types.Task>,
-    withUpToDatePosition(task: types.Task): Remote<types.Task>,
-    withUpToDateDescription(task: types.Task): Remote<types.Task>,
+    tasksOn(map: domain.Map): RemoteIterable<domain.Task>,
+    createdTaskFrom(prototype: domain.TaskPrototype, map: domain.Map): Remote<domain.Task>,
+    withUpToDatePosition(task: domain.Task): Remote<domain.Task>,
+    withUpToDateDescription(task: domain.Task): Remote<domain.Task>,
 }

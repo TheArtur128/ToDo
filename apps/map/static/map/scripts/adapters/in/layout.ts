@@ -1,6 +1,6 @@
-import * as views from "../core/ports/views.js";
-import * as types from "../core/types.js";
-import { Maybe, Dirty } from "../fp.js";
+import * as views from "../../core/ports/views.js";
+import * as domain from "../../core/domain.js";
+import { Maybe } from "../../sugar.js";
 
 export type View = HTMLElement;
 export type MapView = HTMLDivElement;
@@ -12,55 +12,49 @@ export type InteractionModeView = HTMLDivElement;
 export type Animation = HTMLImageElement;
 
 export const staticDrawing = {
-    withDrawn<RootView extends View>(view: View, rootView: RootView): RootView {
+    drawOn<RootView extends View>(rootView: RootView, view: View): void {
         rootView.appendChild(view);
-        return rootView;
     },
 
-    withErased<RootView extends View>(view: View, rootView: RootView): RootView {
+    eraseFrom<RootView extends View>(rootView: RootView, view: View): void {
         try {
             rootView.removeChild(view);
         }
         catch (NotFoundError) {}
-
-        return rootView;
     },
 }
 
-export class LazyStaticDrawing implements views.StaticDrawing<MapView, HTMLElement> {
-    private _drawnViewsInDOM: Set<HTMLElement>;
+export class LazyStaticDrawing implements views.StaticDrawing<View, View> {
+    private _drawnViewsInDOM: Set<View>;
 
     constructor() {
         this._drawnViewsInDOM = new Set();
     }
 
-    withDrawn<RootView extends View>(view: View, rootView: RootView): Dirty<RootView> {
+    drawOn(rootView: View, view: View): void {
         if (this._drawnViewsInDOM.has(view))
             view.hidden = false;
         else {
             rootView.appendChild(view);
             this._drawnViewsInDOM.add(view);
         }
-
-        return rootView;
     }
 
-    withErased<RootView extends View>(view: View, rootView: RootView): Dirty<RootView> {
+    eraseFrom(_: View, view: View): void {
         view.hidden = true;
-        return rootView;
     }
 }
 
-const _baseVisibleViews = {
-    sizeOf(view: View): types.Vector {
+const _baseOfVisibleViews = {
+    sizeOf(view: View): domain.Vector {
         const rect = view.getBoundingClientRect()
 
-        return new types.Vector(rect.width, rect.height);
+        return new domain.Vector(rect.width, rect.height);
     }
 }
 
 export namespace taskAdding {
-    export function createReadinessAnimation(): Dirty<Animation> {
+    export function createReadinessAnimation(): Animation {
         const element = document.createElement("img");
         element.id = "readiness-animation-of-task-adding";
         element.src = "/static/map/animations/ready-to-add.gif";
@@ -76,17 +70,17 @@ export namespace tasks {
     const _interactionModeViewClassName = "task-interaction-mode";
 
     export const views = {
-        sizeOf(_: any): types.Vector {
-            return new types.Vector(255, 124);
+        sizeOf(_: any): domain.Vector {
+            return new domain.Vector(255, 124);
         },
 
-        foundViewOn(mapView: MapView, task: types.Task): Dirty<Maybe<TaskView>> {
+        foundViewOn(mapView: MapView, task: domain.Task): Maybe<TaskView> {
             const view = mapView.querySelector(`#${_viewIdOf(task.id)}`);
 
             return view instanceof HTMLDivElement ? view : undefined
         },
 
-        get emptyView(): TaskView {
+        createEmptyView(): TaskView {
             let view = document.createElement('div');
             view.appendChild(this._getEmptyTaskDescriptionView());
             view.appendChild(this._getEmptyInteractionModeView());
@@ -121,7 +115,7 @@ export namespace tasks {
     export const drawing = {
         ...staticDrawing,
 
-        redrawnBy(task: types.Task, view: TaskView): Dirty<TaskView> {
+        redrawBy(task: domain.Task, view: TaskView): void {
             view.id = _viewIdOf(task.id);
             view.style.left = _inStyleUnits(task.x);
             view.style.top = _inStyleUnits(task.y);
@@ -139,33 +133,31 @@ export namespace tasks {
 
             if (interactionModeView instanceof HTMLDivElement)
                 this._redrawInteractionModeView(interactionModeView, task);
-
-            return view;
         },
 
         _redrawDescriptionView(
             descriptionView: HTMLTextAreaElement,
-            task: types.Task,
+            task: domain.Task,
         ): void {
             descriptionView.value = task.description.value;
-            descriptionView.disabled = task.mode !== types.InteractionMode.editing;
+            descriptionView.disabled = task.mode !== domain.InteractionMode.editing;
         },
 
         _redrawInteractionModeView(
             interactionModeView: InteractionModeView,
-            task: types.Task,
+            task: domain.Task,
         ): void {
             const imageElement = interactionModeView.querySelector("img");
 
             if (imageElement === null)
                 return;
 
-            if (task.mode === types.InteractionMode.editing) {
+            if (task.mode === domain.InteractionMode.editing) {
                 imageElement.src = "/static/map/images/editing-mode.png";
                 imageElement.width = 10;
                 imageElement.height = 10;
             }
-            else if (task.mode === types.InteractionMode.moving) {
+            else if (task.mode === domain.InteractionMode.moving) {
                 imageElement.src = "/static/map/images/moving-mode.png";
                 imageElement.width = 12;
                 imageElement.height = 12;
@@ -173,12 +165,14 @@ export namespace tasks {
         }
     }
 
-    export function cursorFor(taskView: TaskView): Dirty<Maybe<LocalCursor>> {
+    export function cursorFor(taskView: TaskView): LocalCursor {
         let query = `.${_descriptionViewClassName}`;
         const descriptionView = taskView.querySelector(query);
 
         if (descriptionView instanceof HTMLElement)
             return new LocalCursor(taskView, descriptionView);
+        else
+            return new LocalCursor(taskView);
     }
 
     function _viewIdOf(id: number): string {
@@ -188,9 +182,9 @@ export namespace tasks {
 
 export namespace taskPrototypes {
     export const views: views.Views<TaskPrototypeView> = {
-        ..._baseVisibleViews,
+        ..._baseOfVisibleViews,
 
-        get emptyView(): TaskPrototypeView {
+        createEmptyView(): TaskPrototypeView {
             const view = document.createElement('div');
             view.className = "task-prototype";
 
@@ -198,26 +192,21 @@ export namespace taskPrototypes {
         },
     }
 
-    export const drawing: views.Drawing<MapView, TaskPrototypeView, types.TaskPrototype> = {
+    export const drawing: views.Drawing<MapView, TaskPrototypeView, domain.TaskPrototype> = {
         ...staticDrawing,
 
-        redrawnBy(
-            taskPrototype: types.TaskPrototype,
-            view: TaskPrototypeView,
-        ): Dirty<TaskPrototypeView> {
+        redrawBy(taskPrototype: domain.TaskPrototype, view: TaskPrototypeView): void {
             view.style.left = _inStyleUnits(taskPrototype.x);
             view.style.top = _inStyleUnits(taskPrototype.y);
-
-            return view;
         },
     }
 }
 
 export namespace maps {
     export const views: views.Views<MapView> = {
-        ..._baseVisibleViews,
+        ..._baseOfVisibleViews,
 
-        get emptyView(): MapView {
+        createEmptyView(): MapView {
             const view = document.createElement('div');
             view.id = "tasks";
 
@@ -228,31 +217,25 @@ export namespace maps {
     export const drawing = {
         ...staticDrawing,
 
-        withDrawn<RootView extends View>(view: MapView, rootView: RootView): RootView {
+        drawOn<RootView extends View>(rootView: RootView, view: MapView): void {
             rootView.insertBefore(view, rootView.firstChild);
-            return rootView;
         },
 
-        redrawnBy(_: types.Map, view: MapView): MapView {
-            return view;
-        }
+        redrawBy(_: domain.Map, view: MapView): void {}
     }
 }
 
 export const globalCursor: views.Cursor = {
-    asDefault(): Dirty<typeof this> {
+    setDefault(): void {
         _setGlobalStyleProperty("cursor", '', '');
-        return this;
     },
 
-    toGrab(): Dirty<typeof this> {
+    setToGrab(): void {
         _setGlobalStyleProperty("cursor", "grab", "important");
-        return this;
     },
 
-    asGrabbed(): Dirty<typeof this> {
+    setGrabbed(): void {
         _setGlobalStyleProperty("cursor", "grabbing", "important");
-        return this;
     },
 }
 
@@ -263,25 +246,22 @@ export class LocalCursor implements views.Cursor {
         this._elements = elements;
     }
 
-    asDefault(): Dirty<typeof this> {
+    setDefault(): void {
         this._elements.forEach(element => {
             element.style.setProperty("cursor", '', '');
         });
-        return this;
     }
 
-    toGrab(): Dirty<typeof this> {
+    setToGrab(): void {
         this._elements.forEach(element => {
             element.style.setProperty("cursor", "grab", "important");
         });
-        return this;
     }
 
-    asGrabbed(): Dirty<typeof this> {
+    setGrabbed(): void {
         this._elements.forEach(element => {
             element.style.setProperty("cursor", "grabbing", "important");
         });
-        return this;
     }
 }
 
