@@ -1,6 +1,7 @@
 import * as remoteRepos from "../../core/ports/remote-repos.js";
 import * as domain from "../../core/domain.js";
 import * as tools from "../../tools.js";
+import { Maybe } from "../../sugar.js";
 
 const _urls = {
     topMapTaskEndpointURLWith(mapId: number): string {
@@ -37,9 +38,9 @@ export const tasks = {
         })
 
         if (!response.ok)
-            return undefined;
+            return;
 
-        return this._taskOf(await response.json());
+        return this._sculptureTaskOf(await response.json());
     },
 
     tasksOn(map: domain.Map): remoteRepos.RemoteIterable<domain.Task> {
@@ -53,7 +54,8 @@ export const tasks = {
             body: JSON.stringify({x: Math.round(task.x), y: Math.round(task.y)})
         })
 
-        return response.ok ? task : undefined;
+        if (response.ok)
+            return task;
     },
 
     async withUpToDateDescription(task: domain.Task): remoteRepos.Remote<domain.Task> {
@@ -63,7 +65,8 @@ export const tasks = {
             body: JSON.stringify({description: task.description.value})
         })
 
-        return response.ok ? task : undefined;
+        if (response.ok)
+            return task;
     },
 
     async _tasksFrom(url: string): remoteRepos.RemoteIterable<domain.Task> {
@@ -71,14 +74,14 @@ export const tasks = {
         const responseData = await response.json();
 
         if (!(response.ok && responseData?.results instanceof Array))
-            return undefined;
+            return;
 
         return this._parsedTasksFrom(responseData?.results, responseData?.next);
     },
 
-    async *_parsedTasksFrom(results: any[], next: any): AsyncGenerator<domain.Task | undefined> {
+    async *_parsedTasksFrom(results: any[], next: any): AsyncGenerator<Maybe<domain.Task>> {
         for (const taskData of results)
-            yield this._taskOf(taskData);
+            yield this._sculptureTaskOf(taskData);
 
         if (typeof next === "string") {
             const tasks = await this._tasksFrom(next);
@@ -88,25 +91,23 @@ export const tasks = {
         }
     },
 
-    _taskOf(taskData: any): domain.Task | undefined {
+    _sculptureTaskOf(taskData: any): Maybe<domain.Task> {
         const id = taskData?.id;
         let description = taskData?.description;
         const x = taskData?.x;
         const y = taskData?.y;
 
         if (typeof id !== "number" || typeof x !== "number" || typeof y !== "number")
-            return undefined;
+            return;
 
         if (typeof description === "string")
-            try {
-                description = new domain.Description(description);
-            }
-            catch (MapError) {
-                return undefined;
-            }
+            description = domain.Description.of(description);
+
+            if (description === undefined)
+                return
 
         if (!(description instanceof domain.Description))
-            return undefined;
+            return;
 
         return new domain.Task(id, description, x, y);
     },
