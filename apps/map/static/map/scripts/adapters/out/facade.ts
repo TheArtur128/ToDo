@@ -197,13 +197,13 @@ export function continueTaskAdding(
 
 export async function completeTaskAdding(
     taskPrototype: domain.TaskPrototype,
-    taskPrototypeView: layout.TaskPrototypeView,
+    taskPrototypeElement: layout.TaskPrototypeView,
     taskControllers: controllers.ControllersFor<layout.TaskPrototypeView, domain.Task>,
 ): Promise<void> {
     cases.completeTaskAdding(
         _mapViewMatching,
         taskPrototype,
-        taskPrototypeView,
+        taskPrototypeElement,
         layout.taskPrototypes.drawing,
         console.error,
         messages.asyncAlert,
