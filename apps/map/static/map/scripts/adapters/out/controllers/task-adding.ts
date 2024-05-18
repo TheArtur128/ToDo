@@ -2,7 +2,7 @@ import * as base from "./base.js";
 import * as facade from "../facade.js";
 import * as layout from "../../in/layout.js";
 
-export class AvailabilityControllers extends base.EventListenerControllers {
+export class AvailabilityControllers extends base.EventListenerControllersForStatic<layout.View> {
     activeFor(view: layout.View) {
         view.addEventListener("input", this._handler);
     }
@@ -16,7 +16,7 @@ export class AvailabilityControllers extends base.EventListenerControllers {
     }
 }
 
-export class StartingControllers extends base.EventListenerControllers {
+export class StartingControllers extends base.EventListenerControllersForStatic<layout.View> {
     activeFor(view: layout.View) {
         view.addEventListener("pointerdown", this._handler);
     }
@@ -30,7 +30,7 @@ export class StartingControllers extends base.EventListenerControllers {
     }
 }
 
-export class ContinuationControllers extends base.EventListenerControllers {
+export class ContinuationControllers extends base.EventListenerControllersForStatic<layout.View> {
     activeFor(view: layout.View) {
         document.addEventListener("pointermove", this._handleContinuation);
         view.addEventListener("pointerup", this._handleCompletion);

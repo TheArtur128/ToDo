@@ -221,7 +221,7 @@ export namespace maps {
             rootView.insertBefore(view, rootView.firstChild);
         },
 
-        redrawBy(_: domain.Map, view: MapView): void {}
+        redrawBy(_: domain.Map, __: MapView): void {}
     }
 }
 
