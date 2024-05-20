@@ -1,3 +1,5 @@
+export type StorageHTMLElement = HTMLElement & {value: string}
+
 export function isInDOMOf(
     treeElement: HTMLElement,
     searchElement: any,

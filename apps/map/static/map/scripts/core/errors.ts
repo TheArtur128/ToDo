@@ -1,3 +1,3 @@
-export class MapError extends Error {};
+export class InvariantError extends Error {};
 
-export class EmptyDescriptionError extends MapError {};
+export class EmptyDescriptionError extends InvariantError {};

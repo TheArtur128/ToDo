@@ -1,16 +1,23 @@
-import * as facade from "../adapters/facade.js";
-import * as taskControllers from "../controllers/tasks.js";
-import * as taskAddingControllers from "../controllers/task-adding.js";
+import * as facade from "../adapters/out/facade.js";
+import * as taskAddingControllers from "../adapters/out/controllers/task-adding.js";
+import * as taskMovingControllers from "../adapters/out/controllers/task-moving.js";
+import * as taskControllers from "../adapters/out/controllers/tasks.js";
 
-const taskListElement = <HTMLDivElement>document.querySelector("#tasks");
-const descriptionInputElement = <HTMLTextAreaElement>document.querySelector("#new-task-description");
+const taskControllerFactories = [
+    taskControllers.TaskModeChangingController.factory,
+    taskControllers.TaskDescriptionChangingController.factory,
+    taskMovingControllers.PreparationController.factory,
+    taskMovingControllers.StartingController.factory,
+    taskMovingControllers.CancellationController.factory,
+];
 
-const facade_ = new facade.Facade(
-    taskControllers.initAllControllers,
-    taskListElement,
-    descriptionInputElement,
-    taskAddingControllers.dynamicControllers,
+facade.drawMap(
+    document.body,
+    <HTMLTextAreaElement>document.querySelector("#new-task-description"),
+    view => new taskAddingControllers.AvailabilityController(
+        view,
+        document.body,
+        taskControllerFactories,
+    ),
+    taskControllerFactories,
 );
-
-facade_.taskGroups.draw();
-taskAddingControllers.initAvailabilityControllers(facade_, descriptionInputElement);

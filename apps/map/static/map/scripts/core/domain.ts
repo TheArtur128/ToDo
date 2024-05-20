@@ -1,4 +1,21 @@
 import * as errors from "./errors.js";
+import { Maybe } from "../sugar.js";
+
+abstract class _ValueObject<Value> {
+    constructor(readonly value: Value) {}
+
+    mappedBy(tranformed: (value: Value) => Value): typeof this {
+        return this.constructor(tranformed(this.value));
+    }
+
+    static of<T extends _ValueObject<any>, Value>(this: { new(value: Value): T }, value: Value): Maybe<T> {
+        try {
+            return new this(value);
+        } catch (InvariantError) {
+            return undefined;
+        }
+    }
+}
 
 export type Map = { id: number }
 
@@ -31,8 +48,10 @@ export type TaskPrototype = {
     y: number,
 }
 
-export class Description {
-    constructor(readonly value: string) {
+export class Description extends _ValueObject<string> {
+    constructor(value: string) {
+        super(value);
+
         if (value === '')
             throw new errors.EmptyDescriptionError();
     }

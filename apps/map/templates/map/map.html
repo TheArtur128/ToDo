@@ -6,10 +6,6 @@
     <link rel="stylesheet" href={% static 'map/styles/map.css' %}>
 {% endblock %}
 
-{% block before-panels %}
-<div id="tasks"></div>
-{% endblock %}
-
 {% block panels %}
 <div id="creation-panel" class="block">
     <textarea id="new-task-description", class="task-description" maxlength="128" rows="4" cols="32" required></textarea>
