@@ -10,34 +10,38 @@ import * as timeouts from "../in/timeouts.js";
 import * as controllerBase from "./controllers/base.js";
 import * as tools from "../../tools.js";
 
-const _taskControllerMatching = new repos.WeakMapMatching<layout.TaskView, controllers.Controller[]>()
+const _taskControllerMatching = new repos.MatchingFromMap<layout.TaskView, controllers.Controller[]>();
+const _taskAddingAvailabilityControllerMatching = new repos.MatchingFromMap<
+    layout.MapView,
+    controllers.Controller
+>();
 
-const _mapViewMatching = new repos.WeakMapMatching<domain.Map, layout.MapView>();
-const _taskMatching = new repos.WeakMapMatching<layout.TaskView, domain.Task>();
-const _matchingForMapViewHasTaskAdding = new repos.BooleanMatching<layout.MapView>();
+const _mapViewMatching = new repos.MatchingFromMap<domain.Map, layout.MapView>();
+const _taskMatching = new repos.MatchingFromMap<layout.TaskView, domain.Task>();
 
 export function drawMap<TaskAddingElement extends layout.View>(
-    taskControllers: controllers.ControllersFor<layout.TaskView, domain.Task>,
-    taskAddingAvailabilityControllers: controllers.ControllersForStatic<TaskAddingElement>,
-    taskAddingElement: TaskAddingElement,
     mapRootElement: layout.View,
+    taskAddingElement: TaskAddingElement,
+    taskAddingAvailabilityControllerFor: controllers.StaticControllerFor<TaskAddingElement>,
+    taskControllerFactories: controllers.ControllerFor<layout.TaskView, domain.Task>[],
 ): void {
     cases.drawMap(
         mapRootElement,
         _mapViewMatching,
+        _taskControllerMatching,
+        _taskAddingAvailabilityControllerMatching,
         layout.maps.views,
         layout.maps.drawing,
         apiClient.tasks,
         layout.tasks.views,
         layout.tasks.drawing,
         _taskMatching,
-        taskControllers,
+        taskControllerFactories,
         messages.asyncAlert,
         console.error,
         parsers.getCurrentMap,
-        _matchingForMapViewHasTaskAdding,
         taskAddingElement,
-        taskAddingAvailabilityControllers,
+        taskAddingAvailabilityControllerFor,
     )
 }
 
@@ -72,8 +76,8 @@ export function prepareTaskMoving(taskElement: layout.TaskView): void {
     )
 }
 
-const _movingReferencePointMatching = new repos.WeakMapMatching<layout.TaskView, domain.Vector>();
-const _movingControllerMatching = new repos.WeakMapMatching<
+const _movingReferencePointMatching = new repos.MatchingFromMap<layout.TaskView, domain.Vector>();
+const _movingControllerMatching = new repos.MatchingFromMap<
     layout.TaskView,
     controllers.Controller
 >()
@@ -133,7 +137,7 @@ export function moveTask(taskElement: layout.TaskView, x: number, y: number): vo
 const _pastTaskAddingAvailabilityMatching = new repos.BooleanMatching<layout.Animation>();
 const _taskAddingReadinessAnimation = layout.taskAdding.createReadinessAnimation();
 const _taskAddingReadinessAnimationDrawing = new layout.LazyStaticDrawing();
-const _startingControllerMatching = new repos.WeakMapMatching<layout.Animation, controllers.Controller>();
+const _startingControllerMatching = new repos.MatchingFromMap<layout.Animation, controllers.Controller>();
 
 export function handleTaskAddingAvailability(
     startingControllerFor: controllers.StaticControllerFor<layout.Animation>,
@@ -153,9 +157,13 @@ export function handleTaskAddingAvailability(
     )
 }
 
-const _taskPrototypeViewMatching = new repos.WeakMapMatching<layout.MapView, layout.TaskPrototypeView>();
-const _taskPrototypeMatching = new repos.WeakMapMatching<layout.TaskPrototypeView, domain.TaskPrototype>();
-const _continuationControllerMatching = new repos.WeakMapMatching<
+const _taskPrototypeViewMatching = new repos.MatchingFromMap<layout.MapView, layout.TaskPrototypeView>();
+const _taskPrototypeMatching = new repos.MatchingFromMap<layout.TaskPrototypeView, domain.TaskPrototype>();
+const _continuationControllerMatching = new repos.MatchingFromMap<
+    layout.TaskPrototypeView,
+    controllers.Controller
+>();
+const _completionControllerMatching = new repos.MatchingFromMap<
     layout.TaskPrototypeView,
     controllers.Controller
 >();
@@ -163,6 +171,7 @@ const _continuationControllerMatching = new repos.WeakMapMatching<
 export function startTaskAdding(
     startingControllerFor: controllers.StaticControllerFor<layout.Animation>,
     continuationControllerFor: controllers.StaticControllerFor<layout.TaskPrototypeView>,
+    completionControllerFor: controllers.StaticControllerFor<layout.TaskPrototypeView>,
     readinessAnimationRootElement: layout.View,
     descriptionInputElement: tools.StorageHTMLElement,
     x: number,
@@ -183,6 +192,10 @@ export function startTaskAdding(
         new controllerBase.StaticControllerMatching(
             startingControllerFor,
             _startingControllerMatching,
+        ),
+        new controllerBase.StaticControllerMatching(
+            completionControllerFor,
+            _completionControllerMatching,
         ),
         new repos.HTMLElementValueContainer(descriptionInputElement),
         parsers.getCurrentMap,

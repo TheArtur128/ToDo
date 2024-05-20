@@ -1,20 +1,8 @@
 import * as domain from "../../core/domain.js";
-import { Maybe } from "../../sugar.js";
 
-class _MemorizedMapProvider {
-    private _memorizedMap: Maybe<domain.Map> = undefined;
+const mapId = Number(window.location.pathname.split('/')[2]);
+const currentMap: domain.Map = {id: mapId};
 
-    getCurrentMap() {
-        if (this._memorizedMap !== undefined)
-            return this._memorizedMap;
-
-        const mapId = Number(window.location.pathname.split('/')[2]);
-        const map: domain.Map = {id: mapId};
-
-        this._memorizedMap = map;
-
-        return map;
-    }
+export function getCurrentMap(): domain.Map {
+    return currentMap;
 }
-
-export const getCurrentMap = new _MemorizedMapProvider().getCurrentMap;

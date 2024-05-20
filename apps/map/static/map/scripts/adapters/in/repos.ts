@@ -2,8 +2,8 @@ import * as repos from "../../core/ports/repos.js";
 import { Maybe } from "../../sugar.js";
 import * as tools from "../../tools.js";
 
-export class WeakMapMatching<Key extends WeakKey, Value> implements repos.MaybeMatchingBy<Key, Value> {
-    constructor(private _storage: WeakMap<Key, Value> = new WeakMap()) {}
+export class MatchingFromMap<Key extends WeakKey, Value> implements repos.MaybeMatchingBy<Key, Value> {
+    constructor(private _storage: Map<Key, Value> = new Map()) {}
 
     matchedWith(key: Key): Maybe<Value> {
         return this._storage.get(key);

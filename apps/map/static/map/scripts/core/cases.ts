@@ -68,10 +68,10 @@ export async function drawMap<MapRootView, MapView, TaskView, TaskAddingView>(
 
         taskMatching.match(taskView, task);
 
-        const taskControllers = taskControllerMatching.matchedWith(taskView);
+        let taskControllers = taskControllerMatching.matchedWith(taskView);
 
         if (taskControllers === undefined) {
-            let taskControllers = taskControllerFactroris.map(f => f(taskView, task));
+            taskControllers = taskControllerFactroris.map(f => f(taskView, task));
             taskControllers.forEach(c => c.activate());
 
             taskControllerMatching.match(taskView, taskControllers);

@@ -27,6 +27,12 @@ export class TaskModeChangingController extends base.Controller<layout.TaskView,
     private _handler(_: MouseEvent) {
         facade.changeTaskMode(this._view);
     }
+
+    static get factory(): (view: layout.TaskView, value: domain.Task) => TaskModeChangingController {
+        return (view: layout.TaskView, value: domain.Task) => (
+            new TaskModeChangingController(view, value)
+        );
+    }
 }
 
 export class TaskDescriptionChangingController extends base.Controller<layout.TaskView, domain.Task> {
@@ -54,5 +60,11 @@ export class TaskDescriptionChangingController extends base.Controller<layout.Ta
             return;
 
         facade.changeTaskDescription(this._view, this._descriptionView.value);
+    }
+
+    static get factory(): (view: layout.TaskView, value: domain.Task) => TaskDescriptionChangingController {
+        return (view: layout.TaskView, value: domain.Task) => (
+            new TaskDescriptionChangingController(view, value)
+        );
     }
 }

@@ -17,6 +17,13 @@ export class PreparationController extends base.Controller<layout.TaskView, doma
     private _handler(_: any) {
         facade.prepareTaskMoving(this._view);
     }
+
+    static get factory(): (view: layout.TaskView, value: domain.Task) => PreparationController {
+        return (view: layout.TaskView, value: domain.Task) => new PreparationController(
+            view,
+            value,
+        );
+    }
 }
 
 export class ContinuationController extends base.StaticController<layout.TaskView> {
@@ -68,6 +75,12 @@ export class StartingController extends base.Controller<layout.TaskView, domain.
             event.clientY,
         );
     }
+
+    static get factory(): (view: layout.TaskView, value: domain.Task) => StartingController {
+        return (view: layout.TaskView, value: domain.Task) => (
+            new StartingController(view, value)
+        );
+    }
 }
 
 export class CancellationController extends base.Controller<layout.TaskView, domain.Task> {
@@ -85,6 +98,12 @@ export class CancellationController extends base.Controller<layout.TaskView, dom
         facade.cancelTaskMoving(
             this._view,
             (view) => new ContinuationController(view),
+        );
+    }
+
+    static get factory(): (view: layout.TaskView, value: domain.Task) => CancellationController {
+        return (view: layout.TaskView, value: domain.Task) => (
+            new CancellationController(view, value)
         );
     }
 }
