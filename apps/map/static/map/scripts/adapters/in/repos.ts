@@ -1,5 +1,6 @@
 import * as repos from "../../core/ports/repos.js";
 import { Maybe } from "../../sugar.js";
+import * as tools from "../../tools.js";
 
 export class WeakMapMatching<Key extends WeakKey, Value> implements repos.MaybeMatchingBy<Key, Value> {
     constructor(private _storage: WeakMap<Key, Value> = new WeakMap()) {}
@@ -32,10 +33,8 @@ export class BooleanMatching<Key> implements repos.MatchingBy<Key, boolean> {
     }
 }
 
-export type StorageHTMLElement = HTMLElement & {value: string}
-
 export class HTMLElementValueContainer implements repos.Container<string> {
-    constructor(private _storageElement: StorageHTMLElement) {}
+    constructor(private _storageElement: tools.StorageHTMLElement) {}
 
     set(value: string) {
         this._storageElement.value = value;

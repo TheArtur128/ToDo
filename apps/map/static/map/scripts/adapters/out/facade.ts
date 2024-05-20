@@ -7,6 +7,10 @@ import * as layout from "../in/layout.js";
 import * as parsers from "../in/parsers.js";
 import * as messages from "../in/messages.js";
 import * as timeouts from "../in/timeouts.js";
+import * as controllerBase from "./controllers/base.js";
+import * as tools from "../../tools.js";
+
+const _taskControllerMatching = new repos.WeakMapMatching<layout.TaskView, controllers.Controller[]>()
 
 const _mapViewMatching = new repos.WeakMapMatching<domain.Map, layout.MapView>();
 const _taskMatching = new repos.WeakMapMatching<layout.TaskView, domain.Task>();
@@ -37,13 +41,9 @@ export function drawMap<TaskAddingElement extends layout.View>(
     )
 }
 
-export function changeTaskMode(
-    taskElement: layout.TaskView,
-    taskControllers: controllers.ControllersFor<layout.TaskView, domain.Task>,
-): void {
+export function changeTaskMode(taskElement: layout.TaskView): void {
     cases.changeTaskMode(
         taskElement,
-        taskControllers,
         _taskMatching,
         console.error,
         layout.tasks.drawing,
@@ -52,15 +52,10 @@ export function changeTaskMode(
 
 const _taskDescriptionTimeout = new timeouts.Timeout();
 
-export function changeTaskDescription(
-    taskControllers: controllers.ControllersFor<layout.TaskView, domain.Task>,
-    taskElement: layout.TaskView,
-    description: string,
-): void {
+export function changeTaskDescription(taskElement: layout.TaskView, description: string): void {
     cases.changeTaskDescription(
         _taskMatching,
         layout.tasks.drawing,
-        taskControllers,
         console.error,
         _taskDescriptionTimeout,
         apiClient.tasks,
@@ -78,10 +73,14 @@ export function prepareTaskMoving(taskElement: layout.TaskView): void {
 }
 
 const _movingReferencePointMatching = new repos.WeakMapMatching<layout.TaskView, domain.Vector>();
+const _movingControllerMatching = new repos.WeakMapMatching<
+    layout.TaskView,
+    controllers.Controller
+>()
 
 export function startTaskMoving(
     taskElement: layout.TaskView,
-    taskMovingControllers: controllers.ControllersFor<layout.TaskView, domain.Task>,
+    taskMovingControllerFor: (view: layout.TaskView) => controllers.Controller,
     x: number,
     y: number,
 ): void {
@@ -90,34 +89,34 @@ export function startTaskMoving(
         _movingReferencePointMatching,
         layout.tasks.cursorFor(taskElement),
         taskElement,
-        taskMovingControllers,
+        new controllerBase.StaticControllerMatching(
+            taskMovingControllerFor,
+            _movingControllerMatching,
+        ),
         x,
         y,
     )
 }
 
 export function cancelTaskMoving(
-    taskMovingControllers: controllers.ControllersFor<layout.TaskView, domain.Task>,
     taskElement: layout.TaskView,
+    taskMovingControllerFor: controllers.StaticControllerFor<layout.TaskView>,
 ): void {
     cases.cancelTaskMoving(
         _taskMatching,
         _movingReferencePointMatching,
+        new controllerBase.StaticControllerMatching(
+            taskMovingControllerFor,
+            _movingControllerMatching,
+        ),
         layout.tasks.cursorFor(taskElement),
-        taskMovingControllers,
         taskElement,
     )
 }
 
 const _taskMovingTimeout = new timeouts.Timeout();
 
-export function moveTask(
-    taskElement: layout.TaskView,
-    taskControllers: controllers.ControllersFor<layout.TaskView, domain.Task>,
-    taskMovingControllers: controllers.ControllersFor<layout.TaskView, domain.Task>,
-    x: number,
-    y: number,
-): void {
+export function moveTask(taskElement: layout.TaskView, x: number, y: number): void {
     cases.moveTask(
         _taskMatching,
         _movingReferencePointMatching,
@@ -126,8 +125,6 @@ export function moveTask(
         apiClient.tasks,
         layout.tasks.drawing,
         taskElement,
-        taskControllers,
-        taskMovingControllers,
         x,
         y,
     )
@@ -136,11 +133,12 @@ export function moveTask(
 const _pastTaskAddingAvailabilityMatching = new repos.BooleanMatching<layout.Animation>();
 const _taskAddingReadinessAnimation = layout.taskAdding.createReadinessAnimation();
 const _taskAddingReadinessAnimationDrawing = new layout.LazyStaticDrawing();
+const _startingControllerMatching = new repos.WeakMapMatching<layout.Animation, controllers.Controller>();
 
 export function handleTaskAddingAvailability(
+    startingControllerFor: controllers.StaticControllerFor<layout.Animation>,
     readinessAnimationRootElement: layout.View,
     description: string,
-    startingControllers: controllers.ControllersForStatic<layout.Animation>,
 ): void {
     cases.handleTaskAddingAvailability(
         _pastTaskAddingAvailabilityMatching,
@@ -148,15 +146,25 @@ export function handleTaskAddingAvailability(
         readinessAnimationRootElement,
         _taskAddingReadinessAnimation,
         _taskAddingReadinessAnimationDrawing,
-        startingControllers,
+        new controllerBase.StaticControllerMatching(
+            startingControllerFor,
+            _startingControllerMatching,
+        ),
     )
 }
 
+const _taskPrototypeViewMatching = new repos.WeakMapMatching<layout.MapView, layout.TaskPrototypeView>();
+const _taskPrototypeMatching = new repos.WeakMapMatching<layout.TaskPrototypeView, domain.TaskPrototype>();
+const _continuationControllerMatching = new repos.WeakMapMatching<
+    layout.TaskPrototypeView,
+    controllers.Controller
+>();
+
 export function startTaskAdding(
-    continuationControllers: controllers.ControllersFor<layout.TaskPrototypeView, domain.TaskPrototype>,
-    startingControllers: controllers.ControllersForStatic<layout.Animation>,
+    startingControllerFor: controllers.StaticControllerFor<layout.Animation>,
+    continuationControllerFor: controllers.StaticControllerFor<layout.TaskPrototypeView>,
     readinessAnimationRootElement: layout.View,
-    descriptionInputElement: repos.StorageHTMLElement,
+    descriptionInputElement: tools.StorageHTMLElement,
     x: number,
     y: number,
 ): void {
@@ -168,50 +176,57 @@ export function startTaskAdding(
         _taskAddingReadinessAnimationDrawing,
         layout.taskPrototypes.views,
         layout.taskPrototypes.drawing,
-        continuationControllers,
-        startingControllers,
+        new controllerBase.StaticControllerMatching(
+            continuationControllerFor,
+            _continuationControllerMatching,
+        ),
+        new controllerBase.StaticControllerMatching(
+            startingControllerFor,
+            _startingControllerMatching,
+        ),
         new repos.HTMLElementValueContainer(descriptionInputElement),
         parsers.getCurrentMap,
+        _taskPrototypeViewMatching,
+        _taskPrototypeMatching,
         x,
         y,
     )
 }
 
-export function continueTaskAdding(
-    continuationControllers: controllers.ControllersFor<layout.TaskPrototypeView, domain.TaskPrototype>,
-    taskPrototypeElement: layout.TaskPrototypeView,
-    taskPrototype: domain.TaskPrototype,
-    x: number,
-    y: number,
-): void {
+export function continueTaskAdding(x: number, y: number): void {
     cases.continueTaskAdding(
-        continuationControllers,
+        parsers.getCurrentMap,
+        _mapViewMatching,
+        _taskPrototypeViewMatching,
+        _taskPrototypeMatching,
         layout.taskPrototypes.views,
         layout.taskPrototypes.drawing,
-        taskPrototype,
-        taskPrototypeElement,
         x,
         y,
     )
 }
 
 export async function completeTaskAdding(
-    taskPrototype: domain.TaskPrototype,
-    taskPrototypeElement: layout.TaskPrototypeView,
-    taskControllers: controllers.ControllersFor<layout.TaskPrototypeView, domain.Task>,
+    continuationControllerFor: controllers.StaticControllerFor<layout.TaskPrototypeView>,
+    taskControllerFactories: controllers.ControllerFor<layout.TaskView, domain.Task>[],
 ): Promise<void> {
     cases.completeTaskAdding(
         _mapViewMatching,
-        taskPrototype,
-        taskPrototypeElement,
+        _taskPrototypeViewMatching,
+        _taskPrototypeMatching,
         layout.taskPrototypes.drawing,
         console.error,
         messages.asyncAlert,
         apiClient.tasks,
         layout.tasks.views,
         layout.tasks.drawing,
-        taskControllers,
         _taskMatching,
         parsers.getCurrentMap,
+        new controllerBase.StaticControllerMatching(
+            continuationControllerFor,
+            _continuationControllerMatching,
+        ),
+        _taskControllerMatching,
+        taskControllerFactories,
     )
 }

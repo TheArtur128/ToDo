@@ -1,51 +1,86 @@
 import * as base from "./base.js";
 import * as facade from "../facade.js";
 import * as layout from "../../in/layout.js";
+import * as tools from "../../../tools.js";
 
-export class AvailabilityControllers extends base.EventListenerControllersForStatic<layout.View> {
-    activeFor(view: layout.View) {
-        view.addEventListener("input", this._handler);
+export class AvailabilityController extends base.StaticController<tools.StorageHTMLElement> {
+    constructor(
+        view: tools.StorageHTMLElement,
+        private _readnessAnimationRootElement: layout.View,
+    ) {
+        super(view);
     }
 
-    removeFrom(view: layout.View) {
-        view.removeEventListener("input", this._handler);
+    activate() {
+        this._view.addEventListener("input", this._handler);
     }
 
-    private _handler() {
-        facade.handleTaskAddingAvailability();
-    }
-}
-
-export class StartingControllers extends base.EventListenerControllersForStatic<layout.View> {
-    activeFor(view: layout.View) {
-        view.addEventListener("pointerdown", this._handler);
+    deactivate() {
+        this._view.removeEventListener("input", this._handler);
     }
 
-    removeFrom(view: layout.View) {
-        view.removeEventListener("pointerdown", this._handler);
-    }
-
-    private _handler() {
-        facade.startTaskAdding(event.clientX, event.clientY);
+    private _handler(_: any) {
+        facade.handleTaskAddingAvailability(
+            (view: layout.Animation) => new StartingController(view, this._view),
+            this._readnessAnimationRootElement,
+            this._view.value,
+        );
     }
 }
 
-export class ContinuationControllers extends base.EventListenerControllersForStatic<layout.View> {
-    activeFor(view: layout.View) {
-        document.addEventListener("pointermove", this._handleContinuation);
-        view.addEventListener("pointerup", this._handleCompletion);
+export class StartingController extends base.StaticController<layout.Animation> {
+    constructor(
+        view: layout.Animation,
+        private _inputDescriptionElement: tools.StorageHTMLElement,
+    ) {
+        super(view);
     }
 
-    removeFrom(view: layout.View) {
-        document.removeEventListener("pointermove", this._handleContinuation);
-        view.removeEventListener("pointerup", this._handleCompletion);
+    activate() {
+        this._view.addEventListener("pointerdown", this._handler);
     }
 
-    private _handleCompletion() {
-        facade.completeTaskAdding();
+    deactivate() {
+        this._view.removeEventListener("pointerdown", this._handler);
     }
 
-    private handleContinuation(event: PointerEvent) {
+    private _handler(event: PointerEvent) {
+        facade.startTaskAdding(
+            (view: layout.Animation) => new StartingController(view, this._inputDescriptionElement),
+            (view: layout.TaskPrototypeView) => new ContinuationController(view),
+            this._view,
+            this._inputDescriptionElement,
+            event.clientX,
+            event.clientY,
+        );
+    }
+}
+
+export class ContinuationController extends base.StaticController<layout.TaskPrototypeView> {
+    activate() {
+        this._view.addEventListener("pointermove", this._handler);
+    }
+
+    deactivate() {
+        this._view.removeEventListener("pointermove", this._handler);
+    }
+
+    private _handler(event: PointerEvent) {
         facade.continueTaskAdding(event.clientX, event.clientY);
     }
 }
+
+export class CompletionController extends base.StaticController<layout.TaskPrototypeView> {
+    activate() {
+        this._view.addEventListener("pointermove", this._handler);
+    }
+
+    deactivate() {
+        this._view.removeEventListener("pointermove", this._handler);
+    }
+
+    private _handler(event: PointerEvent) {
+        facade.completeTaskAdding(event.clientX, event.clientY);
+    }
+}
+

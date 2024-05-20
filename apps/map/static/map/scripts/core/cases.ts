@@ -11,8 +11,8 @@ const fixationTime: timeouts.Milliseconds = 600;
 export async function drawMap<MapRootView, MapView, TaskView, TaskAddingView>(
     mapRootView: MapRootView,
     mapViewMatching: repos.MaybeMatchingBy<domain.Map, MapView>,
-    taskControllerMatching: repos.MaybeMatchingBy<TaskView, controllers.Controller<TaskView, domain.Task>[]>,
-    taskAddingAvailabilityControllerMatching: repos.MaybeMatchingBy<MapView, controllers.StaticController<TaskAddingView>>,
+    taskControllerMatching: repos.MaybeMatchingBy<TaskView, controllers.Controller[]>,
+    taskAddingAvailabilityControllerMatching: repos.MaybeMatchingBy<MapView, controllers.Controller>,
     mapViews: views.Views<MapView>,
     mapDrawing: views.Drawing<MapRootView, MapView, domain.Map>,
     remoteTasks: remoteRepos.RemoteTasks,
@@ -24,7 +24,7 @@ export async function drawMap<MapRootView, MapView, TaskView, TaskAddingView>(
     logError: messages.Log,
     getCurrentMap: () => domain.Map,
     taskAddingView: TaskAddingView,
-    taskAddingAvailabilityControllerFor: controllers.ControllerForStatic<TaskAddingView>,
+    taskAddingAvailabilityControllerFor: controllers.StaticControllerFor<TaskAddingView>,
 ): Promise<void> {
     const map: domain.Map = getCurrentMap();
     let mapView = mapViewMatching.matchedWith(map);
@@ -162,9 +162,7 @@ export function startTaskMoving<TaskView>(
     referencePointMatching: repos.MaybeMatchingBy<TaskView, domain.Vector>,
     cursor: views.Cursor,
     taskView: TaskView,
-    taskMovingControllerMatching: repos.MatchingBy<
-        TaskView, controllers.Controller<domain.Task>
-    >,
+    taskMovingControllerMatching: repos.MatchingBy<TaskView, controllers.Controller>,
     x: number,
     y: number,
 ): void {
@@ -176,18 +174,14 @@ export function startTaskMoving<TaskView>(
     referencePointMatching.match(taskView, new domain.Vector(x, y));
 
     cursor.setGrabbed();
-    movingController
     taskMovingControllerMatching.matchedWith(taskView).activate();
 }
 
 export function cancelTaskMoving<TaskView>(
     taskMatching: repos.MaybeMatchingBy<TaskView, domain.Task>,
     referencePointMatching: repos.MaybeMatchingBy<TaskView, domain.Vector>,
+    taskMovingControllerMatching: repos.MatchingBy<TaskView, controllers.Controller>,
     cursor: views.Cursor,
-    taskMovingControllerMatching: repos.MatchingBy<
-        TaskView,
-        controllers.Controller<TaskView, domain.Task>
-    >,
     taskView: TaskView,
 ): void {
     const task = taskMatching.matchedWith(taskView);
@@ -250,9 +244,7 @@ export function handleTaskAddingAvailability<ReadinessAnimationRoot, ReadinessAn
     readinessAnimationRoot: ReadinessAnimationRoot,
     readinessAnimation: ReadinessAnimation,
     readinessAnimationDrawing: views.StaticDrawing<ReadinessAnimationRoot, ReadinessAnimation>,
-    startingControllerMatching: repos.MatchingBy<
-        ReadinessAnimation, controllers.StaticController<ReadinessAnimation>
-    >,
+    startingControllerMatching: repos.MatchingBy<ReadinessAnimation, controllers.Controller>,
 ): void {
     const description = domain.Description.of(descriptionValue);
 
@@ -281,22 +273,20 @@ export function startTaskAdding<MapView, ReadinessAnimation, ReadinessAnimationR
     readinessAnimationDrawing: views.StaticDrawing<ReadinessAnimationRoot, ReadinessAnimation>,
     taskPrototypeViews: views.Views<TaskPrototypeView>,
     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, domain.TaskPrototype>,
-    continuationControllerMatching: repos.MatchingBy<
-        TaskPrototypeView,
-        controllers.Controller<ReadinessAnimation, domain.TaskPrototype>
-    >,
-    startingControllerMatching: repos.MatchingBy<
-        ReadinessAnimation, controllers.StaticController<ReadinessAnimation>
-    >,
+    startingControllerMatching: repos.MatchingBy<ReadinessAnimation, controllers.Controller>,
+    continuationControllerMatching: repos.MatchingBy<TaskPrototypeView, controllers.Controller>,
+    completionControllerMatching: repos.MatchingBy<TaskPrototypeView, controllers.Controller>,
     descriptionValueContainer: repos.Container<string>,
     getCurrentMap: () => domain.Map,
+    taskPrototypeViewMatching: repos.MaybeMatchingBy<MapView, TaskPrototypeView>,
+    taskPrototypeMatching: repos.MaybeMatchingBy<TaskPrototypeView, domain.TaskPrototype>,
     x: number,
     y: number,
 ): void {
     const mapView = mapViewMatching.matchedWith(getCurrentMap());
     const description = domain.Description.of(descriptionValueContainer.get());
 
-    if (description === undefined || mapView === undefined)
+    if (mapView === undefined || description === undefined)
         return;
 
     descriptionValueContainer.set('');
@@ -311,21 +301,37 @@ export function startTaskAdding<MapView, ReadinessAnimation, ReadinessAnimationR
     taskPrototypeDrawing.redrawBy(taskPrototype, taskPrototypeView);
     taskPrototypeDrawing.drawOn(mapView, taskPrototypeView);
 
-    continuationControllerMatching.matchedWith()
+    taskPrototypeViewMatching.match(mapView, taskPrototypeView);
+    taskPrototypeMatching.match(taskPrototypeView, taskPrototype);
 
-    continuationControllers.activeFor(taskPrototypeView, taskPrototype);
+    continuationControllerMatching.matchedWith(taskPrototypeView).activate();
+    completionControllerMatching.matchedWith(taskPrototypeView).activate();
 }
 
 export function continueTaskAdding<MapView, TaskPrototypeView>(
-    continuationControllers: controllers.ControllersFor<TaskPrototypeView, domain.TaskPrototype>,
+    getCurrentMap: () => domain.Map,
+    mapViewMatching: repos.MaybeMatchingBy<domain.Map, MapView>,
+    taskPrototypeViewMatching: repos.MaybeMatchingBy<MapView, TaskPrototypeView>,
+    taskPrototypeMatching: repos.MaybeMatchingBy<TaskPrototypeView, domain.TaskPrototype>,
     taskPrototypeViews: views.Views<TaskPrototypeView>,
     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, domain.TaskPrototype>,
-    taskPrototype: domain.TaskPrototype,
-    taskPrototypeView: TaskPrototypeView,
     x: number,
     y: number,
 ): void {
-    taskPrototype = {...taskPrototype, x: x, y: y};
+    const mapView = mapViewMatching.matchedWith(getCurrentMap());
+    if (mapView === undefined)
+        return;
+
+    const taskPrototypeView = taskPrototypeViewMatching.matchedWith(mapView);
+    if (taskPrototypeView === undefined)
+        return;
+
+    const taskPrototype = taskPrototypeMatching.matchedWith(taskPrototypeView);
+    if (taskPrototype === undefined)
+        return;
+
+    taskPrototype.x = x;
+    taskPrototype.y = y;
 
     const size = taskPrototypeViews.sizeOf(taskPrototypeView);
     const taskPrototypeToPresent = {
@@ -333,27 +339,35 @@ export function continueTaskAdding<MapView, TaskPrototypeView>(
     };
 
     taskPrototypeDrawing.redrawBy(taskPrototypeToPresent, taskPrototypeView);
-    continuationControllers.updateFor(taskPrototypeView, taskPrototype);
 }
 
-export async function completeTaskAdding<RootView, MapView, TaskPrototypeView, TaskView>(
+export async function completeTaskAdding<MapView, TaskPrototypeView, TaskView>(
     mapViewMatching: repos.MaybeMatchingBy<domain.Map, MapView>,
-    taskPrototype: domain.TaskPrototype,
-    taskPrototypeView: TaskPrototypeView,
+    taskPrototypeViewMatching: repos.MaybeMatchingBy<MapView, TaskPrototypeView>,
+    taskPrototypeMatching: repos.MaybeMatchingBy<TaskPrototypeView, domain.TaskPrototype>,
     taskPrototypeDrawing: views.Drawing<MapView, TaskPrototypeView, domain.TaskPrototype>,
     logError: messages.Log,
     notify: messages.Notify,
     remoteTasks: remoteRepos.RemoteTasks,
     taskViews: views.Views<TaskView>,
     taskDrawing: views.Drawing<MapView, TaskView, domain.Task>,
-    taskControllers: controllers.ControllersFor<TaskView, domain.Task>,
     taskMatching: repos.MaybeMatchingBy<TaskView, domain.Task>,
     getCurrentMap: () => domain.Map,
+    continuationControllerMatching: repos.MatchingBy<TaskPrototypeView, controllers.Controller>,
+    taskControllerMatching: repos.MaybeMatchingBy<TaskView, controllers.Controller[]>,
+    taskControllerFactroris: controllers.ControllerFor<TaskView, domain.Task>[],
 ): Promise<void> {
     const map: domain.Map = getCurrentMap();
     const mapView = mapViewMatching.matchedWith(map);
-
     if (mapView === undefined)
+        return;
+
+    const taskPrototypeView = taskPrototypeViewMatching.matchedWith(mapView);
+    if (taskPrototypeView === undefined)
+        return;
+
+    const taskPrototype = taskPrototypeMatching.matchedWith(taskPrototypeView);
+    if (taskPrototype === undefined)
         return;
 
     const taskView = taskViews.createEmptyView();
@@ -368,6 +382,7 @@ export async function completeTaskAdding<RootView, MapView, TaskPrototypeView, T
     const task = await remoteTasks.createdTaskFrom(taskPrototypeToCreateTask, map);
 
     taskPrototypeDrawing.eraseFrom(mapView, taskPrototypeView);
+    continuationControllerMatching.matchedWith(taskPrototypeView).deactivate();
 
     if (task === undefined) {
         logError(`A remote task on the map with id = ${map.id} could not be created`);
@@ -377,7 +392,10 @@ export async function completeTaskAdding<RootView, MapView, TaskPrototypeView, T
 
     taskDrawing.redrawBy(task, taskView);
     taskDrawing.drawOn(mapView, taskView);
-    taskControllers.activeFor(taskView, task);
+
+    const controllers = taskControllerFactroris.map(f => f(taskView, task));
+    controllers.forEach(c => c.activate());
 
     taskMatching.match(taskView, task);
+    taskControllerMatching.match(taskView, controllers);
 }

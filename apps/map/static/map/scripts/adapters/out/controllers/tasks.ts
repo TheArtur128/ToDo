@@ -1,130 +1,58 @@
-import * as domain from "../../../core/domain.js";
 import * as base from "./base.js";
-import * as ports from "../../../core/ports/controllers.js";
+import * as domain from "../../../core/domain.js";
 import * as facade from "../facade.js";
 import * as layout from "../../in/layout.js";
-import * as tools from "../../../tools.js";
+import { Maybe } from "../../../sugar.js";
 
-export class TaskModeChangingControllers extends base.EventListenerControllers<layout.TaskView, domain.Task> {
-    root: ports.ControllersFor<layout.TaskView, domain.Task>
+export class TaskModeChangingController extends base.Controller<layout.TaskView, domain.Task> {
+    private _interactionModeView: Maybe<layout.InteractionModeView> = undefined;
 
-    constructor() {
-        super();
-        this.root = this;
+    constructor(view: layout.TaskView, value: domain.Task) {
+        super(view, value);
+
+        const _interactionModeView = this._view.querySelector(".task-description");
+
+        if (_interactionModeView instanceof HTMLDivElement)
+            this._interactionModeView = _interactionModeView;
     }
 
-    activeFor(view: layout.TaskView, _: never): void {
-        const buttonElement = view.querySelector(".task-interaction-mode");
-
-        if (buttonElement instanceof HTMLElement)
-            buttonElement.addEventListener("mouseup", this._handler);
+    activate(): void {
+        this._interactionModeView?.addEventListener("mouseup", this._handler);
     }
 
-    removeFrom(view: layout.TaskView, _: never): void {
-        const buttonElement = view.querySelector(".task-interaction-mode");
-
-        if (buttonElement instanceof HTMLElement)
-            buttonElement.removeEventListener("mouseup", this._handler);
+    deactivate(): void {
+        this._interactionModeView?.removeEventListener("mouseup", this._handler);
     }
 
-    private _handler(event: MouseEvent) {
-        if (event.target instanceof HTMLDivElement)
-            facade.changeTaskMode(event.target, this.root)
+    private _handler(_: MouseEvent) {
+        facade.changeTaskMode(this._view);
     }
 }
 
-export class TaskDescriptionChangingControllers extends base.EventListenerControllers<layout.TaskView, domain.Task> {
-    root: ports.ControllersFor<layout.TaskView, domain.Task>
+export class TaskDescriptionChangingController extends base.Controller<layout.TaskView, domain.Task> {
+    private _descriptionView: Maybe<layout.TaskDescriptionView> = undefined;
 
-    constructor(private _handlers = new WeakSet()) {
-        super();
-        this.root = this;
-    }
+    constructor(view: layout.TaskView, value: domain.Task) {
+        super(view, value);
 
-    activeFor(view: layout.TaskView, _: never): void {
-        const descriptionView = view.querySelector(".task-description");
-
-        if (!(descriptionView instanceof HTMLTextAreaElement))
-            return;
-
-        const handler = new _TaskDescriptionChangingHandler(this, view, descriptionView);
-
-        descriptionView.addEventListener("input", this._handler);
-    }
-
-    removeFrom(view: layout.TaskView, _: never): void {
-        const descriptionView = view.querySelector(".task-description");
+        const descriptionView = this._view.querySelector(".task-description");
 
         if (descriptionView instanceof HTMLTextAreaElement)
-            descriptionView.removeEventListener("input", this._handler);
+            this._descriptionView = descriptionView;
     }
-}
 
-class _TaskDescriptionChangingHandler {
-    constructor(
-        private _controllers: TaskDescriptionChangingControllers,
-        private _taskView: layout.TaskView,
-        private _descriptionView: layout.TaskDescriptionView,
-    ) {}
-
-    handle(event: Event) {
-        facade.changeTaskDescription(
-            this._controllers.root,
-            this._taskView,
-            this._descriptionView.value,
-        );
+    activate(): void {
+        this._descriptionView?.addEventListener("input", this._handler);
     }
-}
 
-export function initDescriptionChangingControllers(
-    taskElement: HTMLDivElement,
-    facade: facade.Facade,
-): void {
-    const descriptionInputElement = taskElement.querySelector(".task-description");
+    deactivate(): void {
+        this._descriptionView?.removeEventListener("input", this._handler);
+    }
 
-    if (descriptionInputElement instanceof HTMLElement)
-        descriptionInputElement.addEventListener("input", () => {
-            facade.tasks.changeDescription(taskElement);
-        })
-}
+    private _handler(_: Event) {
+        if (this._descriptionView === undefined)
+            return;
 
-export function initMovingControllers(
-    taskElement: HTMLDivElement,
-    facade: facade.Facade,
-): void {
-    const buttonElement = taskElement.querySelector(".task-interaction-mode");
-    const moving = facade.taskMovingFor(taskElement);
-
-    if (!(moving !== undefined && buttonElement instanceof HTMLElement))
-        return;
-
-    taskElement.addEventListener("pointerenter", () => {
-        moving.prepare();
-    });
-
-    taskElement.addEventListener("pointerdown", event => {
-        if (!tools.isInDOMOf(buttonElement, event.target))
-            moving.start(event.clientX, event.clientY);
-    });
-
-    taskElement.addEventListener("pointerup", () => {
-        moving.cancel();
-    });
-
-    taskElement.addEventListener("pointerleave", () => {
-        moving.cancel();
-    });
-
-    taskElement.addEventListener("pointermove", event => {
-        moving.handle(event.clientX, event.clientY);
-    });
-}
-
-export function initAllControllers(
-    taskElement: HTMLDivElement,
-    facade: facade.Facade,
-) {
-    initModeChangingControllers(taskElement, facade);
-    initDescriptionChangingControllers(taskElement, facade);
-    initMovingControllers(taskElement, facade);
+        facade.changeTaskDescription(this._view, this._descriptionView.value);
+    }
 }
