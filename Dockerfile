@@ -6,6 +6,7 @@ COPY . .
 
 RUN apk add npm && \
 npm install typescript -g && \
+npm install sass -g && \
 apk add poetry && \
 poetry install
 

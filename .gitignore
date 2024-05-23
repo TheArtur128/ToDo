@@ -161,9 +161,11 @@ cython_debug/
 
 # Custom
 test.py
+confirmations.txt
 /static
 *.js
-confirmations.txt
+*.css
+*.css.map
 
 # Custom Redis
 dump.rdb

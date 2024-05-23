@@ -85,7 +85,7 @@ export namespace tasks {
             view.appendChild(this._getEmptyTaskDescriptionView());
             view.appendChild(this._getEmptyInteractionModeView());
 
-            view.className = "block";
+            view.className = "task";
             view.style.position = "absolute";
 
             return view;

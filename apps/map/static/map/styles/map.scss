@@ -1,3 +1,6 @@
+@import '../../../../shared/static/shared/styles/main';
+@import 'navigation';
+
 #way-panel {
   border-radius: 8px;
   width: 147px;
@@ -19,7 +22,8 @@
   transform: translate(-50%);
 }
 
-#tasks .block {
+.task {
+  @extend .block;
   width: auto;
   height: 90px;
   padding-left: 5px;
