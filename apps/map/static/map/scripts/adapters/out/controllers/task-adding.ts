@@ -15,11 +15,11 @@ export class AvailabilityController extends base.StaticController<tools.StorageH
     }
 
     activate() {
-        this._view.addEventListener("input", this._handler);
+        this._view.addEventListener("input", event => this._handler(event));
     }
 
     deactivate() {
-        this._view.removeEventListener("input", this._handler);
+        this._view.removeEventListener("input", event => this._handler(event));
     }
 
     private _handler(_: any) {
@@ -45,11 +45,11 @@ export class StartingController extends base.StaticController<layout.Animation> 
     }
 
     activate() {
-        this._view.addEventListener("pointerdown", this._handler);
+        this._view.addEventListener("pointerdown", event => this._handler(event));
     }
 
     deactivate() {
-        this._view.removeEventListener("pointerdown", this._handler);
+        this._view.removeEventListener("pointerdown", event => this._handler(event));
     }
 
     private _handler(event: PointerEvent) {
@@ -74,11 +74,11 @@ export class StartingController extends base.StaticController<layout.Animation> 
 
 export class ContinuationController extends base.StaticController<layout.TaskPrototypeView> {
     activate() {
-        this._view.addEventListener("pointermove", this._handler);
+        this._view.addEventListener("pointermove", event => this._handler(event));
     }
 
     deactivate() {
-        this._view.removeEventListener("pointermove", this._handler);
+        this._view.removeEventListener("pointermove", event => this._handler(event));
     }
 
     private _handler(event: PointerEvent) {
@@ -95,11 +95,11 @@ export class CompletionController extends base.StaticController<layout.TaskProto
     }
 
     activate() {
-        this._view.addEventListener("pointermove", this._handler);
+        this._view.addEventListener("pointermove", event => this._handler(event));
     }
 
     deactivate() {
-        this._view.removeEventListener("pointermove", this._handler);
+        this._view.removeEventListener("pointermove", event => this._handler(event));
     }
 
     private _handler(_: any) {

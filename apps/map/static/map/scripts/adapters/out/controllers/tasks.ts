@@ -10,18 +10,18 @@ export class TaskModeChangingController extends base.Controller<layout.TaskView,
     constructor(view: layout.TaskView, value: domain.Task) {
         super(view, value);
 
-        const _interactionModeView = this._view.querySelector(".task-description");
+        const _interactionModeView = this._view.querySelector(".task-interaction-mode");
 
         if (_interactionModeView instanceof HTMLDivElement)
             this._interactionModeView = _interactionModeView;
     }
 
     activate(): void {
-        this._interactionModeView?.addEventListener("mouseup", this._handler);
+        this._interactionModeView?.addEventListener("mouseup", event => this._handler(event));
     }
 
     deactivate(): void {
-        this._interactionModeView?.removeEventListener("mouseup", this._handler);
+        this._interactionModeView?.removeEventListener("mouseup", event => this._handler(event));
     }
 
     private _handler(_: MouseEvent) {
@@ -48,11 +48,11 @@ export class TaskDescriptionChangingController extends base.Controller<layout.Ta
     }
 
     activate(): void {
-        this._descriptionView?.addEventListener("input", this._handler);
+        this._descriptionView?.addEventListener("input", event => this._handler(event));
     }
 
     deactivate(): void {
-        this._descriptionView?.removeEventListener("input", this._handler);
+        this._descriptionView?.removeEventListener("input", event => this._handler(event));
     }
 
     private _handler(_: Event) {

@@ -8,6 +8,7 @@ const taskControllerFactories = [
     taskControllers.TaskDescriptionChangingController.factory,
     taskMovingControllers.PreparationController.factory,
     taskMovingControllers.StartingController.factory,
+    taskMovingControllers.StoppingController.factory,
     taskMovingControllers.CancellationController.factory,
 ];
 

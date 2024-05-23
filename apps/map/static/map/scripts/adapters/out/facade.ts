@@ -31,10 +31,10 @@ export function drawMap<TaskAddingElement extends layout.View>(
         _taskControllerMatching,
         _taskAddingAvailabilityControllerMatching,
         layout.maps.views,
-        layout.maps.drawing,
+        layout.maps.presenter,
         apiClient.tasks,
         layout.tasks.views,
-        layout.tasks.drawing,
+        layout.tasks.presenter,
         _taskMatching,
         taskControllerFactories,
         messages.asyncAlert,
@@ -50,7 +50,7 @@ export function changeTaskMode(taskElement: layout.TaskView): void {
         taskElement,
         _taskMatching,
         console.error,
-        layout.tasks.drawing,
+        layout.tasks.modeChangingPresenter,
     )
 }
 
@@ -59,7 +59,7 @@ const _taskDescriptionTimeout = new timeouts.Timeout();
 export function changeTaskDescription(taskElement: layout.TaskView, description: string): void {
     cases.changeTaskDescription(
         _taskMatching,
-        layout.tasks.drawing,
+        layout.tasks.presenter,
         console.error,
         _taskDescriptionTimeout,
         apiClient.tasks,
@@ -71,7 +71,7 @@ export function changeTaskDescription(taskElement: layout.TaskView, description:
 export function prepareTaskMoving(taskElement: layout.TaskView): void {
     cases.prepareTaskMoving(
         _taskMatching,
-        layout.tasks.cursorFor(taskElement),
+        layout.tasks.readyToMovePresenter,
         taskElement,
     )
 }
@@ -91,7 +91,7 @@ export function startTaskMoving(
     cases.startTaskMoving(
         _taskMatching,
         _movingReferencePointMatching,
-        layout.tasks.cursorFor(taskElement),
+        layout.tasks.movementPresenter,
         taskElement,
         new controllerBase.StaticControllerMatching(
             taskMovingControllerFor,
@@ -102,18 +102,22 @@ export function startTaskMoving(
     )
 }
 
-export function cancelTaskMoving(
+export function cancelTaskMoving(taskElement: layout.TaskView): void {
+    cases.cancelTaskMoving(_taskMatching, layout.tasks.staticPresenter, taskElement);
+}
+
+export function stopTaskMoving(
     taskElement: layout.TaskView,
     taskMovingControllerFor: controllers.StaticControllerFor<layout.TaskView>,
 ): void {
-    cases.cancelTaskMoving(
+    cases.stopTaskMoving(
         _taskMatching,
         _movingReferencePointMatching,
         new controllerBase.StaticControllerMatching(
             taskMovingControllerFor,
             _movingControllerMatching,
         ),
-        layout.tasks.cursorFor(taskElement),
+        layout.tasks.readyToMovePresenter,
         taskElement,
     )
 }
@@ -127,7 +131,7 @@ export function moveTask(taskElement: layout.TaskView, x: number, y: number): vo
         console.error,
         _taskMovingTimeout,
         apiClient.tasks,
-        layout.tasks.drawing,
+        layout.tasks.presenter,
         taskElement,
         x,
         y,
@@ -136,7 +140,7 @@ export function moveTask(taskElement: layout.TaskView, x: number, y: number): vo
 
 const _pastTaskAddingAvailabilityMatching = new repos.BooleanMatching<layout.Animation>();
 const _taskAddingReadinessAnimation = layout.taskAdding.createReadinessAnimation();
-const _taskAddingReadinessAnimationDrawing = new layout.LazyStaticDrawing();
+const _taskAddingReadinessAnimationPresenter = new layout.LazyStaticPresenter();
 const _startingControllerMatching = new repos.MatchingFromMap<layout.Animation, controllers.Controller>();
 
 export function handleTaskAddingAvailability(
@@ -149,7 +153,7 @@ export function handleTaskAddingAvailability(
         description,
         readinessAnimationRootElement,
         _taskAddingReadinessAnimation,
-        _taskAddingReadinessAnimationDrawing,
+        _taskAddingReadinessAnimationPresenter,
         new controllerBase.StaticControllerMatching(
             startingControllerFor,
             _startingControllerMatching,
@@ -182,9 +186,9 @@ export function startTaskAdding(
         _mapViewMatching,
         readinessAnimationRootElement,
         _taskAddingReadinessAnimation,
-        _taskAddingReadinessAnimationDrawing,
+        _taskAddingReadinessAnimationPresenter,
         layout.taskPrototypes.views,
-        layout.taskPrototypes.drawing,
+        layout.taskPrototypes.presenter,
         new controllerBase.StaticControllerMatching(
             continuationControllerFor,
             _continuationControllerMatching,
@@ -213,7 +217,7 @@ export function continueTaskAdding(x: number, y: number): void {
         _taskPrototypeViewMatching,
         _taskPrototypeMatching,
         layout.taskPrototypes.views,
-        layout.taskPrototypes.drawing,
+        layout.taskPrototypes.presenter,
         x,
         y,
     )
@@ -227,12 +231,12 @@ export async function completeTaskAdding(
         _mapViewMatching,
         _taskPrototypeViewMatching,
         _taskPrototypeMatching,
-        layout.taskPrototypes.drawing,
+        layout.taskPrototypes.presenter,
         console.error,
         messages.asyncAlert,
         apiClient.tasks,
         layout.tasks.views,
-        layout.tasks.drawing,
+        layout.tasks.presenter,
         _taskMatching,
         parsers.getCurrentMap,
         new controllerBase.StaticControllerMatching(

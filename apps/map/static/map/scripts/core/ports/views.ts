@@ -1,15 +1,18 @@
 import * as domain from "../domain.js";
 import { Maybe } from "../../sugar.js";
 
-export type StaticDrawing<RootView, View> = {
+export type StaticPresenter<RootView, View> = {
     drawOn(rootView: RootView, view: View): void,
     eraseFrom(rootView: RootView, view: View): void,
 }
 
-export type Drawing<RootView, View, Value> = (
-    StaticDrawing<RootView, View> & {
-        redrawBy(value: Value, view: View): void,
-    }
+export type DynamicPresenter<View, Value> = {
+    redrawBy(value: Value, view: View): void;
+}
+
+export type Presenter<RootView, View, Value> = (
+    StaticPresenter<RootView, View>
+    & DynamicPresenter<View, Value>
 )
 
 export type Views<View> = {
@@ -19,10 +22,4 @@ export type Views<View> = {
 
 export type Subviews<RootView, View, Value> = Views<View> & {
     foundViewOn(rootView: RootView, value: Value): Maybe<View>,
-}
-
-export type Cursor = {
-    setDefault(): void;
-    setToGrab(): void;
-    setGrabbed(): void;
 }

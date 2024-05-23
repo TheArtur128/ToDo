@@ -11,7 +11,7 @@ export type TaskDescriptionView = HTMLTextAreaElement;
 export type InteractionModeView = HTMLDivElement;
 export type Animation = HTMLImageElement;
 
-export const staticDrawing = {
+export const staticPresenter = {
     drawOn<RootView extends View>(rootView: RootView, view: View): void {
         rootView.appendChild(view);
     },
@@ -23,8 +23,9 @@ export const staticDrawing = {
         catch (NotFoundError) {}
     },
 }
+const _staticPresenter = staticPresenter;
 
-export class LazyStaticDrawing implements views.StaticDrawing<View, View> {
+export class LazyStaticPresenter implements views.StaticPresenter<View, View> {
     private _drawnViewsInDOM: Set<View>;
 
     constructor() {
@@ -112,8 +113,8 @@ export namespace tasks {
         },
     }
 
-    export const drawing = {
-        ...staticDrawing,
+    export const presenter = {
+        ..._staticPresenter,
 
         redrawBy(task: domain.Task, view: TaskView): void {
             view.id = _viewIdOf(task.id);
@@ -165,14 +166,41 @@ export namespace tasks {
         }
     }
 
-    export function cursorFor(taskView: TaskView): LocalCursor {
+    export const modeChangingPresenter = {
+        ...presenter,
+
+        redrawBy(task: domain.Task, view: TaskView): void {
+            presenter.redrawBy(task, view);
+            _cursorFor(view).setDefault();
+        }
+    }
+
+    export const movementPresenter = {
+        redrawBy(_: domain.Task, view: TaskView): void {
+            _cursorFor(view).setGrabbed();
+        },
+    }
+
+    export const readyToMovePresenter = {
+        redrawBy(_: domain.Task, view: TaskView): void {
+            _cursorFor(view).setToGrab();
+        },
+    }
+
+    export const staticPresenter = {
+        redrawBy(_: domain.Task, view: TaskView): void {
+            _cursorFor(view).setDefault();
+        },
+    }
+
+    function _cursorFor(taskView: TaskView): _LocalCursor {
         let query = `.${_descriptionViewClassName}`;
         const descriptionView = taskView.querySelector(query);
 
         if (descriptionView instanceof HTMLElement)
-            return new LocalCursor(taskView, descriptionView);
+            return new _LocalCursor(taskView, descriptionView);
         else
-            return new LocalCursor(taskView);
+            return new _LocalCursor(taskView);
     }
 
     function _viewIdOf(id: number): string {
@@ -192,8 +220,8 @@ export namespace taskPrototypes {
         },
     }
 
-    export const drawing: views.Drawing<MapView, TaskPrototypeView, domain.TaskPrototype> = {
-        ...staticDrawing,
+    export const presenter: views.Presenter<MapView, TaskPrototypeView, domain.TaskPrototype> = {
+        ...staticPresenter,
 
         redrawBy(taskPrototype: domain.TaskPrototype, view: TaskPrototypeView): void {
             view.style.left = _inStyleUnits(taskPrototype.x);
@@ -214,8 +242,8 @@ export namespace maps {
         },
     }
 
-    export const drawing = {
-        ...staticDrawing,
+    export const presenter = {
+        ...staticPresenter,
 
         drawOn<RootView extends View>(rootView: RootView, view: MapView): void {
             rootView.insertBefore(view, rootView.firstChild);
@@ -225,21 +253,7 @@ export namespace maps {
     }
 }
 
-export const globalCursor: views.Cursor = {
-    setDefault(): void {
-        _setGlobalStyleProperty("cursor", '', '');
-    },
-
-    setToGrab(): void {
-        _setGlobalStyleProperty("cursor", "grab", "important");
-    },
-
-    setGrabbed(): void {
-        _setGlobalStyleProperty("cursor", "grabbing", "important");
-    },
-}
-
-export class LocalCursor implements views.Cursor {
+class _LocalCursor {
     private _elements: HTMLElement[];
 
     constructor(...elements: HTMLElement[]) {
@@ -263,15 +277,6 @@ export class LocalCursor implements views.Cursor {
             element.style.setProperty("cursor", "grabbing", "important");
         });
     }
-}
-
-function _setGlobalStyleProperty(property: string, value: string | null, priority?: string): void {
-    document.querySelectorAll('*').forEach(element => {
-        if (!(element instanceof HTMLElement))
-            return;
-
-        element.style.setProperty(property, value, priority);
-    })
 }
 
 function _inStyleUnits(coordinate: number): string {
