@@ -304,8 +304,8 @@ export function startTaskAdding<MapView, ReadinessAnimation, ReadinessAnimationR
     const taskPrototype: domain.TaskPrototype = {description: description, x: x, y: y};
 
     const taskPrototypeView = taskPrototypeViews.createEmptyView();
-    taskPrototypePresenter.redrawBy(taskPrototype, taskPrototypeView);
     taskPrototypePresenter.drawOn(mapView, taskPrototypeView);
+    taskPrototypePresenter.redrawBy(taskPrototype, taskPrototypeView);
 
     taskPrototypeViewMatching.match(mapView, taskPrototypeView);
     taskPrototypeMatching.match(taskPrototypeView, taskPrototype);
@@ -319,8 +319,7 @@ export function continueTaskAdding<MapView, TaskPrototypeView>(
     mapViewMatching: repos.MaybeMatchingBy<domain.Map, MapView>,
     taskPrototypeViewMatching: repos.MaybeMatchingBy<MapView, TaskPrototypeView>,
     taskPrototypeMatching: repos.MaybeMatchingBy<TaskPrototypeView, domain.TaskPrototype>,
-    taskPrototypeViews: views.Views<TaskPrototypeView>,
-    taskPrototypePresenter: views.Presenter<MapView, TaskPrototypeView, domain.TaskPrototype>,
+    taskPrototypePresenter: views.DynamicPresenter<TaskPrototypeView, domain.TaskPrototype>,
     x: number,
     y: number,
 ): void {
@@ -339,12 +338,7 @@ export function continueTaskAdding<MapView, TaskPrototypeView>(
     taskPrototype.x = x;
     taskPrototype.y = y;
 
-    const size = taskPrototypeViews.sizeOf(taskPrototypeView);
-    const taskPrototypeToPresent = {
-        ...taskPrototype, x: x - size.x / 2, y: y - size.y / 2
-    };
-
-    taskPrototypePresenter.redrawBy(taskPrototypeToPresent, taskPrototypeView);
+    taskPrototypePresenter.redrawBy(taskPrototype, taskPrototypeView);
 }
 
 export async function completeTaskAdding<MapView, TaskPrototypeView, TaskView>(
@@ -360,6 +354,7 @@ export async function completeTaskAdding<MapView, TaskPrototypeView, TaskView>(
     taskMatching: repos.MaybeMatchingBy<TaskView, domain.Task>,
     getCurrentMap: () => domain.Map,
     continuationControllerMatching: repos.MatchingBy<TaskPrototypeView, controllers.Controller>,
+    completionControllerMatching: repos.MatchingBy<TaskPrototypeView, controllers.Controller>,
     taskControllerMatching: repos.MaybeMatchingBy<TaskView, controllers.Controller[]>,
     taskControllerFactroris: controllers.ControllerFor<TaskView, domain.Task>[],
 ): Promise<void> {
@@ -376,19 +371,12 @@ export async function completeTaskAdding<MapView, TaskPrototypeView, TaskView>(
     if (taskPrototype === undefined)
         return;
 
-    const taskView = taskViews.createEmptyView();
-    const size = taskViews.sizeOf(taskView);
+    continuationControllerMatching.matchedWith(taskPrototypeView).deactivate();
+    completionControllerMatching.matchedWith(taskPrototypeView).deactivate();
 
-    const taskPrototypeToCreateTask = {
-        ...taskPrototype,
-        x: taskPrototype.x - size.x / 2,
-        y: taskPrototype.y - size.y / 2,
-    }
-
-    const task = await remoteTasks.createdTaskFrom(taskPrototypeToCreateTask, map);
+    const task = await remoteTasks.createdTaskFrom(taskPrototype, map);
 
     taskPrototypePresenter.eraseFrom(mapView, taskPrototypeView);
-    continuationControllerMatching.matchedWith(taskPrototypeView).deactivate();
 
     if (task === undefined) {
         logError(`A remote task on the map with id = ${map.id} could not be created`);
@@ -396,8 +384,9 @@ export async function completeTaskAdding<MapView, TaskPrototypeView, TaskView>(
         return;
     }
 
-    taskPresenter.redrawBy(task, taskView);
+    const taskView = taskViews.createEmptyView();
     taskPresenter.drawOn(mapView, taskView);
+    taskPresenter.redrawBy(task, taskView);
 
     const controllers = taskControllerFactroris.map(f => f(taskView, task));
     controllers.forEach(c => c.activate());

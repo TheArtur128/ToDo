@@ -91,4 +91,4 @@ class User(mixins.Visualizable, models.Model):
     )
 
     def __str__(self) -> str:
-        return self.id
+        return str(self.id)

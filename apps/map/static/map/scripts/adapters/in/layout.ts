@@ -46,11 +46,21 @@ export class LazyStaticPresenter implements views.StaticPresenter<View, View> {
     }
 }
 
-const _baseOfVisibleViews = {
-    sizeOf(view: View): domain.Vector {
-        const rect = view.getBoundingClientRect()
+export function centeringPresenterOf<
+    View_ extends View,
+    Value,
+    Presenter extends views.DynamicPresenter<View_, Value>
+>(presenter: Presenter): Presenter {
+    return {
+        ...presenter,
+        redrawBy(value: Value, view: View_) {
+            presenter.redrawBy(value, view);
 
-        return new domain.Vector(rect.width, rect.height);
+            const rect = view.getBoundingClientRect()
+
+            view.style.left = _inStyleUnits(parseInt(view.style.left) - rect.width / 2);
+            view.style.top = _inStyleUnits(parseInt(view.style.top) - rect.height / 2);
+        },
     }
 }
 
@@ -210,8 +220,6 @@ export namespace tasks {
 
 export namespace taskPrototypes {
     export const views: views.Views<TaskPrototypeView> = {
-        ..._baseOfVisibleViews,
-
         createEmptyView(): TaskPrototypeView {
             const view = document.createElement('div');
             view.className = "task-prototype";
@@ -232,8 +240,6 @@ export namespace taskPrototypes {
 
 export namespace maps {
     export const views: views.Views<MapView> = {
-        ..._baseOfVisibleViews,
-
         createEmptyView(): MapView {
             const view = document.createElement('div');
             view.id = "tasks";

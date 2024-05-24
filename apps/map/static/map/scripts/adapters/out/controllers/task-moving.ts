@@ -1,161 +1,79 @@
-import * as base from "./base.js";
-import * as domain from "../../../core/domain.js";
+import * as controllers from "../../../core/ports/controllers.js";
 import * as facade from "../facade.js";
 import * as layout from "../../in/layout.js";
 import * as tools from "../../../tools.js";
-import { Maybe } from "../../../sugar.js";
 
-export class PreparationController extends base.Controller<layout.TaskView, domain.Task> {
-    private _interactionModeView: Maybe<layout.InteractionModeView> = undefined;
+export function preparationControllerFor(view: layout.TaskView, _: any): controllers.Controller {
+    const handler = () => facade.prepareTaskMoving(view);
 
-    constructor(view: layout.TaskView, value: domain.Task) {
-        super(view, value);
+    let interactionModeView = view.querySelector(".task-interaction-mode");
 
-        const _interactionModeView = this._view.querySelector(".task-description");
-
-        if (_interactionModeView instanceof HTMLDivElement)
-            this._interactionModeView = _interactionModeView;
-    }
-
-    activate(): void {
-        this._view.addEventListener("pointerenter", event => this._handler(event));
-        this._interactionModeView?.addEventListener(
-            "pointerleave", event => this._handler(event)
-        );
-    }
-
-    deactivate(): void {
-        this._view.removeEventListener("pointerenter", event => this._handler(event));
-        this._interactionModeView?.removeEventListener(
-            "pointerleave", event => this._handler(event)
-        );
-    }
-
-    private _handler(_: any) {
-        facade.prepareTaskMoving(this._view);
-    }
-
-    static get factory(): (view: layout.TaskView, value: domain.Task) => PreparationController {
-        return (view: layout.TaskView, value: domain.Task) => new PreparationController(
-            view,
-            value,
-        );
+    return {
+        activate() {
+            view.addEventListener("pointerenter", handler);
+            interactionModeView?.addEventListener("pointerleave", handler);
+        },
+        deactivate() {
+            view.removeEventListener("pointerenter", handler);
+            interactionModeView?.removeEventListener("pointerleave", handler);
+        },
     }
 }
 
-export class ContinuationController extends base.StaticController<layout.TaskView> {
-    private _interactionModeView: Maybe<layout.InteractionModeView> = undefined;
+export function continuationControllerFor(view: layout.TaskView): controllers.Controller {
+    const handler = (event: PointerEvent) => facade.moveTask(view, event.clientX, event.clientY);
 
-    constructor(view: layout.TaskView) {
-        super(view);
-
-        const _interactionModeView = this._view.querySelector(".task-description");
-
-        if (_interactionModeView instanceof HTMLDivElement)
-            this._interactionModeView = _interactionModeView;
-    }
-
-    activate(): void {
-        this._view.addEventListener("pointermove", event => this._handler(event));
-        this._interactionModeView?.addEventListener(
-            "pointerout", event => this._handler(event)
-        );
-    }
-
-    deactivate(): void {
-        this._view.removeEventListener("pointermove", event => this._handler(event));
-        this._interactionModeView?.removeEventListener(
-            "pointerout", event => this._handler(event)
-        );
-    }
-
-    private _handler(event: PointerEvent) {
-        facade.moveTask(this._view, event.clientX, event.clientY);
+    return {
+        activate: () => view.addEventListener("pointermove", handler),
+        deactivate: () => view.removeEventListener("pointermove", handler),
     }
 }
 
-export class StartingController extends base.Controller<layout.TaskView, domain.Task> {
-    private _interactionModeView: Maybe<layout.InteractionModeView> = undefined;
+export function startingControllerFor(view: layout.TaskView, _: any): controllers.Controller {
+    const interactionModeView = view.querySelector(".task-interaction-mode");
 
-    constructor(view: layout.TaskView, value: domain.Task) {
-        super(view, value);
-
-        const _interactionModeView = this._view.querySelector(".task-description");
-
-        if (_interactionModeView instanceof HTMLDivElement)
-            this._interactionModeView = _interactionModeView;
-    }
-
-    activate(): void {
-        this._view.addEventListener("pointerdown", event => this._handler(event));
-    }
-
-    deactivate(): void {
-        this._view.removeEventListener("pointerdown", event => this._handler(event));
-    }
-
-    private _handler(event: PointerEvent) {
+    const handler = (event: PointerEvent) => {
         const isInInteractionModeView = (
-            this._interactionModeView !== undefined
-            && tools.isInDOMOf(this._interactionModeView, event.target)
+            interactionModeView instanceof HTMLElement
+            && tools.isInDOMOf(interactionModeView, event.target)
         );
         if (isInInteractionModeView)
             return;
 
         facade.startTaskMoving(
-            this._view,
-            (view) => new ContinuationController(view),
+            view,
+            continuationControllerFor,
             event.clientX,
             event.clientY,
         );
     }
 
-    static get factory(): (view: layout.TaskView, value: domain.Task) => StartingController {
-        return (view: layout.TaskView, value: domain.Task) => (
-            new StartingController(view, value)
-        );
+    return {
+        activate: () => view.addEventListener("pointerdown", handler),
+        deactivate: () => view.removeEventListener("pointerdown", handler),
     }
 }
 
-export class CancellationController extends base.Controller<layout.TaskView, domain.Task> {
-    activate(): void {
-        this._view.addEventListener("pointerleave", event => this._handler(event));
-    }
+export function cancellationControllerFor(
+    view: layout.TaskView,
+    _: any,
+): controllers.Controller {
+    const handler = () => facade.cancelTaskMoving(view);
 
-    deactivate(): void {
-        this._view.removeEventListener("pointerleave", event => this._handler(event));
-    }
-
-    private _handler(_: any) {
-        facade.cancelTaskMoving(this._view);
-    }
-
-    static get factory(): (view: layout.TaskView, value: domain.Task) => CancellationController {
-        return (view: layout.TaskView, value: domain.Task) => (
-            new CancellationController(view, value)
-        );
+    return {
+        activate: () => view.addEventListener("pointerleave", handler),
+        deactivate: () => view.removeEventListener("pointerleave", handler),
     }
 }
 
-export class StoppingController extends base.Controller<layout.TaskView, domain.Task> {
-    activate(): void {
-        this._view.addEventListener("pointerup", event => this._handler(event));
-    }
+export function stoppingControllerFor(
+    view: layout.TaskView,
+    _: any,
+): controllers.Controller {
+    const handler = () => facade.stopTaskMoving(view, continuationControllerFor);
 
-    deactivate(): void {
-        this._view.removeEventListener("pointerup", event => this._handler(event));
-    }
-
-    private _handler(_: any) {
-        facade.stopTaskMoving(
-            this._view,
-            (view) => new ContinuationController(view),
-        );
-    }
-
-    static get factory(): (view: layout.TaskView, value: domain.Task) => StoppingController {
-        return (view: layout.TaskView, value: domain.Task) => (
-            new StoppingController(view, value)
-        );
+    return {
+        activate: () => view.addEventListener("pointerup", handler),
+        deactivate: () => view.removeEventListener("pointerup", handler),
     }
 }

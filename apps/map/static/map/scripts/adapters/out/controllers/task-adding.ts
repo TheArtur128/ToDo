@@ -1,111 +1,86 @@
 import * as domain from "../../../core/domain.js";
 import * as controllers from "../../../core/ports/controllers.js";
-import * as base from "./base.js";
 import * as facade from "../facade.js";
 import * as layout from "../../in/layout.js";
 import * as tools from "../../../tools.js";
 
-export class AvailabilityController extends base.StaticController<tools.StorageHTMLElement> {
-    constructor(
-        view: tools.StorageHTMLElement,
-        private _readnessAnimationRootElement: layout.View,
-        private _taskControllerFactories: controllers.ControllerFor<layout.TaskView, domain.Task>[],
-    ) {
-        super(view);
-    }
-
-    activate() {
-        this._view.addEventListener("input", event => this._handler(event));
-    }
-
-    deactivate() {
-        this._view.removeEventListener("input", event => this._handler(event));
-    }
-
-    private _handler(_: any) {
+export function availabilityControllerFor(
+    storageElement: tools.StorageHTMLElement,
+    readnessAnimationRootElement: layout.View,
+    taskControllerFactories: controllers.ControllerFor<layout.TaskView, domain.Task>[],
+): controllers.Controller {
+    const handler = () => {
         facade.handleTaskAddingAvailability(
-            (animation: layout.Animation) => new StartingController(
+            (animation: layout.Animation) => startingControllerFor(
                 animation,
-                this._view,
-                this._taskControllerFactories,
+                storageElement,
+                taskControllerFactories,
             ),
-            this._readnessAnimationRootElement,
-            this._view.value,
+            readnessAnimationRootElement,
+            storageElement.value,
         );
+    }
+
+    return {
+        activate: () => storageElement.addEventListener("input", handler),
+        deactivate: () => storageElement.removeEventListener("input", handler),
     }
 }
 
-export class StartingController extends base.StaticController<layout.Animation> {
-    constructor(
-        view: layout.Animation,
-        private _inputDescriptionElement: tools.StorageHTMLElement,
-        private _taskControllerFactories: controllers.ControllerFor<layout.TaskView, domain.Task>[],
-    ) {
-        super(view);
-    }
+export function startingControllerFor(
+    animation: layout.Animation,
+    inputDescriptionElement: tools.StorageHTMLElement,
+    taskControllerFactories: controllers.ControllerFor<layout.TaskView, domain.Task>[],
+): controllers.Controller {
+    const handler = (event: PointerEvent) => facade.startTaskAdding(
+        (animation: layout.Animation) => startingControllerFor(
+            animation,
+            inputDescriptionElement,
+            taskControllerFactories,
+        ),
+        continuationControllerFor,
+        (view: layout.TaskPrototypeView) => completionControllerFor(
+            view,
+            taskControllerFactories
+        ),
+        animation,
+        inputDescriptionElement,
+        event.clientX,
+        event.clientY,
+    );
 
-    activate() {
-        this._view.addEventListener("pointerdown", event => this._handler(event));
-    }
-
-    deactivate() {
-        this._view.removeEventListener("pointerdown", event => this._handler(event));
-    }
-
-    private _handler(event: PointerEvent) {
-        facade.startTaskAdding(
-            (animation: layout.Animation) => new StartingController(
-                animation,
-                this._inputDescriptionElement,
-                this._taskControllerFactories,
-            ),
-            (view: layout.TaskPrototypeView) => new ContinuationController(view),
-            (view: layout.TaskPrototypeView) => new CompletionController(
-                view,
-                this._taskControllerFactories
-            ),
-            this._view,
-            this._inputDescriptionElement,
-            event.clientX,
-            event.clientY,
-        );
+    return {
+        activate: () => animation.addEventListener("pointerdown", handler),
+        deactivate: () => animation.removeEventListener("pointerdown", handler),
     }
 }
 
-export class ContinuationController extends base.StaticController<layout.TaskPrototypeView> {
-    activate() {
-        this._view.addEventListener("pointermove", event => this._handler(event));
-    }
+export function continuationControllerFor(
+    _: layout.TaskPrototypeView,
+): controllers.Controller {
+    const handler = (event: PointerEvent) => facade.continueTaskAdding(event.clientX, event.clientY);
 
-    deactivate() {
-        this._view.removeEventListener("pointermove", event => this._handler(event));
-    }
-
-    private _handler(event: PointerEvent) {
-        facade.continueTaskAdding(event.clientX, event.clientY);
+    return {
+        activate: () => document.addEventListener("pointermove", handler),
+        deactivate: () => document.removeEventListener("pointermove", handler),
     }
 }
 
-export class CompletionController extends base.StaticController<layout.TaskPrototypeView> {
-    constructor(
-        view: layout.TaskPrototypeView,
-        private _taskControllerFactories: controllers.ControllerFor<layout.TaskView, domain.Task>[]
-    ) {
-        super(view);
-    }
+export function completionControllerFor(
+    _: layout.TaskPrototypeView,
+    taskControllerFactories: controllers.ControllerFor<layout.TaskView, domain.Task>[],
+): controllers.Controller {
+    const handler = () => facade.completeTaskAdding(
+        continuationControllerFor,
+        (view: layout.TaskPrototypeView) => completionControllerFor(
+            view,
+            taskControllerFactories,
+        ),
+        taskControllerFactories,
+    );
 
-    activate() {
-        this._view.addEventListener("pointermove", event => this._handler(event));
-    }
-
-    deactivate() {
-        this._view.removeEventListener("pointermove", event => this._handler(event));
-    }
-
-    private _handler(_: any) {
-        facade.completeTaskAdding(
-            (view: layout.TaskPrototypeView) => new ContinuationController(view),
-            this._taskControllerFactories,
-        );
+    return {
+        activate: () => document.addEventListener("pointerup", handler),
+        deactivate: () => document.removeEventListener("pointerup", handler),
     }
 }

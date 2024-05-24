@@ -32,8 +32,8 @@ export const tasks = {
           headers: _headers.dispatchHeaders,
           body: JSON.stringify({
                 description: taskPrototype.description.value,
-                x: Math.round(taskPrototype.x),
-                y: Math.round(taskPrototype.y),
+                x: Math.round(taskPrototype.x - 127.5),
+                y: Math.round(taskPrototype.y - 62),
             })
         })
 

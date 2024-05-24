@@ -7,7 +7,7 @@ import * as layout from "../in/layout.js";
 import * as parsers from "../in/parsers.js";
 import * as messages from "../in/messages.js";
 import * as timeouts from "../in/timeouts.js";
-import * as controllerBase from "./controllers/base.js";
+import * as controllerCreation from "./controllers/creation.js";
 import * as tools from "../../tools.js";
 
 const _taskControllerMatching = new repos.MatchingFromMap<layout.TaskView, controllers.Controller[]>();
@@ -93,7 +93,7 @@ export function startTaskMoving(
         _movingReferencePointMatching,
         layout.tasks.movementPresenter,
         taskElement,
-        new controllerBase.StaticControllerMatching(
+        new controllerCreation.Matching(
             taskMovingControllerFor,
             _movingControllerMatching,
         ),
@@ -113,7 +113,7 @@ export function stopTaskMoving(
     cases.stopTaskMoving(
         _taskMatching,
         _movingReferencePointMatching,
-        new controllerBase.StaticControllerMatching(
+        new controllerCreation.Matching(
             taskMovingControllerFor,
             _movingControllerMatching,
         ),
@@ -154,7 +154,7 @@ export function handleTaskAddingAvailability(
         readinessAnimationRootElement,
         _taskAddingReadinessAnimation,
         _taskAddingReadinessAnimationPresenter,
-        new controllerBase.StaticControllerMatching(
+        new controllerCreation.Matching(
             startingControllerFor,
             _startingControllerMatching,
         ),
@@ -188,16 +188,16 @@ export function startTaskAdding(
         _taskAddingReadinessAnimation,
         _taskAddingReadinessAnimationPresenter,
         layout.taskPrototypes.views,
-        layout.taskPrototypes.presenter,
-        new controllerBase.StaticControllerMatching(
-            continuationControllerFor,
-            _continuationControllerMatching,
-        ),
-        new controllerBase.StaticControllerMatching(
+        layout.centeringPresenterOf(layout.taskPrototypes.presenter),
+        new controllerCreation.Matching(
             startingControllerFor,
             _startingControllerMatching,
         ),
-        new controllerBase.StaticControllerMatching(
+        new controllerCreation.Matching(
+            continuationControllerFor,
+            _continuationControllerMatching,
+        ),
+        new controllerCreation.Matching(
             completionControllerFor,
             _completionControllerMatching,
         ),
@@ -216,8 +216,7 @@ export function continueTaskAdding(x: number, y: number): void {
         _mapViewMatching,
         _taskPrototypeViewMatching,
         _taskPrototypeMatching,
-        layout.taskPrototypes.views,
-        layout.taskPrototypes.presenter,
+        layout.centeringPresenterOf(layout.taskPrototypes.presenter),
         x,
         y,
     )
@@ -225,13 +224,14 @@ export function continueTaskAdding(x: number, y: number): void {
 
 export async function completeTaskAdding(
     continuationControllerFor: controllers.StaticControllerFor<layout.TaskPrototypeView>,
+    completionControllerFor: controllers.StaticControllerFor<layout.TaskPrototypeView>,
     taskControllerFactories: controllers.ControllerFor<layout.TaskView, domain.Task>[],
 ): Promise<void> {
     cases.completeTaskAdding(
         _mapViewMatching,
         _taskPrototypeViewMatching,
         _taskPrototypeMatching,
-        layout.taskPrototypes.presenter,
+        layout.centeringPresenterOf(layout.taskPrototypes.presenter),
         console.error,
         messages.asyncAlert,
         apiClient.tasks,
@@ -239,9 +239,13 @@ export async function completeTaskAdding(
         layout.tasks.presenter,
         _taskMatching,
         parsers.getCurrentMap,
-        new controllerBase.StaticControllerMatching(
+        new controllerCreation.Matching(
             continuationControllerFor,
             _continuationControllerMatching,
+        ),
+        new controllerCreation.Matching(
+            completionControllerFor,
+            _completionControllerMatching,
         ),
         _taskControllerMatching,
         taskControllerFactories,

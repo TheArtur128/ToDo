@@ -1,19 +1,7 @@
 import * as controllers from "../../../core/ports/controllers.js";
 import * as repos from "../../../core/ports/repos.js";
 
-export abstract class Controller<View, Value> implements controllers.Controller {
-    constructor(protected _view: View, protected _value: Value) {}
-    abstract activate(): void;
-    abstract deactivate(): void;
-}
-
-export abstract class StaticController<View> implements controllers.Controller {
-    constructor(protected _view: View) {}
-    abstract activate(): void;
-    abstract deactivate(): void;
-}
-
-export class StaticControllerMatching<View> implements repos.MatchingBy<View, controllers.Controller> {
+export class Matching<View> implements repos.MatchingBy<View, controllers.Controller> {
     constructor(
         private _controllerFor: (view: View) => controllers.Controller,
         private _maybeMatching: repos.MaybeMatchingBy<View, controllers.Controller>

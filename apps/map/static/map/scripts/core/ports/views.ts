@@ -1,4 +1,3 @@
-import * as domain from "../domain.js";
 import { Maybe } from "../../sugar.js";
 
 export type StaticPresenter<RootView, View> = {
@@ -17,7 +16,6 @@ export type Presenter<RootView, View, Value> = (
 
 export type Views<View> = {
     createEmptyView(): View,
-    sizeOf(view: View): domain.Vector,
 }
 
 export type Subviews<RootView, View, Value> = Views<View> & {
